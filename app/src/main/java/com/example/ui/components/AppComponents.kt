@@ -11,8 +11,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import com.example.R
 import com.example.data.model.Product
+import java.io.File
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -237,12 +239,21 @@ fun VendorCard(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = vendor.name.take(2),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                    if (vendor.logoUri.isNotBlank() && File(vendor.logoUri).exists()) {
+                        AsyncImage(
+                            model = File(vendor.logoUri),
+                            contentDescription = "لوگوی وندور",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = vendor.name.take(2),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -469,6 +480,19 @@ fun openMap(context: Context, query: String) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
         context.startActivity(intent)
     } catch (_: Exception) {}
+}
+
+fun openMap(context: Context, lat: Double, lng: Double, label: String = "") {
+    try {
+        val uri = Uri.parse("geo:$lat,$lng?q=$lat,$lng(" + Uri.encode(label) + ")")
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        context.startActivity(intent)
+    } catch (_: Exception) {
+        try {
+            val browserUri = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng")
+            context.startActivity(Intent(Intent.ACTION_VIEW, browserUri))
+        } catch (_: Exception) {}
+    }
 }
 
 fun shareVendor(context: Context, vendor: Vendor) {

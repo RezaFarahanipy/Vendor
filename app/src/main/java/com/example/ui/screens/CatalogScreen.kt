@@ -67,6 +67,7 @@ import com.example.R
 import com.example.data.model.Product
 import com.example.ui.components.AppHeader
 import com.example.ui.theme.NavyDeep
+import com.example.ui.components.CatalogViewerDialog
 import com.example.ui.theme.RedFavorite
 import com.example.ui.theme.TealDark
 import com.example.ui.theme.TealLight
@@ -84,6 +85,7 @@ fun CatalogScreen(
     val selectedCategory by viewModel.selectedProductCategory.collectAsState()
 
     var selectedProductForDetail by remember { mutableStateOf<Product?>(null) }
+    var showFullCatalogViewer by remember { mutableStateOf(false) }
 
     val productCategories = listOf(
         "همه",
@@ -174,7 +176,7 @@ fun CatalogScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                         .clickable {
-                            Toast.makeText(context, "دریافت کاتالوگ کامل جامع آغاز شد", Toast.LENGTH_SHORT).show()
+                            showFullCatalogViewer = true
                         },
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
@@ -333,6 +335,16 @@ fun CatalogScreen(
                     Text("بستن")
                 }
             }
+        )
+    }
+
+    if (showFullCatalogViewer) {
+        CatalogViewerDialog(
+            vendorName = "کاتالوگ جامع وندوریاب",
+            catalogTitle = "کاتالوگ جامع صنعتی و تجهیزات تخصصی",
+            catalogLocalPath = "",
+            catalogPdfUrl = "",
+            onDismiss = { showFullCatalogViewer = false }
         )
     }
 }

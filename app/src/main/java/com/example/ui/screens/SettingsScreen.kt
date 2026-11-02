@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,19 +22,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BusinessCenter
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.FeaturedPlayList
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Verified
@@ -42,7 +51,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -65,13 +76,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.model.ActivityType
+import com.example.data.model.Category
 import com.example.ui.components.AppHeader
 import com.example.ui.components.sendEmail
 import com.example.ui.theme.GreenVerified
 import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.RedFavorite
 import com.example.ui.theme.TealDark
 import com.example.ui.theme.TealPrimary
 import com.example.ui.viewmodel.VendorViewModel
+import com.example.util.PersianUtils
 
 @Composable
 fun SettingsScreen(
@@ -79,10 +94,13 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val isDark by viewModel.isDarkMode.collectAsState()
+    val allActivityTypes by viewModel.allActivityTypes.collectAsState()
+    val allCategories by viewModel.allCategories.collectAsState()
 
     var showAboutDialog by remember { mutableStateOf(false) }
-    var showCategoryDialog by remember { mutableStateOf(false) }
-    var newCategoryName by remember { mutableStateOf("") }
+    var showFeaturesDialog by remember { mutableStateOf(false) }
+    var showActivityTypeManageDialog by remember { mutableStateOf(false) }
+    var showCategoryManageDialog by remember { mutableStateOf(false) }
     var showCsvImportDialog by remember { mutableStateOf(false) }
     var csvInputText by remember { mutableStateOf("") }
     var showResetDialog by remember { mutableStateOf(false) }
@@ -100,6 +118,50 @@ fun SettingsScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            // Full Features and Capabilities of the App
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize()
+                        .clickable { showFeaturesDialog = true },
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = TealPrimary.copy(alpha = 0.15f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SettingsIconBadge(icon = Icons.Default.FeaturedPlayList, tint = TealPrimary)
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "راهنما و قابلیت‌های کامل برنامه",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "مشاهده فهرست جامع ۱۲ قابلیت کلیدی و تجاری وندوریاب",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            tint = TealPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+
             // Developer & Programmer Card (رضا فراهانی)
             item {
                 Card(
@@ -185,16 +247,6 @@ fun SettingsScreen(
                 }
             }
 
-            // Database & Storage Architecture Card
-            item {
-                SettingsClickableCard(
-                    icon = Icons.Default.Storage,
-                    title = "محل ذخیره‌سازی داده‌ها (دیتابیس آفلاین)",
-                    subtitle = "پایگاه داده رابطه‌ای Room Database (SQLite) + فایل CSV",
-                    onClick = { showDatabaseInfoDialog = true }
-                )
-            }
-
             // Dark Mode Toggle
             item {
                 Card(
@@ -238,13 +290,33 @@ fun SettingsScreen(
                 }
             }
 
-            // Manage Categories
+            // Manage Activity Types (نوع فعالیت: تولیدکننده، بازرگانی، واردکننده...)
+            item {
+                SettingsClickableCard(
+                    icon = Icons.Default.BusinessCenter,
+                    title = "مدیریت انواع فعالیت شرکت‌ها",
+                    subtitle = "${PersianUtils.toPersianDigits(allActivityTypes.size)} نوع تعریف‌شده (افزودن، ویرایش و حذف)",
+                    onClick = { showActivityTypeManageDialog = true }
+                )
+            }
+
+            // Manage Categories (زمینه‌های فعالیت: صنعتی، استیل، مواد شیمیایی...)
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.Category,
-                    title = "مدیریت دسته‌بندی‌ها",
-                    subtitle = "افزودن و ویرایش شاخه‌های صنعتی",
-                    onClick = { showCategoryDialog = true }
+                    title = "مدیریت زمینه‌های فعالیت و دسته‌بندی‌ها",
+                    subtitle = "${PersianUtils.toPersianDigits(allCategories.size)} دسته تعریف‌شده (افزودن، ویرایش و حذف)",
+                    onClick = { showCategoryManageDialog = true }
+                )
+            }
+
+            // Database & Storage Architecture Card
+            item {
+                SettingsClickableCard(
+                    icon = Icons.Default.Storage,
+                    title = "محل ذخیره‌سازی داده‌ها (دیتابیس آفلاین)",
+                    subtitle = "پایگاه داده رابطه‌ای Room Database (SQLite) + فایل CSV",
+                    onClick = { showDatabaseInfoDialog = true }
                 )
             }
 
@@ -310,6 +382,329 @@ fun SettingsScreen(
         }
     }
 
+    // Full Features and Capabilities Dialog
+    if (showFeaturesDialog) {
+        AlertDialog(
+            onDismissRequest = { showFeaturesDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.FeaturedPlayList, contentDescription = null, tint = TealPrimary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("قابلیت‌ها و امکانات کامل وندوریاب", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    FeatureItem(
+                        number = "۱",
+                        title = "مدیریت جامع وندورها و تأمین‌کنندگان",
+                        desc = "ثبت، ویرایش، حذف، برچسب‌گذاری، وضعیت تأییدیه رسمی و ثبت یادداشت‌های محرمانه داخلی برای هر شرکت."
+                    )
+                    FeatureItem(
+                        number = "۲",
+                        title = "سیستم چندشماره‌ای تماس و ارتباطات",
+                        desc = "پشتیبانی از چندین خط ثابت و چندین شماره همراه برای هر وندور به همراه دکمه‌های مستقیم تماس و پیامک."
+                    )
+                    FeatureItem(
+                        number = "۳",
+                        title = "ارتباط سریع با پیام‌رسان‌های مطرح",
+                        desc = "امکان ارسال مستقیم پیام در واتس‌اپ، تلگرام، بله و روبیکا به شماره‌های شرکت و تک‌تک پرسنل."
+                    )
+                    FeatureItem(
+                        number = "۴",
+                        title = "مدیریت پرسنل و مدیران ارتباطی در فرم وندور",
+                        desc = "ثبت و ویرایش مدیرعامل، مسئول فروش، کارشناسان فنی با نام، سمت، داخلی و شماره همراه در حین افزودن و ویرایش وندور."
+                    )
+                    FeatureItem(
+                        number = "۵",
+                        title = "انتخاب و ویرایش لوگوی شرکت",
+                        desc = "انتخاب لوگوی واقعی از گالری گوشی (Photo Picker استاندارد) و ذخیره‌سازی محلی به همراه نشان‌های اختصاری شکیل."
+                    )
+                    FeatureItem(
+                        number = "۶",
+                        title = "آپلود و نمایش کاتالوگ دیجیتال (PDF)",
+                        desc = "بارگذاری فایل‌های PDF کاتالوگ و بروشورها، پیش‌نمایش و باز کردن مستقیم با برنامه‌های PDFخوان و امکان اشتراک‌گذاری."
+                    )
+                    FeatureItem(
+                        number = "۷",
+                        title = "مدیریت کامل محصولات و تجهیزات وندور",
+                        desc = "امکان افزودن، ویرایش و حذف تک‌تک محصولات صنعتی، مدل‌ها، کدهای فنی و مشخصات هیدرولیکی/مکانیکی."
+                    )
+                    FeatureItem(
+                        number = "۸",
+                        title = "موقعیت‌یابی تعاملی روی نقشه (GPS)",
+                        desc = "نقشه لمسی تعاملی با قابلیت جابجایی پین، ورودی دستی طول و عرض جغرافیایی، انتخاب شهرک‌های صنعتی ایران و اتصال به نشان و بلد."
+                    )
+                    FeatureItem(
+                        number = "۹",
+                        title = "اطلاعات مالی، بانکی و ثبتی",
+                        desc = "امکان ثبت چندین حساب بانکی با نام بانک، شعبه، شماره حساب و شماره شبا با دکمه کپی، به همراه کد اقتصادی، شناسه ملی و شماره ثبت."
+                    )
+                    FeatureItem(
+                        number = "۱۰",
+                        title = "مدیریت پویای انواع فعالیت و دسته‌بندی‌ها",
+                        desc = "امکان تعریف، ویرایش و حذف انواع فعالیت (تولیدی، بازرگانی و...) و زمینه‌های صنعتی مستقیماً از بخش تنظیمات."
+                    )
+                    FeatureItem(
+                        number = "۱۱",
+                        title = "موتور جستجوی بلادرنگ و فیلترهای پیشرفته",
+                        desc = "جستجوی هوشمند با اصلاح ی/ک عربی و نیم‌فاصله، فیلتر شهر، تأییدیه، کاتالوگ و مرتب‌سازی بر اساس امتیاز و جدیدترین‌ها."
+                    )
+                    FeatureItem(
+                        number = "۱۲",
+                        title = "دیتابیس بومی ۱۰۰٪ آفلاین (Room Database)",
+                        desc = "ذخیره‌سازی کامل بر روی حافظه گوشی بدون نیاز به اینترنت، با پشتیبانی کامل از خروجی و ورودی فایل اکسل و CSV."
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showFeaturesDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                ) {
+                    Text("بستن")
+                }
+            }
+        )
+    }
+
+    // Manage Activity Types Dialog (انواع فعالیت)
+    if (showActivityTypeManageDialog) {
+        var newActName by remember { mutableStateOf("") }
+        var editingActType by remember { mutableStateOf<ActivityType?>(null) }
+        var editActName by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { showActivityTypeManageDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.BusinessCenter, contentDescription = null, tint = TealPrimary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("مدیریت انواع فعالیت شرکت‌ها", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "انواع فعالیت قابل انتخاب در فرم ثبت وندور:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Input to add new activity type
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = newActName,
+                            onValueChange = { newActName = it },
+                            placeholder = { Text("نوع جدید (مثال: بازرگانی)") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Button(
+                            onClick = {
+                                if (newActName.isNotBlank()) {
+                                    viewModel.addActivityType(newActName)
+                                    newActName = ""
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                        ) {
+                            Text("افزودن")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    allActivityTypes.forEach { act ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (editingActType?.id == act.id) {
+                                OutlinedTextField(
+                                    value = editActName,
+                                    onValueChange = { editActName = it },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(onClick = {
+                                    if (editActName.isNotBlank()) {
+                                        viewModel.updateActivityType(act.copy(name = editActName.trim()))
+                                        editingActType = null
+                                    }
+                                }) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = "تأیید", tint = TealPrimary)
+                                }
+                            } else {
+                                Text(
+                                    text = act.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = {
+                                        editingActType = act
+                                        editActName = act.name
+                                    },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(16.dp))
+                                }
+                                IconButton(
+                                    onClick = { viewModel.deleteActivityType(act.id) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showActivityTypeManageDialog = false }) {
+                    Text("بستن")
+                }
+            }
+        )
+    }
+
+    // Manage Categories Dialog (زمینه‌های فعالیت)
+    if (showCategoryManageDialog) {
+        var newCatName by remember { mutableStateOf("") }
+        var editingCategory by remember { mutableStateOf<Category?>(null) }
+        var editCatName by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { showCategoryManageDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Category, contentDescription = null, tint = TealPrimary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("مدیریت زمینه‌های فعالیت و دسته‌ها", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "دسته‌بندی‌های صنعتی فعال در برنامه:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Add category input
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = newCatName,
+                            onValueChange = { newCatName = it },
+                            placeholder = { Text("نام زمینه (مثال: ابزار دقیق)") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Button(
+                            onClick = {
+                                if (newCatName.isNotBlank()) {
+                                    viewModel.addCategory(newCatName)
+                                    newCatName = ""
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                        ) {
+                            Text("افزودن")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    allCategories.forEach { cat ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (editingCategory?.id == cat.id) {
+                                OutlinedTextField(
+                                    value = editCatName,
+                                    onValueChange = { editCatName = it },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(onClick = {
+                                    if (editCatName.isNotBlank()) {
+                                        viewModel.updateCategory(cat.copy(name = editCatName.trim()))
+                                        editingCategory = null
+                                    }
+                                }) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = "تأیید", tint = TealPrimary)
+                                }
+                            } else {
+                                Text(
+                                    text = cat.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = {
+                                        editingCategory = cat
+                                        editCatName = cat.name
+                                    },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(16.dp))
+                                }
+                                IconButton(
+                                    onClick = { viewModel.deleteCategory(cat.id) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCategoryManageDialog = false }) {
+                    Text("بستن")
+                }
+            }
+        )
+    }
+
     // Database Architecture explanation dialog
     if (showDatabaseInfoDialog) {
         AlertDialog(
@@ -329,8 +724,9 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("• دیتابیس محلی: Room Database مبتنی بر SQLite")
-                    Text("• جدول‌های فعال: vendors (وندورها), contact_persons (پرسنل), categories (دسته‌ها), products (محصولات)")
+                    Text("• جدول‌های فعال: vendors (وندورها), contact_persons (پرسنل), categories (دسته‌ها), products (محصولات), activity_types (انواع فعالیت)")
                     Text("• ماندگاری: اطلاعات با بستن یا راه‌اندازی مجدد گوشی هرگز پاک نمی‌شوند.")
+                    Text("• فایل‌های کاتالوگ و لوگوها: در پوشه اختصاصی امن برنامه (filesDir) به شکل آفلاین نگهداری می‌شوند.")
                     Text("• پشتیبان‌گیری: امکان استخراج فایل استاندارد CSV / Excel و ورود مجدد آن در هر زمان فراهم است.")
                 }
             },
@@ -340,42 +736,6 @@ fun SettingsScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
                 ) {
                     Text("متوجه شدم")
-                }
-            }
-        )
-    }
-
-    // Add Category Dialog
-    if (showCategoryDialog) {
-        AlertDialog(
-            onDismissRequest = { showCategoryDialog = false },
-            title = { Text("افزودن دسته‌بندی جدید", fontWeight = FontWeight.Bold) },
-            text = {
-                OutlinedTextField(
-                    value = newCategoryName,
-                    onValueChange = { newCategoryName = it },
-                    placeholder = { Text("نام دسته (مثال: تجهیزات ابزار دقیق، بازرگانی)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (newCategoryName.isNotBlank()) {
-                            viewModel.addCategory(newCategoryName.trim())
-                            newCategoryName = ""
-                            showCategoryDialog = false
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
-                ) {
-                    Text("افزودن")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCategoryDialog = false }) {
-                    Text("انصراف")
                 }
             }
         )
@@ -462,11 +822,12 @@ fun SettingsScreen(
                     Text("رضا فراهانی", fontWeight = FontWeight.Bold)
                     Text("ایمیل: Rezafarahani2008@gmail.com")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("امکانات:")
-                    Text("• مدیریت و ثبت پرسنل با ارسال مستقیم به تلگرام، واتس‌اپ، بله و روبیکا")
-                    Text("• جستجوی فوق‌سریع فارسی با اصلاح هوشمند ارقام و حروف")
-                    Text("• پایگاه اطلاعاتی Room Database محلی")
-                    Text("• مدیریت کاتالوگ و گالری محصولات")
+                    Text("امکانات برجسته:")
+                    Text("• سیستم چندشماره‌ای تماس و ارتباط در واتس‌اپ، تلگرام، بله و روبیکا")
+                    Text("• نقشه تعاملی با موقعیت‌یاب لمسی GPS")
+                    Text("• آپلود و نمایش کاتالوگ دیجیتال PDF")
+                    Text("• ثبت شماره شبا، بانک، شعبه و کدهای ثبتی")
+                    Text("• مدیریت و ویرایش محصولات و پرسنل وندور")
                 }
             },
             confirmButton = {
@@ -478,6 +839,52 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun FeatureItem(number: String, title: String, desc: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(TealPrimary),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = PersianUtils.toPersianDigits(number),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NavyDeep
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = desc,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 

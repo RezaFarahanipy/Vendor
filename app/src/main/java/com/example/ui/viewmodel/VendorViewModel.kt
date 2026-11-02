@@ -4,7 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
+import com.example.data.model.ActivityType
 import com.example.data.model.Category
+import com.example.data.model.ContactPerson
 import com.example.data.model.Product
 import com.example.data.model.Vendor
 import com.example.data.repository.VendorRepository
@@ -61,6 +63,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     // Search and filters
     val searchQuery = MutableStateFlow("")
     val selectedCategoryFilter = MutableStateFlow("همه")
+    val selectedActivityTypeFilter = MutableStateFlow("همه")
     val selectedCityFilter = MutableStateFlow("همه")
     val onlyVerifiedFilter = MutableStateFlow(false)
     val onlyCatalogFilter = MutableStateFlow(false)
@@ -92,11 +95,15 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     val favoriteProducts: StateFlow<List<Product>> = repository.favoriteProducts
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Filtered vendors reacting to search, category, city, verification, and sort
+    val allActivityTypes: StateFlow<List<ActivityType>> = repository.allActivityTypes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Filtered vendors reacting to search, category, activity type, city, verification, and sort
     val filteredVendors: StateFlow<List<Vendor>> = combine(
         allVendors,
         searchQuery,
         selectedCategoryFilter,
+        selectedActivityTypeFilter,
         selectedCityFilter,
         onlyVerifiedFilter,
         onlyCatalogFilter,
@@ -106,10 +113,11 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         val vendors = args[0] as List<Vendor>
         val query = args[1] as String
         val category = args[2] as String
-        val city = args[3] as String
-        val verifiedOnly = args[4] as Boolean
-        val catalogOnly = args[5] as Boolean
-        val sort = args[6] as SortOption
+        val actType = args[3] as String
+        val city = args[4] as String
+        val verifiedOnly = args[5] as Boolean
+        val catalogOnly = args[6] as Boolean
+        val sort = args[7] as SortOption
 
         vendors.filter { vendor ->
             // Search query matching
@@ -120,12 +128,23 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
                         PersianUtils.matchesSearch(vendor.tags, query) ||
                         PersianUtils.matchesSearch(vendor.city, query) ||
                         PersianUtils.matchesSearch(vendor.phone, query) ||
+                        PersianUtils.matchesSearch(vendor.mobile, query) ||
+                        PersianUtils.matchesSearch(vendor.secondaryPhones, query) ||
+                        PersianUtils.matchesSearch(vendor.additionalMobiles, query) ||
+                        PersianUtils.matchesSearch(vendor.economicCode, query) ||
+                        PersianUtils.matchesSearch(vendor.nationalId, query) ||
+                        PersianUtils.matchesSearch(vendor.registrationNumber, query) ||
                         PersianUtils.matchesSearch(vendor.ceoName, query)
             }
 
             // Category matching
             val matchesCategory = if (category == "همه" || category.isBlank()) true else {
                 PersianUtils.matchesSearch(vendor.categories, category)
+            }
+
+            // Activity Type matching
+            val matchesActivityType = if (actType == "همه" || actType.isBlank()) true else {
+                PersianUtils.matchesSearch(vendor.activityType, actType)
             }
 
             // City matching
@@ -137,9 +156,9 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
             val matchesVerified = if (verifiedOnly) vendor.isVerified else true
 
             // Catalog
-            val matchesCatalog = if (catalogOnly) vendor.catalogPdfUrl.isNotBlank() else true
+            val matchesCatalog = if (catalogOnly) (vendor.catalogPdfUrl.isNotBlank() || vendor.catalogLocalPath.isNotBlank()) else true
 
-            matchesQuery && matchesCategory && matchesCity && matchesVerified && matchesCatalog
+            matchesQuery && matchesCategory && matchesActivityType && matchesCity && matchesVerified && matchesCatalog
         }.let { list ->
             when (sort) {
                 SortOption.RELEVANCE -> list
@@ -244,11 +263,11 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun saveVendor(vendor: Vendor, onComplete: () -> Unit) {
+    fun saveVendor(vendor: Vendor, onComplete: (Long) -> Unit) {
         viewModelScope.launch {
-            repository.saveVendor(vendor)
+            val savedId = repository.saveVendor(vendor)
             userNotice.value = "اطلاعات وندور با موفقیت ذخیره شد"
-            onComplete()
+            onComplete(savedId)
         }
     }
 
@@ -260,13 +279,89 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    // Categories
     fun addCategory(name: String, icon: String = "category") {
         viewModelScope.launch {
-            repository.addCategory(Category(name = name, iconName = icon))
+            repository.addCategory(Category(name = name.trim(), iconName = icon))
             userNotice.value = "دسته‌بندی جدید افزوده شد"
         }
     }
 
+    fun updateCategory(category: Category) {
+        viewModelScope.launch {
+            repository.updateCategory(category)
+            userNotice.value = "دسته‌بندی ویرایش شد"
+        }
+    }
+
+    fun deleteCategory(categoryId: Long) {
+        viewModelScope.launch {
+            repository.deleteCategory(categoryId)
+            userNotice.value = "دسته‌بندی حذف شد"
+        }
+    }
+
+    // Activity Types
+    fun addActivityType(name: String) {
+        viewModelScope.launch {
+            repository.addActivityType(name.trim())
+            userNotice.value = "نوع فعالیت جدید افزوده شد"
+        }
+    }
+
+    fun updateActivityType(activityType: ActivityType) {
+        viewModelScope.launch {
+            repository.updateActivityType(activityType)
+            userNotice.value = "نوع فعالیت بروزرسانی شد"
+        }
+    }
+
+    fun deleteActivityType(activityTypeId: Long) {
+        viewModelScope.launch {
+            repository.deleteActivityType(activityTypeId)
+            userNotice.value = "نوع فعالیت حذف شد"
+        }
+    }
+
+    // Products CRUD
+    fun saveProduct(product: Product, onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            repository.saveProduct(product)
+            userNotice.value = "اطلاعات محصول ذخیره شد"
+            onComplete()
+        }
+    }
+
+    fun deleteProduct(productId: Long) {
+        viewModelScope.launch {
+            repository.deleteProduct(productId)
+            userNotice.value = "محصول حذف شد"
+        }
+    }
+
+    fun getProductsForVendor(vendorId: Long): kotlinx.coroutines.flow.Flow<List<Product>> =
+        repository.getProductsByVendor(vendorId)
+
+    // Contacts CRUD
+    fun getContactsForVendor(vendorId: Long): kotlinx.coroutines.flow.Flow<List<ContactPerson>> =
+        repository.getContactsByVendor(vendorId)
+
+    fun saveContact(contact: ContactPerson, onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            repository.saveContact(contact)
+            userNotice.value = "اطلاعات پرسنل با موفقیت ثبت شد"
+            onComplete()
+        }
+    }
+
+    fun deleteContact(contactId: Long) {
+        viewModelScope.launch {
+            repository.deleteContact(contactId)
+            userNotice.value = "پرسنل حذف شد"
+        }
+    }
+
+    // Export / Import / Reset
     fun exportToCsv(onSuccess: (String) -> Unit) {
         viewModelScope.launch {
             val csv = repository.exportCsv()
@@ -286,23 +381,6 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             repository.restoreSampleData()
             userNotice.value = "اطلاعات پیش‌فرض بازیابی شدند"
-        }
-    }
-
-    fun getContactsForVendor(vendorId: Long): kotlinx.coroutines.flow.Flow<List<com.example.data.model.ContactPerson>> =
-        repository.getContactsByVendor(vendorId)
-
-    fun saveContact(contact: com.example.data.model.ContactPerson) {
-        viewModelScope.launch {
-            repository.saveContact(contact)
-            userNotice.value = "اطلاعات پرسنل با موفقیت ثبت شد"
-        }
-    }
-
-    fun deleteContact(contactId: Long) {
-        viewModelScope.launch {
-            repository.deleteContact(contactId)
-            userNotice.value = "پرسنل حذف شد"
         }
     }
 

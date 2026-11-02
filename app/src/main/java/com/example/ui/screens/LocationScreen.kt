@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.LocationOn
@@ -47,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.ui.components.AppHeader
+import com.example.ui.components.InteractiveMapPicker
 import com.example.ui.components.openMap
 import com.example.ui.theme.BlueAccent
 import com.example.ui.theme.NavyDeep
@@ -87,82 +90,19 @@ fun LocationScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Map Visual Representation Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EEF4)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    // Stylized map background with grid lines
-                    Image(
-                        painter = painterResource(id = R.drawable.industrial_hero_banner),
-                        contentDescription = "Map preview",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                        alpha = 0.35f
-                    )
+            // Interactive Map Canvas
+            InteractiveMapPicker(
+                latitude = vendor.latitude,
+                longitude = vendor.longitude,
+                onLocationChange = { _, _, _, _ -> },
+                vendorTitle = vendor.name
+            )
 
-                    // Pin in center
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(RedFavorite),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(NavyDeep.copy(alpha = 0.85f))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = vendor.name,
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    // Coordinates badge
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(12.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(NavyDeep.copy(alpha = 0.75f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "${PersianUtils.toPersianDigits(vendor.latitude)}, ${PersianUtils.toPersianDigits(vendor.longitude)}",
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                }
-            }
-
-            // Company Address Details Card
+            // Address Details Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -172,79 +112,100 @@ fun LocationScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "آدرس رسمی شرکت",
+                        text = "آدرس کارخانه و دفتر مرکزی",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+
                     Text(
-                        text = vendor.address.ifBlank { "آدرس در سامانه ثبت نشده است." },
+                        text = vendor.address.ifBlank { "آدرس دقیق در سیستم ثبت نشده است." },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "استان ${vendor.province}، شهر ${vendor.city}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "استان: ${vendor.province}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "شهر: ${vendor.city}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
 
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Direct Open Map Intent Button
                     Button(
-                        onClick = { openMap(context, vendor.address.ifBlank { "${vendor.latitude},${vendor.longitude}" }) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
+                        onClick = { openMap(context, vendor.latitude, vendor.longitude, vendor.name) },
+                        modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = TealPrimary,
                             contentColor = NavyDeep
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Directions,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "مسیریابی در نقشه (نشان / گوگل‌مپ)",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Directions,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "مسیریابی با برنامه‌های نقشه (نشان، بلد، گوگل)",
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
 
-            // Location Photos Section
-            Text(
-                text = "تصاویر محیط کارخانه و انبار",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(listOf(R.drawable.industrial_pump_system, R.drawable.industrial_hero_banner)) { drawableId ->
-                    Box(
-                        modifier = Modifier
-                            .size(width = 170.dp, height = 110.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(NavyDeep)
-                    ) {
-                        Image(
-                            painter = painterResource(id = drawableId),
-                            contentDescription = "Location photo",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+            // Quick Contact Bar for Location Visit
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "هماهنگی جهت مراجعه حضوری",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
                         )
+                        Text(
+                            text = "تلفن مستقیم: ${PersianUtils.toPersianDigits(vendor.phone.ifBlank { vendor.mobile })}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            val targetPhone = vendor.phone.ifBlank { vendor.mobile }
+                            com.example.ui.components.dialPhone(context, targetPhone)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = TealDark, contentColor = Color.White),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("تماس")
                     }
                 }
             }

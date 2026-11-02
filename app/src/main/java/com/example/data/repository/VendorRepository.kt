@@ -1,6 +1,7 @@
 package com.example.data.repository
 
 import com.example.data.local.AppDatabase
+import com.example.data.model.ActivityType
 import com.example.data.model.Category
 import com.example.data.model.ContactPerson
 import com.example.data.model.Product
@@ -18,6 +19,7 @@ class VendorRepository(private val database: AppDatabase) {
     private val categoryDao = database.categoryDao()
     private val productDao = database.productDao()
     private val contactPersonDao = database.contactPersonDao()
+    private val activityTypeDao = database.activityTypeDao()
 
     val allVendors: Flow<List<Vendor>> = vendorDao.getAllVendors()
     val favoriteVendors: Flow<List<Vendor>> = vendorDao.getFavoriteVendors()
@@ -25,6 +27,7 @@ class VendorRepository(private val database: AppDatabase) {
     val allCategories: Flow<List<Category>> = categoryDao.getAllCategories()
     val allProducts: Flow<List<Product>> = productDao.getAllProducts()
     val favoriteProducts: Flow<List<Product>> = productDao.getFavoriteProducts()
+    val allActivityTypes: Flow<List<ActivityType>> = activityTypeDao.getAllActivityTypes()
 
     val totalVendorsCount: Flow<Int> = vendorDao.getVendorCount()
     val totalFavoritesCount: Flow<Int> = vendorDao.getFavoriteCount()
@@ -45,6 +48,12 @@ class VendorRepository(private val database: AppDatabase) {
             categoryDao.insertCategories(SampleData.initialCategories)
             productDao.insertProducts(SampleData.initialProducts)
             contactPersonDao.insertContacts(SampleData.initialContacts)
+            activityTypeDao.insertActivityTypes(SampleData.initialActivityTypes)
+        } else {
+            val currentTypes = allActivityTypes.first()
+            if (currentTypes.isEmpty()) {
+                activityTypeDao.insertActivityTypes(SampleData.initialActivityTypes)
+            }
         }
     }
 
@@ -59,6 +68,11 @@ class VendorRepository(private val database: AppDatabase) {
 
     suspend fun deleteVendor(vendorId: Long) = withContext(Dispatchers.IO) {
         vendorDao.deleteVendorById(vendorId)
+        // Also delete associated contacts and products
+        val contacts = contactPersonDao.getContactsByVendor(vendorId).first()
+        contacts.forEach { contactPersonDao.deleteContactById(it.id) }
+        val products = productDao.getProductsByVendor(vendorId).first()
+        products.forEach { productDao.deleteProductById(it.id) }
     }
 
     suspend fun toggleVendorFavorite(vendorId: Long, currentFavorite: Boolean) = withContext(Dispatchers.IO) {
@@ -77,14 +91,21 @@ class VendorRepository(private val database: AppDatabase) {
         vendorDao.recordContact(vendorId, System.currentTimeMillis())
     }
 
-    suspend fun addProduct(product: Product): Long = withContext(Dispatchers.IO) {
-        productDao.insertProduct(product)
+    // Products CRUD
+    suspend fun saveProduct(product: Product): Long = withContext(Dispatchers.IO) {
+        if (product.id == 0L) {
+            productDao.insertProduct(product)
+        } else {
+            productDao.updateProduct(product)
+            product.id
+        }
     }
 
     suspend fun deleteProduct(productId: Long) = withContext(Dispatchers.IO) {
         productDao.deleteProductById(productId)
     }
 
+    // Contacts CRUD
     suspend fun saveContact(contact: ContactPerson): Long = withContext(Dispatchers.IO) {
         if (contact.id == 0L) {
             contactPersonDao.insertContact(contact)
@@ -98,8 +119,30 @@ class VendorRepository(private val database: AppDatabase) {
         contactPersonDao.deleteContactById(contactId)
     }
 
+    // Categories CRUD
     suspend fun addCategory(category: Category): Long = withContext(Dispatchers.IO) {
         categoryDao.insertCategory(category)
+    }
+
+    suspend fun updateCategory(category: Category) = withContext(Dispatchers.IO) {
+        categoryDao.updateCategory(category)
+    }
+
+    suspend fun deleteCategory(categoryId: Long) = withContext(Dispatchers.IO) {
+        categoryDao.deleteCategoryById(categoryId)
+    }
+
+    // Activity Types CRUD
+    suspend fun addActivityType(name: String): Long = withContext(Dispatchers.IO) {
+        activityTypeDao.insertActivityType(ActivityType(name = name.trim()))
+    }
+
+    suspend fun updateActivityType(activityType: ActivityType) = withContext(Dispatchers.IO) {
+        activityTypeDao.updateActivityType(activityType)
+    }
+
+    suspend fun deleteActivityType(activityTypeId: Long) = withContext(Dispatchers.IO) {
+        activityTypeDao.deleteActivityTypeById(activityTypeId)
     }
 
     suspend fun checkDuplicate(name: String): Boolean = withContext(Dispatchers.IO) {
@@ -124,5 +167,6 @@ class VendorRepository(private val database: AppDatabase) {
         categoryDao.insertCategories(SampleData.initialCategories)
         productDao.insertProducts(SampleData.initialProducts)
         contactPersonDao.insertContacts(SampleData.initialContacts)
+        activityTypeDao.insertActivityTypes(SampleData.initialActivityTypes)
     }
 }

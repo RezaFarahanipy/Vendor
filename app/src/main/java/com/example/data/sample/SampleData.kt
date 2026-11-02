@@ -1,10 +1,22 @@
 package com.example.data.sample
 
+import com.example.data.model.ActivityType
 import com.example.data.model.Category
+import com.example.data.model.ContactPerson
 import com.example.data.model.Product
 import com.example.data.model.Vendor
 
 object SampleData {
+
+    val initialActivityTypes = listOf(
+        ActivityType(id = 1, name = "تولیدکننده"),
+        ActivityType(id = 2, name = "واردکننده"),
+        ActivityType(id = 3, name = "بازرگانی"),
+        ActivityType(id = 4, name = "توزیع‌کننده مستقیم"),
+        ActivityType(id = 5, name = "خدمات فنی و مهندسی"),
+        ActivityType(id = 6, name = "پیمانکار صنعتی"),
+        ActivityType(id = 7, name = "نمایندگی رسمی")
+    )
 
     val initialCategories = listOf(
         Category(id = 1, name = "صنعتی", iconName = "precision_manufacturing", vendorCount = 345),
@@ -29,6 +41,7 @@ object SampleData {
             phone = "021-77654321",
             mobile = "0912-3456789",
             secondaryPhones = "021-77654322, 021-77654323",
+            additionalMobiles = "0935-1234567, 0910-8877665",
             email = "info@parspump.com",
             website = "www.parspump.com",
             province = "تهران",
@@ -46,6 +59,10 @@ object SampleData {
             categories = "صنعتی, استیل, صنایع غذایی, پمپ",
             tags = "تولید ملی, تضمین کیفیت, گارانتی ۳۶ ماهه, تأمین قطعات",
             notes = "قرارداد تأمین برای فاز اول پالایشگاه با تخفیف ۵ درصدی توافق شد.",
+            economicCode = "411354897621",
+            nationalId = "10103487920",
+            registrationNumber = "284910",
+            bankAccounts = "بانک ملت|123456789|IR450120000000001234567890|شعبه مرکزی صنعت;;بانک تجارت|987654321|IR880190000000009876543210|شعبه شمس‌آباد",
             lastContactDate = System.currentTimeMillis() - 3600000L * 4
         ),
         Vendor(
@@ -53,9 +70,11 @@ object SampleData {
             name = "آب‌پارس",
             ceoName = "دکتر علیرضا رضایی",
             description = "تأمین‌کننده تجهیزات انتقال سیالات، پمپ‌های شناور عمیق و لجن‌کش‌های تخصصی و ایستگاه‌های پمپاژ کشاورزی و صنعتی",
-            activityType = "تولید و تأمین",
+            activityType = "بازرگانی",
             phone = "031-36654120",
             mobile = "0913-2005544",
+            secondaryPhones = "031-36654121",
+            additionalMobiles = "0913-9876543",
             email = "sales@abpars.ir",
             website = "www.abpars.ir",
             province = "اصفهان",
@@ -73,6 +92,10 @@ object SampleData {
             categories = "صنعتی, استیل, خدمات پس از فروش, پمپ",
             tags = "پمپ شناور, تحویل فوری, تست هیدرولیک",
             notes = "استعلام قیمت پروژه‌های آبرسانی کویری ارسال شد.",
+            economicCode = "411987654321",
+            nationalId = "10260458921",
+            registrationNumber = "43120",
+            bankAccounts = "بانک صادرات|332211009|IR770190000000003322110090|شعبه محمودآباد اصفهان",
             lastContactDate = System.currentTimeMillis() - 3600000L * 24
         ),
         Vendor(
@@ -80,9 +103,11 @@ object SampleData {
             name = "فناوران تجهیز",
             ceoName = "مهندس کاظمی",
             description = "مرکز تخصصی تجهیزات صنعتی و ابزار دقیق، فلومتر، ترانسمیترهای فشار، شیرهای پنوماتیک و شیرآلات استیل ضد اسید",
-            activityType = "واردکننده و تأمین‌کننده",
+            activityType = "واردکننده",
             phone = "051-38401122",
             mobile = "0915-1102233",
+            secondaryPhones = "051-38401123",
+            additionalMobiles = "0915-9988776",
             email = "info@fanavarantajhiz.com",
             website = "www.fanavarantajhiz.com",
             province = "خراسان رضوی",
@@ -100,6 +125,10 @@ object SampleData {
             categories = "برق و الکترونیک, ابزار دقیق, صنعتی",
             tags = "تضمین اصالت کالا, کالیبراسیون رسمی, تحویل مشهد و تهران",
             notes = "بررسی سوابق کنترل کیفیت قطعات الکترونیکی انجام شد.",
+            economicCode = "411543219876",
+            nationalId = "10380291823",
+            registrationNumber = "65430",
+            bankAccounts = "بانک سامان|554433221|IR320560000000005544332210|شعبه سناباد مشهد",
             lastContactDate = System.currentTimeMillis() - 3600000L * 48
         ),
         Vendor(
@@ -110,6 +139,8 @@ object SampleData {
             activityType = "توزیع‌کننده مستقیم",
             phone = "071-37258900",
             mobile = "0917-3104567",
+            secondaryPhones = "071-37258901",
+            additionalMobiles = "0917-8877665",
             email = "omid.tajhiz@gmail.com",
             website = "www.omidtayhiz.ir",
             province = "فارس",
@@ -127,6 +158,10 @@ object SampleData {
             categories = "صنعتی, شیرآلات, اتصالات صنعتی",
             tags = "کلاس ۶۰۰, تست فشار, ارسال به تمام کشور",
             notes = "آمادگی ارسال نمونه شیر پروانه‌ای به انبار مرکزی.",
+            economicCode = "411765432189",
+            nationalId = "10530182741",
+            registrationNumber = "12984",
+            bankAccounts = "بانک ملی|0102030405006|IR120170000000102030405006|شعبه شهرک صنعتی شیراز",
             lastContactDate = System.currentTimeMillis() - 3600000L * 72
         ),
         Vendor(
@@ -134,9 +169,11 @@ object SampleData {
             name = "فولاد صنعت گستر",
             ceoName = "مهندس سهرابی",
             description = "بزرگترین بنگاه پخش ورق‌های استنلس استیل ۳۰۴ و ۳۱۶، میلگرد، پروفیل‌های صنعتی و لوله‌های بدون درز مانیسمان",
-            activityType = "تأمین‌کننده مواد اولیه",
+            activityType = "بازرگانی",
             phone = "021-66391000",
             mobile = "0912-8877665",
+            secondaryPhones = "021-66391001",
+            additionalMobiles = "0912-1122334",
             email = "contact@fooladgostar.ir",
             website = "www.fooladgostar.ir",
             province = "تهران",
@@ -154,6 +191,10 @@ object SampleData {
             categories = "صنعتی, مواد اولیه, آهن‌آلات",
             tags = "استیل ۳۱۶, ورق مانیسمان, سرتیفیکیت کارخانه",
             notes = "",
+            economicCode = "411876543210",
+            nationalId = "10109988776",
+            registrationNumber = "39201",
+            bankAccounts = "بانک پاسارگاد|2109876543|IR550570000000002109876543|شعبه بازار آهن شادآباد",
             lastContactDate = null
         ),
         Vendor(
@@ -164,6 +205,8 @@ object SampleData {
             activityType = "تولیدکننده",
             phone = "026-34709811",
             mobile = "0912-4455667",
+            secondaryPhones = "026-34709812",
+            additionalMobiles = "0912-7788990",
             email = "sales@aryapolymer.com",
             website = "www.aryapolymer.com",
             province = "البرز",
@@ -178,9 +221,13 @@ object SampleData {
             isFavorite = false,
             rating = 4.5f,
             reviewCount = 23,
-            categories = "مواد شیمیایی, ساختمان و عمرانی",
-            tags = "رزین اپوکسی, افزودنی بتن, گواهی استاندارد ملی",
-            notes = "",
+            categories = "مواد شیمیایی, ساختمان و عمرانی, چسب صنعتی",
+            tags = "اپوکسی, استاندارد ASTM, فروش عمده",
+            notes = "آمادگی شرکت در مناقصه شهرداری کرج.",
+            economicCode = "411654321098",
+            nationalId = "10320147852",
+            registrationNumber = "19402",
+            bankAccounts = "بانک رفاه|908070605|IR190130000000009080706050|شعبه بهارستان کرج",
             lastContactDate = null
         )
     )
@@ -192,9 +239,9 @@ object SampleData {
             name = "پمپ سانتریفیوژ استیل مدل TP-100",
             brand = "پارس پمپ",
             model = "TP-100",
-            technicalCode = "PMP-TP-100-SS",
-            specifications = "دبی: ۵۰ مترمکعب/ساعت | هد: ۴۵ متر | توان: ۵.۵ کیلووات | متریال پروانه: استیل ۳۱۶ | ولتاژ: ۳۸۰ ولت ۳ فاز",
-            description = "مناسب برای خطوط فرآوری لبنیات، صنایع دارویی و انتقال مواد شیمیایی غیرساینده. مجهز به مکانیکال سیل دوبل کارباید.",
+            technicalCode = "PP-TP100-SS316",
+            specifications = "دبی: ۱۲۰ مترمکعب در ساعت | هد: ۶۵ متر | جنس پروانه: استیل ۳۱۶ ضد اسید | توان الکتروموتور: ۱۸.۵ کیلووات",
+            description = "پمپ گریز از مرکز تمام استیل تک پروانه با آب‌بندی مکانیکال سیل دوبل جهت انتقال سیالات خورنده در صنایع شیمیایی و نفت.",
             category = "پمپ‌های سانتریفیوژ",
             imageDrawable = "industrial_pump_system",
             catalogPdfUrl = "https://example.com/specs/tp100.pdf",
@@ -203,15 +250,15 @@ object SampleData {
         Product(
             id = 2,
             vendorId = 1,
-            name = "پمپ عمودی استیل مدل VEP-300",
+            name = "پمپ عمودی استیل چندطبقه مدل MLV-300",
             brand = "پارس پمپ",
-            model = "VEP-300",
-            technicalCode = "PMP-VEP-300",
-            specifications = "دبی: ۱۲۰ مترمکعب/ساعت | هد: ۹۰ متر | توان: ۱۱ کیلووات | فشار کاری: ۱۶ بار | اتصالات: فلنجی PN16",
-            description = "طراحی چندطبقه عمودی با اشغال فضای حداقلی در موتورخانه. مناسب برای بوسترپمپ‌های آبرسانی برج‌ها و خنک‌کننده‌های صنعتی.",
+            model = "MLV-300",
+            technicalCode = "PP-MLV300-SS",
+            specifications = "تعداد طبقات: ۸ طبقه | هد حداکثر: ۱۸۰ متر | ورودی/خروجی: فلنجی استاندارد DIN | دمای کاری: تا ۱۲۰ درجه",
+            description = "پمپ سانتریفیوژ فشار قوی عمودی این‌لاین مناسب بوسترهای آبرسانی ساختمانی، دیگ‌های بخار و سیستم‌های RO تصفیه آب صنعتی.",
             category = "پمپ‌های عمودی",
             imageDrawable = "industrial_pump_system",
-            catalogPdfUrl = "https://example.com/specs/vep300.pdf",
+            catalogPdfUrl = "https://example.com/specs/mlv300.pdf",
             isFavorite = true
         ),
         Product(
@@ -220,9 +267,9 @@ object SampleData {
             name = "پمپ دنده‌ای استیل مدل GP-50",
             brand = "پارس پمپ",
             model = "GP-50",
-            technicalCode = "PMP-GP-50",
-            specifications = "دبی: ۲۰ لیتر/دقیقه | فشار: ۶ بار | دور موتور: ۹۰۰ دور | قابلیت پمپاژ سیالات غلیظ تا ویسکوزیته ۱۰۰۰۰ cP",
-            description = "مخصوص انتقال عسل، روغن‌های خوراکی، پلیمرهای چسبناک، صابون مایع و مایعات غلیظ صنعتی بدون کف‌کردگی.",
+            technicalCode = "PP-GP50-SS",
+            specifications = "ویسکوزیته کاری: تا ۵۰۰۰ سانتی‌پوئز | فشار خروجی: ۱۰ بار | دبی: ۸ مترمکعب بر ساعت",
+            description = "پمپ جابجایی مثبت دنده داخلی مناسب انتقال روغن‌های داغ صنعتی، چسب، شکلات و مواد دارویی با جریان یکنواخت و بدون ضربه.",
             category = "پمپ‌های دنده‌ای",
             imageDrawable = "industrial_pump_system",
             catalogPdfUrl = "https://example.com/specs/gp50.pdf",
@@ -231,12 +278,12 @@ object SampleData {
         Product(
             id = 4,
             vendorId = 1,
-            name = "پمپ طبقاتی استیل مدل MLV-200",
+            name = "پمپ طبقاتی استیل افقی مدل VEP-200",
             brand = "پارس پمپ",
-            model = "MLV-200",
-            technicalCode = "PMP-MLV-200",
-            specifications = "دبی: ۳۵ مترمکعب/ساعت | هد: ۱۶۰ متر | توان: ۱۵ کیلووات | استیل تمام ۳۰۴ و ۳۱۶ ضد سایش",
-            description = "سیستم پمپاژ اسمز معکوس (RO) و تغذیه دیگ‌های بخار با راندمان هیدرولیکی بیش از ۷۸ درصد و مصرف انرژی رده A.",
+            model = "VEP-200",
+            technicalCode = "PP-VEP200-SS",
+            specifications = "هد: ۱۱۰ متر | دبی: ۴۵ مترمکعب | کلاس حرارتی الکتروموتور: F | بدنه: استیل مقاوم ۳۰۴",
+            description = "طراحی فشرده و کم‌صدا با راندمان هیدرولیکی عالی مخصوص سیستم‌های خنک‌کننده چیلرها و شستشوی صنعتی با فشار بالا.",
             category = "پمپ‌های طبقاتی",
             imageDrawable = "industrial_pump_system",
             catalogPdfUrl = "https://example.com/specs/mlv200.pdf",
@@ -273,7 +320,7 @@ object SampleData {
     )
 
     val initialContacts = listOf(
-        com.example.data.model.ContactPerson(
+        ContactPerson(
             id = 1,
             vendorId = 1,
             name = "مجید محمودی",
@@ -283,7 +330,7 @@ object SampleData {
             extension = "101",
             email = "m.mahmoudi@parspump.com"
         ),
-        com.example.data.model.ContactPerson(
+        ContactPerson(
             id = 2,
             vendorId = 1,
             name = "مهندس احمدی",
@@ -293,7 +340,7 @@ object SampleData {
             extension = "105",
             email = "sales@parspump.com"
         ),
-        com.example.data.model.ContactPerson(
+        ContactPerson(
             id = 3,
             vendorId = 2,
             name = "علیرضا رضایی",
