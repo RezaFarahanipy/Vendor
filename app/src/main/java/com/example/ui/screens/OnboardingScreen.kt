@@ -100,7 +100,7 @@ fun OnboardingScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "وندورلیست",
+                    text = "وندوریاب",
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White

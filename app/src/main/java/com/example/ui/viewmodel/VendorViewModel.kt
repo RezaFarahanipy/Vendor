@@ -289,6 +289,27 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun getContactsForVendor(vendorId: Long): kotlinx.coroutines.flow.Flow<List<com.example.data.model.ContactPerson>> =
+        repository.getContactsByVendor(vendorId)
+
+    fun saveContact(contact: com.example.data.model.ContactPerson) {
+        viewModelScope.launch {
+            repository.saveContact(contact)
+            userNotice.value = "اطلاعات پرسنل با موفقیت ثبت شد"
+        }
+    }
+
+    fun deleteContact(contactId: Long) {
+        viewModelScope.launch {
+            repository.deleteContact(contactId)
+            userNotice.value = "پرسنل حذف شد"
+        }
+    }
+
+    fun toggleDarkMode() {
+        isDarkMode.value = !isDarkMode.value
+    }
+
     fun clearNotice() {
         userNotice.value = null
     }

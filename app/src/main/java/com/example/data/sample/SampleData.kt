@@ -271,4 +271,37 @@ object SampleData {
             isFavorite = false
         )
     )
+
+    val initialContacts = listOf(
+        com.example.data.model.ContactPerson(
+            id = 1,
+            vendorId = 1,
+            name = "مجید محمودی",
+            role = "مدیر عامل",
+            mobile = "09123456789",
+            phone = "021-77654321",
+            extension = "101",
+            email = "m.mahmoudi@parspump.com"
+        ),
+        com.example.data.model.ContactPerson(
+            id = 2,
+            vendorId = 1,
+            name = "مهندس احمدی",
+            role = "مدیر فروش و بازرگانی",
+            mobile = "09129876543",
+            phone = "021-77654322",
+            extension = "105",
+            email = "sales@parspump.com"
+        ),
+        com.example.data.model.ContactPerson(
+            id = 3,
+            vendorId = 2,
+            name = "علیرضا رضایی",
+            role = "مدیر عامل",
+            mobile = "09132005544",
+            phone = "031-36654120",
+            extension = "102",
+            email = "rezaei@abpars.ir"
+        )
+    )
 }

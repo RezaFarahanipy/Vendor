@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ui.components.AppHeader
+import com.example.ui.components.ProductItemRow
 import com.example.ui.components.VendorCard
 import com.example.ui.theme.NavyDeep
 import com.example.ui.theme.TealPrimary

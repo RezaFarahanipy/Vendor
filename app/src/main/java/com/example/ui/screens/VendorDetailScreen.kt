@@ -1,6 +1,8 @@
 package com.example.ui.screens
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,24 +29,30 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.NoteAlt
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -53,8 +61,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -79,9 +87,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.example.data.model.ContactPerson
 import com.example.data.model.Product
 import com.example.data.model.Vendor
 import com.example.ui.components.DirectContactActionsRow
+import com.example.ui.components.ProductItemRow
 import com.example.ui.components.dialPhone
 import com.example.ui.components.openMap
 import com.example.ui.components.openWebsite
@@ -97,6 +107,7 @@ import com.example.ui.theme.TealDark
 import com.example.ui.theme.TealLight
 import com.example.ui.theme.TealPrimary
 import com.example.ui.viewmodel.VendorViewModel
+import com.example.util.MessengerUtils
 import com.example.util.PersianUtils
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -120,12 +131,15 @@ fun VendorDetailScreen(
         return
     }
 
+    val contactsFlow = remember(vendor.id) { viewModel.getContactsForVendor(vendor.id) }
+    val contacts by contactsFlow.collectAsState(initial = emptyList())
     val vendorProducts = allProducts.filter { it.vendorId == vendor.id }
 
     var showInquiryDialog by remember { mutableStateOf(false) }
     var showNotesDialog by remember { mutableStateOf(false) }
     var notesText by remember(vendor.notes) { mutableStateOf(vendor.notes) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showAddContactDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier
@@ -352,7 +366,7 @@ fun VendorDetailScreen(
             }
         }
 
-        // Direct Actions Row (تماس, پیام, وبسایت, مسیریابی)
+        // Direct Actions & Instant Messenger shortcuts on Vendor Home
         item {
             Card(
                 modifier = Modifier
@@ -362,14 +376,125 @@ fun VendorDetailScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
-                DirectContactActionsRow(
-                    phone = vendor.phone,
-                    mobile = vendor.mobile,
-                    email = vendor.email,
-                    website = vendor.website,
-                    address = vendor.address,
-                    modifier = Modifier.padding(vertical = 10.dp)
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                ) {
+                    DirectContactActionsRow(
+                        phone = vendor.phone,
+                        mobile = vendor.mobile,
+                        email = vendor.email,
+                        website = vendor.website,
+                        address = vendor.address
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "ارسال پیام در پیام‌رسان‌ها:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    val activePhone = vendor.mobile.ifBlank { vendor.phone }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        MessengerTile(label = "واتس‌اپ", color = Color(0xFF25D366)) {
+                            MessengerUtils.openWhatsApp(context, activePhone, "سلام، از طریق اپلیکیشن وندوریاب با شما تماس می‌گیرم.")
+                        }
+                        MessengerTile(label = "تلگرام", color = Color(0xFF229ED9)) {
+                            MessengerUtils.openTelegram(context, activePhone)
+                        }
+                        MessengerTile(label = "بله", color = Color(0xFF1E88E5)) {
+                            MessengerUtils.openBale(context, activePhone)
+                        }
+                        MessengerTile(label = "روبیکا", color = Color(0xFFE91E63)) {
+                            MessengerUtils.openRubika(context, activePhone)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Personnel Management Section (مدیران و پرسنل شرکت)
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .animateContentSize(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.People,
+                                contentDescription = null,
+                                tint = TealPrimary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "پرسنل و مدیران شرکت",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        Button(
+                            onClick = { showAddContactDialog = true },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.height(34.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("افزودن پرسنل", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    if (contacts.isEmpty()) {
+                        Text(
+                            text = "هنوز پرسنلی برای این شرکت ثبت نشده است. روی افزودن پرسنل بزنید.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        contacts.forEach { contact ->
+                            PersonnelCardItem(
+                                contact = contact,
+                                onDelete = { viewModel.deleteContact(contact.id) }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
             }
         }
 
@@ -389,7 +514,7 @@ fun VendorDetailScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "اطلاعات تماس و آدرس",
+                        text = "اطلاعات تماس و نشانی کارخانه",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -441,7 +566,7 @@ fun VendorDetailScreen(
             }
         }
 
-        // Primary Action: Request Quote / Inquiry
+        // Request Quote CTA
         item {
             Box(
                 modifier = Modifier
@@ -469,55 +594,88 @@ fun VendorDetailScreen(
             }
         }
 
-        // Full PDF Catalog Card
+        // Full PDF Catalog Card (با قابلیت آپلود و دانلود)
         item {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .clickable {
-                        Toast.makeText(context, "کاتالوگ آماده مشاهده است", Toast.LENGTH_SHORT).show()
-                    },
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
                 )
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(16.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(46.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(RedFavorite),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.PictureAsPdf,
-                            contentDescription = "PDF",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(RedFavorite),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PictureAsPdf,
+                                contentDescription = "PDF",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = vendor.catalogTitle,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "شامل مشخصات فنی، نقشه‌های ابعادی و استانداردها",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = vendor.catalogTitle,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "شامل مشخصات فنی، نقشه‌های ابعادی و استانداردها",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                Toast.makeText(context, "دانلود کاتالوگ ${vendor.name} با موفقیت آغاز شد", Toast.LENGTH_LONG).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("دانلود کاتالوگ")
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                Toast.makeText(context, "فایل کاتالوگ جدید آماده الصاق به وندور شد", Toast.LENGTH_SHORT).show()
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("آپلود کاتالوگ")
+                        }
                     }
                 }
             }
@@ -568,7 +726,7 @@ fun VendorDetailScreen(
             }
         }
 
-        // Internal Private Notes Card
+        // Internal Notes Section
         item {
             Card(
                 modifier = Modifier
@@ -615,7 +773,7 @@ fun VendorDetailScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = if (vendor.notes.isNotBlank()) vendor.notes else "هیچ یادداشتی ثبت نشده است. برای درج شرایط توافق یا تخفیف‌ها روی آیکون ویرایش بزنید.",
+                        text = if (vendor.notes.isNotBlank()) vendor.notes else "هیچ یادداشتی ثبت نشده است.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -623,7 +781,7 @@ fun VendorDetailScreen(
             }
         }
 
-        // Delete Vendor button
+        // Delete Vendor
         item {
             Box(
                 modifier = Modifier
@@ -649,6 +807,105 @@ fun VendorDetailScreen(
         item {
             Spacer(modifier = Modifier.height(60.dp))
         }
+    }
+
+    // Add Personnel Dialog
+    if (showAddContactDialog) {
+        var pName by remember { mutableStateOf("") }
+        var pRole by remember { mutableStateOf("مدیر عامل") }
+        var pMobile by remember { mutableStateOf("") }
+        var pPhone by remember { mutableStateOf("") }
+        var pExt by remember { mutableStateOf("") }
+        var pEmail by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { showAddContactDialog = false },
+            title = { Text("افزودن شخص تماس / پرسنل", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = pName,
+                        onValueChange = { pName = it },
+                        label = { Text("نام و نام خانوادگی (مثلاً مجید محمودی) *") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = pRole,
+                        onValueChange = { pRole = it },
+                        label = { Text("سمت سازمانی (مدیرعامل، بازرگانی، فروش)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = pMobile,
+                        onValueChange = { pMobile = it },
+                        label = { Text("شماره همراه (جهت واتس‌اپ، بله، روبیکا)") },
+                        placeholder = { Text("09123456789") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = pPhone,
+                            onValueChange = { pPhone = it },
+                            label = { Text("تلفن مستقیم") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1.5f)
+                        )
+                        OutlinedTextField(
+                            value = pExt,
+                            onValueChange = { pExt = it },
+                            label = { Text("داخلی") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    OutlinedTextField(
+                        value = pEmail,
+                        onValueChange = { pEmail = it },
+                        label = { Text("ایمیل پرسنل") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (pName.isBlank()) {
+                            Toast.makeText(context, "نام پرسنل الزامی است", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        val newContact = ContactPerson(
+                            vendorId = vendor.id,
+                            name = pName.trim(),
+                            role = pRole.trim(),
+                            mobile = pMobile.trim(),
+                            phone = pPhone.trim(),
+                            extension = pExt.trim(),
+                            email = pEmail.trim()
+                        )
+                        viewModel.saveContact(newContact)
+                        showAddContactDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                ) {
+                    Text("ذخیره پرسنل", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddContactDialog = false }) {
+                    Text("انصراف")
+                }
+            }
+        )
     }
 
     // Inquiry Dialog
@@ -738,7 +995,7 @@ fun VendorDetailScreen(
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text("حذف وندور", fontWeight = FontWeight.Bold) },
-            text = { Text("آیا از حذف شرکت «${vendor.name}» اطمینان دارید؟ این عمل غیرقابل بازگشت است.") },
+            text = { Text("آیا از حذف شرکت «${vendor.name}» اطمینان دارید؟") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -755,6 +1012,196 @@ fun VendorDetailScreen(
                     Text("انصراف")
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun PersonnelCardItem(
+    contact: ContactPerson,
+    onDelete: () -> Unit
+) {
+    val context = LocalContext.current
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+        border = CardDefaults.outlinedCardBorder().copy(brush = Brush.linearGradient(listOf(TealDark.copy(alpha = 0.3f), TealDark.copy(alpha = 0.1f))))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(TealPrimary.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = TealPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = contact.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = contact.role,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(30.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "حذف پرسنل",
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Details line
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (contact.mobile.isNotBlank()) {
+                    Text(
+                        text = "همراه: ${PersianUtils.toPersianDigits(contact.mobile)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (contact.phone.isNotBlank()) {
+                    Text(
+                        text = "تلفن: ${PersianUtils.toPersianDigits(contact.phone)}" + if (contact.extension.isNotBlank()) " (داخلی ${PersianUtils.toPersianDigits(contact.extension)})" else "",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Communication buttons for this personnel
+            val number = contact.mobile.ifBlank { contact.phone }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                PersonnelActionButton(label = "تماس", icon = Icons.Default.Call, tint = TealPrimary) {
+                    dialPhone(context, number)
+                }
+                PersonnelActionButton(label = "پیامک", icon = Icons.Default.Message, tint = BlueAccent) {
+                    sendSms(context, number)
+                }
+                PersonnelActionButton(label = "واتس‌اپ", icon = Icons.Default.Send, tint = Color(0xFF25D366)) {
+                    MessengerUtils.openWhatsApp(context, number)
+                }
+                PersonnelActionButton(label = "تلگرام", icon = Icons.Default.Send, tint = Color(0xFF229ED9)) {
+                    MessengerUtils.openTelegram(context, number)
+                }
+                PersonnelActionButton(label = "بله", icon = Icons.Default.Send, tint = Color(0xFF1E88E5)) {
+                    MessengerUtils.openBale(context, number)
+                }
+                PersonnelActionButton(label = "روبیکا", icon = Icons.Default.Send, tint = Color(0xFFE91E63)) {
+                    MessengerUtils.openRubika(context, number)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PersonnelActionButton(
+    label: String,
+    icon: ImageVector,
+    tint: Color,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .clip(CircleShape)
+                .background(tint.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = tint,
+                modifier = Modifier.size(15.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 9.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun MessengerTile(
+    label: String,
+    color: Color,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(color.copy(alpha = 0.12f))
+            .clickable { onClick() }
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = color
         )
     }
 }
@@ -801,73 +1248,6 @@ private fun ContactDetailRow(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-        }
-    }
-}
-
-@Composable
-fun ProductItemRow(
-    product: Product,
-    onFavoriteClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(NavyDeep)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.industrial_pump_system),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = product.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "مدل: ${product.model} | ${product.brand}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = product.specifications,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            IconButton(onClick = onFavoriteClick) {
-                Icon(
-                    imageVector = if (product.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = "علاقه‌مندی",
-                    tint = if (product.isFavorite) RedFavorite else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
     }
 }

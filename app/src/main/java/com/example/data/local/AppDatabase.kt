@@ -16,13 +16,14 @@ import com.example.data.model.Vendor
         Product::class,
         ContactPerson::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun vendorDao(): VendorDao
     abstract fun categoryDao(): CategoryDao
     abstract fun productDao(): ProductDao
+    abstract fun contactPersonDao(): ContactPersonDao
 
     companion object {
         @Volatile
@@ -35,7 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "vendorlist_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                 INSTANCE = instance
                 instance

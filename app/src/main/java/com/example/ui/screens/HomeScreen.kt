@@ -1,5 +1,12 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,7 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +35,8 @@ import androidx.compose.material.icons.filled.Apartment
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PrecisionManufacturing
 import androidx.compose.material.icons.filled.Restaurant
@@ -43,8 +51,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -54,9 +60,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -66,7 +72,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.model.Category
-import com.example.data.model.Vendor
 import com.example.ui.components.StatCard
 import com.example.ui.components.VendorCard
 import com.example.ui.theme.AmberRating
@@ -89,6 +94,7 @@ fun HomeScreen(
     val stats by viewModel.stats.collectAsState()
     val allVendors by viewModel.allVendors.collectAsState()
     val categories by viewModel.allCategories.collectAsState()
+    val isDark by viewModel.isDarkMode.collectAsState()
 
     Scaffold(
         floatingActionButton = {
@@ -97,7 +103,9 @@ fun HomeScreen(
                 containerColor = TealPrimary,
                 contentColor = NavyDeep,
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.testTag("add_vendor_fab")
+                modifier = Modifier
+                    .testTag("add_vendor_fab")
+                    .animateContentSize(spring(dampingRatio = Spring.DampingRatioMediumBouncy))
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -120,12 +128,16 @@ fun HomeScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .animateContentSize(),
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
-            // Header Profile Bar
+            // Header Bar with Branding & Theme Switcher
             item {
-                HomeHeaderBar()
+                HomeHeaderBar(
+                    isDark = isDark,
+                    onToggleTheme = { viewModel.toggleDarkMode() }
+                )
             }
 
             // Search Bar Card
@@ -138,7 +150,7 @@ fun HomeScreen(
                 )
             }
 
-            // 3 Stat Cards (Recent Contacts, Total Vendors, Favorites)
+            // 3 Stat Cards
             item {
                 Row(
                     modifier = Modifier
@@ -152,9 +164,7 @@ fun HomeScreen(
                         value = if (stats.recentContacts > 0) stats.recentContacts.toString() else "۴۵",
                         icon = Icons.Default.Call,
                         iconTint = TealPrimary,
-                        onClick = {
-                            viewModel.currentTab.value = MainTab.SEARCH
-                        }
+                        onClick = { viewModel.currentTab.value = MainTab.SEARCH }
                     )
                     StatCard(
                         modifier = Modifier.weight(1f),
@@ -173,9 +183,7 @@ fun HomeScreen(
                         value = if (stats.totalFavorites > 0) stats.totalFavorites.toString() else "۲۸",
                         icon = Icons.Default.Star,
                         iconTint = AmberRating,
-                        onClick = {
-                            viewModel.currentTab.value = MainTab.FAVORITES
-                        }
+                        onClick = { viewModel.currentTab.value = MainTab.FAVORITES }
                     )
                 }
             }
@@ -199,9 +207,7 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         TextButton(
-                            onClick = {
-                                viewModel.currentTab.value = MainTab.SEARCH
-                            }
+                            onClick = { viewModel.currentTab.value = MainTab.SEARCH }
                         ) {
                             Text(
                                 text = "مشاهده همه",
@@ -213,7 +219,6 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // 6 Categories in 2 rows of 3 columns
                     val displayCategories = if (categories.isNotEmpty()) categories.take(6) else defaultCategories()
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -253,7 +258,7 @@ fun HomeScreen(
                 }
             }
 
-            // Industrial Banner Promo Card
+            // Promo Banner
             item {
                 Box(
                     modifier = Modifier
@@ -261,9 +266,7 @@ fun HomeScreen(
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                         .height(130.dp)
                         .clip(RoundedCornerShape(20.dp))
-                        .clickable {
-                            viewModel.currentTab.value = MainTab.SEARCH
-                        }
+                        .clickable { viewModel.currentTab.value = MainTab.SEARCH }
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.industrial_hero_banner),
@@ -277,8 +280,8 @@ fun HomeScreen(
                             .background(
                                 Brush.horizontalGradient(
                                     listOf(
-                                        NavyDeep.copy(alpha = 0.85f),
-                                        NavyDeep.copy(alpha = 0.4f),
+                                        NavyDeep.copy(alpha = 0.88f),
+                                        NavyDeep.copy(alpha = 0.45f),
                                         Color.Transparent
                                     )
                                 )
@@ -291,13 +294,13 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "تأمین‌کنندگان معتبر",
+                            text = "تأمین‌کنندگان معتبر صنعتی",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = "در کنار کسب‌وکار شما",
+                            text = "استعلام قیمت مستقیم و بدون واسطه",
                             style = MaterialTheme.typography.bodySmall,
                             color = TealLight
                         )
@@ -306,7 +309,7 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
-                                .background(TealPrimary.copy(alpha = 0.9f))
+                                .background(TealPrimary)
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
@@ -317,7 +320,7 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack, // Left arrow for Persian RTL
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = null,
                                 tint = NavyDeep,
                                 modifier = Modifier.size(14.dp)
@@ -350,8 +353,12 @@ fun HomeScreen(
                 }
             }
 
-            items(allVendors.take(5)) { vendor ->
-                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+            items(allVendors.take(5), key = { it.id }) { vendor ->
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .animateContentSize()
+                ) {
                     VendorCard(
                         vendor = vendor,
                         onClick = { onVendorClick(vendor.id) },
@@ -364,78 +371,98 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeHeaderBar() {
+private fun HomeHeaderBar(
+    isDark: Boolean,
+    onToggleTheme: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // User Profile info (Right side in RTL)
+        // App Identity (Clean Branding - no personal user name)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
                     .size(46.dp)
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(14.dp))
                     .background(
-                        Brush.linearGradient(
-                            listOf(Color(0xFF0F3A5D), TealDark)
-                        )
+                        Brush.linearGradient(listOf(NavyDeep, TealDark))
                     )
-                    .border(1.5.dp, TealPrimary, CircleShape),
+                    .border(1.5.dp, TealPrimary, RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "ع‌ر",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                Image(
+                    painter = painterResource(id = R.drawable.vendor_app_icon),
+                    contentDescription = "وندوریاب",
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(
-                    text = "علی رضایی",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "وندوریاب",
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "مدیر خرید و تدارکات",
+                    text = "سامانه جامع تأمین‌کنندگان صنعتی",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        // Notification Bell (Left side in RTL)
-        IconButton(
-            onClick = {},
-            modifier = Modifier.size(42.dp)
-        ) {
-            BadgedBox(
-                badge = {
-                    Badge(
-                        containerColor = RedFavorite,
-                        modifier = Modifier.size(8.dp)
-                    )
-                }
+        // Action Buttons: Theme Toggle & Notification
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Theme Switcher Button with smooth animation
+            IconButton(
+                onClick = onToggleTheme,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "اعلان‌ها",
-                    tint = MaterialTheme.colorScheme.onSurface
+                    imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                    contentDescription = "تغییر تم",
+                    tint = if (isDark) AmberRating else TealDark,
+                    modifier = Modifier.size(22.dp)
                 )
+            }
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            IconButton(
+                onClick = {},
+                modifier = Modifier.size(40.dp)
+            ) {
+                BadgedBox(
+                    badge = {
+                        Badge(
+                            containerColor = RedFavorite,
+                            modifier = Modifier.size(8.dp)
+                        )
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "اعلان‌ها",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun HomeSearchBar(
-    onSearchSubmit: (String) -> Unit
-) {
+private fun HomeSearchBar(onSearchSubmit: (String) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -467,7 +494,7 @@ private fun HomeSearchBar(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "جستجوی نام شرکت، محصول، فعالیت ...",
+                text = "جستجوی وندور، محصول، نوع فعالیت، شهر...",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f)
@@ -485,7 +512,8 @@ private fun HomeCategoryTile(
     Card(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .clickable { onClick() },
+            .clickable { onClick() }
+            .animateContentSize(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {

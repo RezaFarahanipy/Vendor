@@ -1,6 +1,8 @@
 package com.example.ui.screens
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,7 +31,10 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContactPhone
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -49,6 +54,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,11 +63,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Vendor
@@ -107,6 +113,8 @@ fun AddEditVendorScreen(
     var province by remember(editingVendor) { mutableStateOf(editingVendor?.province ?: "تهران") }
     var city by remember(editingVendor) { mutableStateOf(editingVendor?.city ?: "تهران") }
     var address by remember(editingVendor) { mutableStateOf(editingVendor?.address ?: "") }
+    var latitude by remember(editingVendor) { mutableDoubleStateOf(editingVendor?.latitude ?: 35.73576) }
+    var longitude by remember(editingVendor) { mutableDoubleStateOf(editingVendor?.longitude ?: 51.44678) }
 
     var catalogTitle by remember(editingVendor) {
         mutableStateOf(editingVendor?.catalogTitle ?: "کاتالوگ جامع محصولات و مشخصات فنی")
@@ -115,10 +123,19 @@ fun AddEditVendorScreen(
     var isVerified by remember(editingVendor) { mutableStateOf(editingVendor?.isVerified ?: true) }
     var rating by remember(editingVendor) { mutableFloatStateOf(editingVendor?.rating ?: 4.5f) }
 
-    val activityOptions = listOf("تولیدکننده", "واردکننده", "توزیع‌کننده مستقیم", "خدمات مهندسی", "پیمانکار صنعتی")
+    // Activity types including "بازرگانی"
+    val activityOptions = listOf(
+        "تولیدکننده",
+        "واردکننده",
+        "بازرگانی",
+        "توزیع‌کننده مستقیم",
+        "خدمات مهندسی",
+        "پیمانکار صنعتی"
+    )
+
     val availableCategories = listOf(
         "صنعتی", "ساختمان و عمرانی", "ماشین‌آلات", "مواد غذایی",
-        "مواد شیمیایی", "برق و الکترونیک", "پمپ", "استیل", "شیرآلات", "ابزار دقیق", "مواد اولیه"
+        "مواد شیمیایی", "برق و الکترونیک", "پمپ", "استیل", "شیرآلات", "ابزار دقیق", "مواد اولیه", "بازرگانی"
     )
 
     Column(
@@ -152,7 +169,7 @@ fun AddEditVendorScreen(
                 StepDivider(isPassed = currentStep > 1)
                 StepBadge(step = 2, currentStep = currentStep, label = "زمینه فعالیت")
                 StepDivider(isPassed = currentStep > 2)
-                StepBadge(step = 3, currentStep = currentStep, label = "تماس و آدرس")
+                StepBadge(step = 3, currentStep = currentStep, label = "تماس و لوکیشن")
                 StepDivider(isPassed = currentStep > 3)
                 StepBadge(step = 4, currentStep = currentStep, label = "کاتالوگ")
             }
@@ -163,24 +180,68 @@ fun AddEditVendorScreen(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(16.dp)
+                .animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             when (currentStep) {
                 1 -> {
                     // Step 1: Base Info
                     Text(
-                        text = "اطلاعات اولیه شرکت",
+                        text = "اطلاعات اولیه و لوگوی شرکت",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
 
+                    // Logo indicator & picker
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    Brush.linearGradient(listOf(NavyDeep, TealDark))
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (name.isNotBlank()) name.take(2) else "لوگو",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column {
+                            Text(
+                                text = "نشان و لوگوی شرکت",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "به‌صورت خودکار از حروف اختصاری یا آیکون اختصاصی ساخته می‌شود",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text("نام شرکت یا واحد صنعتی *") },
-                        placeholder = { Text("مثال: پارس پمپ") },
+                        label = { Text("نام شرکت یا واحد بازرگانی *") },
+                        placeholder = { Text("مثال: بازرگانی فولاد پارس") },
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -191,7 +252,7 @@ fun AddEditVendorScreen(
                         value = ceoName,
                         onValueChange = { ceoName = it },
                         label = { Text("نام مدیرعامل یا مسئول فروش") },
-                        placeholder = { Text("مثال: مهندس رضایی") },
+                        placeholder = { Text("مثال: مهندس محمودی") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -223,8 +284,8 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
-                        label = { Text("توضیحات و خلاصه فعالیت شرکت") },
-                        placeholder = { Text("زمینه تخصصی، استانداردهای تولید، ظرفیت تأمین...") },
+                        label = { Text("توضیحات و خلاصه فعالیت") },
+                        placeholder = { Text("زمینه تخصصی، برندهای قابل تأمین، استانداردهای بین‌المللی...") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3
                     )
@@ -233,14 +294,14 @@ fun AddEditVendorScreen(
                 2 -> {
                     // Step 2: Categories and Tags
                     Text(
-                        text = "دسته‌بندی‌ها و تخصص‌ها",
+                        text = "زمینه‌های فعالیت و دسته‌ها",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
 
                     Text(
-                        text = "شاخه‌های فعالیت مرتبط با این وندور را انتخاب کنید:",
+                        text = "شاخه‌های مرتبط با فعالیت این وندور را انتخاب کنید:",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -285,15 +346,15 @@ fun AddEditVendorScreen(
                         value = tagsText,
                         onValueChange = { tagsText = it },
                         label = { Text("برچسب‌ها و کلمات کلیدی (با کاما جدا کنید)") },
-                        placeholder = { Text("پمپ استیل، گارانتی ۲ ساله، شیر کشویی...") },
+                        placeholder = { Text("تأمین مستقیم، بازرگانی، گارانتی ۲ ساله...") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
 
                 3 -> {
-                    // Step 3: Contact & Address
+                    // Step 3: Contact & Location
                     Text(
-                        text = "اطلاعات تماس و نشانی",
+                        text = "اطلاعات تماس و موقعیت مکانی (لوکیشن)",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -311,7 +372,7 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = mobile,
                         onValueChange = { mobile = it },
-                        label = { Text("شماره همراه") },
+                        label = { Text("شماره همراه (واتس‌اپ، بله، روبیکا)") },
                         placeholder = { Text("0912-3456789") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
@@ -356,17 +417,113 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = address,
                         onValueChange = { address = it },
-                        label = { Text("آدرس کامل کارخانه / دفتر مرکزی") },
+                        label = { Text("آدرس کامل کارخانه / دفتر") },
                         placeholder = { Text("شهرک صنعتی، خیابان صنعت، پلاک...") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2
                     )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Location / GPS Coords picker
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.LocationOn,
+                                    contentDescription = null,
+                                    tint = TealPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "موقعیت جغرافیایی روی نقشه (GPS)",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "مختصات فعلی: ${PersianUtils.toPersianDigits(latitude)}, ${PersianUtils.toPersianDigits(longitude)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Text(
+                                text = "انتخاب سریع شهرک‌های صنعتی مطرح:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                FilterChip(
+                                    selected = latitude == 35.73576,
+                                    onClick = {
+                                        latitude = 35.73576
+                                        longitude = 51.44678
+                                        province = "تهران"
+                                        city = "تهران (شهرک شمس‌آباد)"
+                                    },
+                                    label = { Text("شهرک شمس‌آباد") }
+                                )
+                                FilterChip(
+                                    selected = latitude == 35.6621,
+                                    onClick = {
+                                        latitude = 35.6621
+                                        longitude = 51.3204
+                                        province = "تهران"
+                                        city = "شادآباد"
+                                    },
+                                    label = { Text("شادآباد تهران") }
+                                )
+                                FilterChip(
+                                    selected = latitude == 32.65462,
+                                    onClick = {
+                                        latitude = 32.65462
+                                        longitude = 51.66798
+                                        province = "اصفهان"
+                                        city = "شهرک محمودآباد"
+                                    },
+                                    label = { Text("محمودآباد اصفهان") }
+                                )
+                                FilterChip(
+                                    selected = latitude == 36.2972,
+                                    onClick = {
+                                        latitude = 36.2972
+                                        longitude = 59.6067
+                                        province = "خراسان رضوی"
+                                        city = "مشهد (شهرک توس)"
+                                    },
+                                    label = { Text("توس مشهد") }
+                                )
+                            }
+                        }
+                    }
                 }
 
                 4 -> {
                     // Step 4: Catalog & Rating
                     Text(
-                        text = "کاتالوگ و ارزیابی",
+                        text = "کاتالوگ، بروشور و ارزیابی",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -378,6 +535,22 @@ fun AddEditVendorScreen(
                         label = { Text("عنوان فایل کاتالوگ") },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    Button(
+                        onClick = {
+                            Toast.makeText(context, "فایل کاتالوگ انتخاب و بارگذاری شد", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("بارگذاری فایل کاتالوگ (PDF)")
+                    }
 
                     OutlinedTextField(
                         value = notes,
@@ -409,7 +582,7 @@ fun AddEditVendorScreen(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "نمایش نشان سبز وندور معتبر",
+                                    text = "نمایش نشان سبز وندور معتبر در جستجو",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -484,7 +657,7 @@ fun AddEditVendorScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward, // Right arrow for back in RTL
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp)
                         )
@@ -514,7 +687,7 @@ fun AddEditVendorScreen(
                         Text("مرحله بعد", fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(6.dp))
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, // Left arrow for forward in RTL
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp)
                         )
@@ -542,6 +715,8 @@ fun AddEditVendorScreen(
                                 province = province.trim(),
                                 city = city.trim(),
                                 address = address.trim(),
+                                latitude = latitude,
+                                longitude = longitude,
                                 catalogTitle = catalogTitle.trim(),
                                 notes = notes.trim(),
                                 isVerified = isVerified,

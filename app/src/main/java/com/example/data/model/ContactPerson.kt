@@ -9,7 +9,9 @@ data class ContactPerson(
     val id: Long = 0,
     val vendorId: Long,
     val name: String,
-    val role: String = "مدیر فروش",
+    val role: String = "مدیر عامل",
+    val mobile: String = "",
     val phone: String = "",
+    val extension: String = "",
     val email: String = ""
 )

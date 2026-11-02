@@ -90,7 +90,7 @@ fun SearchScreen(
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
-    val categoryChips = listOf("همه", "صنعتی", "استیل", "صنایع غذایی", "برق", "مواد اولیه", "شیرآلات")
+    val categoryChips = listOf("همه", "صنعتی", "بازرگانی", "استیل", "صنایع غذایی", "برق", "مواد اولیه", "شیرآلات")
 
     Column(
         modifier = Modifier
