@@ -33,6 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
@@ -361,6 +362,162 @@ fun VendorCard(
 }
 
 @Composable
+fun MessengerActionBar(
+    mobile: String,
+    phone: String,
+    modifier: Modifier = Modifier,
+    companyName: String = "",
+    onCallClick: (() -> Unit)? = null
+) {
+    val context = LocalContext.current
+    val targetPhone = mobile.ifBlank { phone }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // WhatsApp Button (#25D366)
+            BrandedMessengerButton(
+                label = "واتس‌اپ",
+                icon = Icons.Default.Message,
+                bgColor = Color(0xFF25D366),
+                textColor = Color.White,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    com.example.util.MessengerUtils.openWhatsApp(
+                        context,
+                        targetPhone,
+                        "سلام، از طریق اپلیکیشن وندوریاب با شما در ارتباط هستم."
+                    )
+                }
+            )
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            // Telegram Button (#0088CC)
+            BrandedMessengerButton(
+                label = "تلگرام",
+                icon = Icons.AutoMirrored.Filled.Send,
+                bgColor = Color(0xFF0088CC),
+                textColor = Color.White,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    com.example.util.MessengerUtils.openTelegram(context, targetPhone)
+                }
+            )
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            // Bale Button (#00A389)
+            BrandedMessengerButton(
+                label = "بله",
+                icon = Icons.Default.CheckCircle,
+                bgColor = Color(0xFF00A389),
+                textColor = Color.White,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    com.example.util.MessengerUtils.openBale(context, targetPhone)
+                }
+            )
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            // Rubika Button (#7B1FA2)
+            BrandedMessengerButton(
+                label = "روبیکا",
+                icon = Icons.Default.Star,
+                bgColor = Color(0xFF8E24AA),
+                textColor = Color.White,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    com.example.util.MessengerUtils.openRubika(context, targetPhone)
+                }
+            )
+        }
+
+        // Secondary Row: Direct Phone Call & SMS
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = {
+                    if (onCallClick != null) onCallClick()
+                    else dialPhone(context, phone.ifBlank { mobile })
+                },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TealPrimary,
+                    contentColor = NavyDeep
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("تماس مستقیم", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
+
+            OutlinedButton(
+                onClick = { sendSms(context, mobile.ifBlank { phone }) },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.Message, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("ارسال پیامک", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun BrandedMessengerButton(
+    label: String,
+    icon: ImageVector,
+    bgColor: Color,
+    textColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = textColor,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = textColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp
+            )
+        }
+    }
+}
+
+@Composable
 fun DirectContactActionsRow(
     phone: String,
     mobile: String,
@@ -369,37 +526,11 @@ fun DirectContactActionsRow(
     address: String,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        ContactActionButton(
-            label = "تماس",
-            icon = Icons.Default.Call,
-            tint = TealPrimary,
-            onClick = { dialPhone(context, phone.ifBlank { mobile }) }
-        )
-        ContactActionButton(
-            label = "پیام",
-            icon = Icons.Default.Message,
-            tint = BlueAccent,
-            onClick = { sendSms(context, mobile.ifBlank { phone }) }
-        )
-        ContactActionButton(
-            label = "وبسایت",
-            icon = Icons.Default.Language,
-            tint = TealDark,
-            onClick = { openWebsite(context, website) }
-        )
-        ContactActionButton(
-            label = "مسیریابی",
-            icon = Icons.Default.LocationOn,
-            tint = GreenVerified,
-            onClick = { openMap(context, address) }
-        )
-    }
+    MessengerActionBar(
+        mobile = mobile,
+        phone = phone,
+        modifier = modifier
+    )
 }
 
 @Composable

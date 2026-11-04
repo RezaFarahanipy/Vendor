@@ -116,6 +116,9 @@ import com.example.ui.theme.TealDark
 import com.example.ui.theme.TealLight
 import com.example.ui.theme.TealPrimary
 import com.example.ui.viewmodel.VendorViewModel
+import androidx.activity.compose.BackHandler
+import com.example.ui.theme.GreenVerified
+import com.example.util.ShebaUtils
 import com.example.util.PersianUtils
 import java.io.File
 import java.io.FileOutputStream
@@ -134,6 +137,15 @@ fun AddEditVendorScreen(
     val allCategories by viewModel.allCategories.collectAsState()
 
     var currentStep by remember { mutableIntStateOf(1) }
+
+    // Intercept back button to step back through wizard or navigate back cleanly
+    BackHandler {
+        if (currentStep > 1) {
+            currentStep--
+        } else {
+            onBack()
+        }
+    }
 
     // Step 1: Base info & Logo
     var name by remember(editingVendor) { mutableStateOf(editingVendor?.name ?: "") }
@@ -624,36 +636,62 @@ fun AddEditVendorScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
+                            }
 
-                                Button(
-                                    onClick = {
+                            // Beautiful Styled Add Account Button
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
                                         bankAccountsList.add(BankAccount("", "", "", ""))
                                     },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = TealPrimary.copy(alpha = 0.2f),
-                                        contentColor = TealDark
-                                    ),
-                                    shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = TealPrimary.copy(alpha = 0.12f)
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.5.dp, TealPrimary.copy(alpha = 0.45f))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp, horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("افزودن حساب دیگر", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = null,
+                                        tint = TealDark,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "افزودن حساب بانکی و شماره شبا جدید",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TealDark
+                                    )
                                 }
                             }
 
                             bankAccountsList.forEachIndexed { index, account ->
+                                val shebaValidation = remember(account.iban) {
+                                    if (account.iban.isNotBlank()) ShebaUtils.validateSheba(account.iban) else null
+                                }
+
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .animateContentSize(),
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = RoundedCornerShape(14.dp),
                                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                                 ) {
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(12.dp),
+                                            .padding(14.dp),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         Row(
@@ -687,7 +725,7 @@ fun AddEditVendorScreen(
                                                     bankAccountsList[index] = account.copy(bankName = it)
                                                 },
                                                 label = { Text("نام بانک") },
-                                                placeholder = { Text("ملت، صادرات...") },
+                                                placeholder = { Text("ملت، صادرات، ملی...") },
                                                 singleLine = true,
                                                 modifier = Modifier.weight(1f)
                                             )
@@ -698,7 +736,7 @@ fun AddEditVendorScreen(
                                                     bankAccountsList[index] = account.copy(branch = it)
                                                 },
                                                 label = { Text("نام یا کد شعبه") },
-                                                placeholder = { Text("شعبه صنعت") },
+                                                placeholder = { Text("شعبه مرکزی") },
                                                 singleLine = true,
                                                 modifier = Modifier.weight(1f)
                                             )
@@ -718,12 +756,63 @@ fun AddEditVendorScreen(
 
                                         OutlinedTextField(
                                             value = account.iban,
-                                            onValueChange = {
-                                                bankAccountsList[index] = account.copy(iban = it)
+                                            onValueChange = { input ->
+                                                val raw = input.uppercase().replace(" ", "")
+                                                val formatted = if (!raw.startsWith("IR") && raw.any { it.isDigit() }) {
+                                                    "IR" + raw.filter { it.isDigit() }
+                                                } else {
+                                                    raw
+                                                }
+                                                val validation = ShebaUtils.validateSheba(formatted)
+                                                val autoBank = validation.detectedBankName
+                                                val newBankName = if (account.bankName.isBlank() && autoBank != null) {
+                                                    autoBank
+                                                } else {
+                                                    account.bankName
+                                                }
+                                                bankAccountsList[index] = account.copy(
+                                                    iban = formatted,
+                                                    bankName = newBankName
+                                                )
                                             },
                                             label = { Text("شماره شبا (IBAN)") },
                                             placeholder = { Text("IR120120000000001234567890") },
                                             singleLine = true,
+                                            isError = shebaValidation != null && !shebaValidation.isValid && account.iban.length > 5,
+                                            supportingText = {
+                                                if (shebaValidation != null) {
+                                                    if (!shebaValidation.isValid && account.iban.length > 5) {
+                                                        Text(
+                                                            text = shebaValidation.errorMessage ?: "شماره شبا نامعتبر است",
+                                                            color = MaterialTheme.colorScheme.error,
+                                                            fontSize = 11.sp
+                                                        )
+                                                    } else if (shebaValidation.isValid) {
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Check,
+                                                                contentDescription = null,
+                                                                tint = GreenVerified,
+                                                                modifier = Modifier.size(14.dp)
+                                                            )
+                                                            Spacer(modifier = Modifier.width(4.dp))
+                                                            Text(
+                                                                text = "شماره شبا معتبر است (${shebaValidation.detectedBankName ?: "بانک ایرانی"})",
+                                                                color = GreenVerified,
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Default.AccountBalance,
+                                                    contentDescription = null,
+                                                    tint = if (shebaValidation?.isValid == true) GreenVerified else MaterialTheme.colorScheme.primary
+                                                )
+                                            },
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                     }

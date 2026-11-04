@@ -11,6 +11,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,21 +30,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Agriculture
 import androidx.compose.material.icons.filled.Apartment
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PrecisionManufacturing
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
@@ -57,13 +57,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -72,7 +72,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.model.Category
-import com.example.ui.components.StatCard
 import com.example.ui.components.VendorCard
 import com.example.ui.theme.AmberRating
 import com.example.ui.theme.NavyDeep
@@ -82,6 +81,8 @@ import com.example.ui.theme.TealLight
 import com.example.ui.theme.TealPrimary
 import com.example.ui.viewmodel.MainTab
 import com.example.ui.viewmodel.VendorViewModel
+import com.example.util.AppLanguage
+import com.example.util.Localization
 import com.example.util.PersianUtils
 
 @Composable
@@ -91,10 +92,10 @@ fun HomeScreen(
     onOpenAddVendor: () -> Unit,
     onVendorClick: (Long) -> Unit
 ) {
-    val stats by viewModel.stats.collectAsState()
     val allVendors by viewModel.allVendors.collectAsState()
     val categories by viewModel.allCategories.collectAsState()
     val isDark by viewModel.isDarkMode.collectAsState()
+    val lang by viewModel.appLanguage.collectAsState()
 
     Scaffold(
         floatingActionButton = {
@@ -113,11 +114,11 @@ fun HomeScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "ثبت وندور جدید"
+                        contentDescription = Localization.get("new_vendor_btn", lang)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "ثبت وندور جدید",
+                        text = Localization.get("new_vendor_btn", lang),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -132,63 +133,86 @@ fun HomeScreen(
                 .animateContentSize(),
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
-            // Header Bar with Branding & Theme Switcher
+            // Header Bar with Branding, Language & Theme Switcher
             item {
                 HomeHeaderBar(
                     isDark = isDark,
-                    onToggleTheme = { viewModel.toggleDarkMode() }
+                    lang = lang,
+                    onToggleTheme = { viewModel.toggleDarkMode() },
+                    onToggleLanguage = { viewModel.toggleLanguage() }
                 )
             }
 
-            // Search Bar Card
+            // Sleek Banner triggering dedicated Search screen
             item {
-                HomeSearchBar(
-                    onSearchSubmit = { query ->
-                        viewModel.searchQuery.value = query
-                        viewModel.currentTab.value = MainTab.SEARCH
-                    }
-                )
-            }
-
-            // 3 Stat Cards
-            item {
-                Row(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .clickable { onOpenSearch("") },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        title = "تماس‌های اخیر",
-                        value = if (stats.recentContacts > 0) stats.recentContacts.toString() else "۴۵",
-                        icon = Icons.Default.Call,
-                        iconTint = TealPrimary,
-                        onClick = { viewModel.currentTab.value = MainTab.SEARCH }
-                    )
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        title = "کل وندورها",
-                        value = if (stats.totalVendors > 0) stats.totalVendors.toString() else "۱,۲۴۸",
-                        icon = Icons.Default.Business,
-                        iconTint = Color(0xFF1E88E5),
-                        onClick = {
-                            viewModel.selectedCategoryFilter.value = "همه"
-                            viewModel.currentTab.value = MainTab.SEARCH
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(TealPrimary.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null,
+                                    tint = TealPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = if (lang == AppLanguage.FA) "جستجوی هوشمند تأمین‌کنندگان" else "Smart Supplier Search",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (lang == AppLanguage.FA) "برای جستجوی پیشرفته، لمس کنید" else "Tap for advanced filtering and search",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 11.sp
+                                )
+                            }
                         }
-                    )
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        title = "علاقه‌مندی‌ها",
-                        value = if (stats.totalFavorites > 0) stats.totalFavorites.toString() else "۲۸",
-                        icon = Icons.Default.Star,
-                        iconTint = AmberRating,
-                        onClick = { viewModel.currentTab.value = MainTab.FAVORITES }
-                    )
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(TealPrimary)
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (lang == AppLanguage.FA) "جستجو" else "Search",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = NavyDeep,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
 
-            // Main Categories Section
+            // Compact & Animated Categories Section
             item {
                 Column(
                     modifier = Modifier
@@ -201,7 +225,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "دسته‌بندی‌های اصلی",
+                            text = Localization.get("main_categories", lang),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -210,14 +234,14 @@ fun HomeScreen(
                             onClick = { viewModel.currentTab.value = MainTab.SEARCH }
                         ) {
                             Text(
-                                text = "مشاهده همه",
+                                text = Localization.get("view_all", lang),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     val displayCategories = if (categories.isNotEmpty()) categories.take(6) else defaultCategories()
 
@@ -227,8 +251,9 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             displayCategories.take(3).forEach { category ->
-                                HomeCategoryTile(
+                                CompactCategoryTile(
                                     category = category,
+                                    lang = lang,
                                     modifier = Modifier.weight(1f),
                                     onClick = {
                                         viewModel.selectedCategoryFilter.value = category.name
@@ -243,8 +268,9 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 displayCategories.drop(3).take(3).forEach { category ->
-                                    HomeCategoryTile(
+                                    CompactCategoryTile(
                                         category = category,
+                                        lang = lang,
                                         modifier = Modifier.weight(1f),
                                         onClick = {
                                             viewModel.selectedCategoryFilter.value = category.name
@@ -258,112 +284,60 @@ fun HomeScreen(
                 }
             }
 
-            // Promo Banner
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .height(130.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable { viewModel.currentTab.value = MainTab.SEARCH }
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.industrial_hero_banner),
-                        contentDescription = "Industrial Hub",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        NavyDeep.copy(alpha = 0.88f),
-                                        NavyDeep.copy(alpha = 0.45f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                    )
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "تأمین‌کنندگان معتبر صنعتی",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "استعلام قیمت مستقیم و بدون واسطه",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TealLight
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(TealPrimary)
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "مشاهده وندورها",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = NavyDeep
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = null,
-                                tint = NavyDeep,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Recent Vendors Section
+            // Latest Vendors Header
             item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "آخرین وندورها",
+                        text = Localization.get("latest_vendors", lang),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "${PersianUtils.toPersianDigits(allVendors.size)} وندور فعال",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = if (lang == AppLanguage.FA) "${PersianUtils.toPersianDigits(allVendors.size)} وندور" else "${allVendors.size} Vendors",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
 
-            items(allVendors.take(5), key = { it.id }) { vendor ->
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .animateContentSize()
-                ) {
-                    VendorCard(
-                        vendor = vendor,
-                        onClick = { onVendorClick(vendor.id) },
-                        onFavoriteClick = { viewModel.toggleVendorFavorite(vendor) }
-                    )
+            // Vendor Cards List
+            if (allVendors.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (lang == AppLanguage.FA) "هیچ وندوری یافت نشد. اولین وندور را ثبت کنید!" else "No vendors found. Add the first vendor!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                items(allVendors, key = { it.id }) { vendor ->
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn() + slideInVertically()
+                    ) {
+                        VendorCard(
+                            vendor = vendor,
+                            onClick = { onVendorClick(vendor.id) },
+                            onFavoriteClick = { viewModel.toggleVendorFavorite(vendor) },
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                                .testTag("vendor_card_${vendor.id}")
+                        )
+                    }
                 }
             }
         }
@@ -373,7 +347,9 @@ fun HomeScreen(
 @Composable
 private fun HomeHeaderBar(
     isDark: Boolean,
-    onToggleTheme: () -> Unit
+    lang: AppLanguage,
+    onToggleTheme: () -> Unit,
+    onToggleLanguage: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -382,77 +358,105 @@ private fun HomeHeaderBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // App Identity (Clean Branding - no personal user name)
+        // App Identity (Clean Branding)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(46.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(13.dp))
                     .background(
                         Brush.linearGradient(listOf(NavyDeep, TealDark))
                     )
-                    .border(1.5.dp, TealPrimary, RoundedCornerShape(14.dp)),
+                    .border(1.5.dp, TealPrimary, RoundedCornerShape(13.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.vendor_app_icon),
-                    contentDescription = "وندوریاب",
+                    contentDescription = Localization.get("app_title", lang),
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(9.dp))
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(
-                    text = "وندوریاب",
+                    text = Localization.get("app_title", lang),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "سامانه جامع تأمین‌کنندگان صنعتی",
+                    text = Localization.get("app_subtitle", lang),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        // Action Buttons: Theme Toggle & Notification
+        // Action Buttons: Language Toggle, Theme Toggle & Notification
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // Language Switcher Button (فارسی / EN)
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                    .clickable { onToggleLanguage() }
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Language,
+                        contentDescription = "Language",
+                        tint = TealPrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (lang == AppLanguage.FA) "EN" else "فا",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
             // Theme Switcher Button with smooth animation
             IconButton(
                 onClick = onToggleTheme,
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(38.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface)
             ) {
                 Icon(
                     imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
-                    contentDescription = "تغییر تم",
+                    contentDescription = "Theme",
                     tint = if (isDark) AmberRating else TealDark,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(4.dp))
 
             IconButton(
                 onClick = {},
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(38.dp)
             ) {
                 BadgedBox(
                     badge = {
                         Badge(
                             containerColor = RedFavorite,
-                            modifier = Modifier.size(8.dp)
+                            modifier = Modifier.size(7.dp)
                         )
                     }
                 ) {
                     Icon(
                         imageVector = Icons.Default.Notifications,
-                        contentDescription = "اعلان‌ها",
+                        contentDescription = "Notifications",
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -461,67 +465,40 @@ private fun HomeHeaderBar(
     }
 }
 
+/**
+ * Compact, reduced-height category card with smooth press/scale animation
+ */
 @Composable
-private fun HomeSearchBar(onSearchSubmit: (String) -> Unit) {
+private fun CompactCategoryTile(
+    category: Category,
+    lang: AppLanguage,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.94f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "tile_scale"
+    )
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable { onSearchSubmit("") },
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .scale(scale)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(interactionSource = interactionSource, indication = null) { onClick() }
+            .animateContentSize(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isPressed) 1.dp else 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(TealPrimary),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "جستجو",
-                    tint = NavyDeep,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "جستجوی وندور، محصول، نوع فعالیت، شهر...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun HomeCategoryTile(
-    category: Category,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .clickable { onClick() }
-            .animateContentSize(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp, horizontal = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 8.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
         ) {
             val icon = when (category.name) {
                 "صنعتی" -> Icons.Default.PrecisionManufacturing
@@ -535,8 +512,8 @@ private fun HomeCategoryTile(
 
             Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
@@ -544,24 +521,27 @@ private fun HomeCategoryTile(
                     imageVector = icon,
                     contentDescription = category.name,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(16.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = category.name,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "${PersianUtils.toPersianDigits(category.vendorCount)} وندور",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 10.sp
-            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = category.name,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 11.sp
+                )
+                Text(
+                    text = if (lang == AppLanguage.FA) "${PersianUtils.toPersianDigits(category.vendorCount)} وندور" else "${category.vendorCount} items",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 9.sp
+                )
+            }
         }
     }
 }

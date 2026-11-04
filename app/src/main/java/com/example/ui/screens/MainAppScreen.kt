@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import android.app.Activity
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -7,24 +9,20 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -33,27 +31,27 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.example.ui.theme.NavyBorder
-import com.example.ui.theme.NavyCard
 import com.example.ui.theme.NavyDeep
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealLight
 import com.example.ui.theme.TealPrimary
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.MainTab
 import com.example.ui.viewmodel.VendorViewModel
+import com.example.util.AppLanguage
+import com.example.util.Localization
 
 @Composable
 fun MainAppScreen(viewModel: VendorViewModel) {
@@ -61,7 +59,11 @@ fun MainAppScreen(viewModel: VendorViewModel) {
     val currentTab by viewModel.currentTab.collectAsState()
     val selectedVendorId by viewModel.selectedVendorId.collectAsState()
     val notice by viewModel.userNotice.collectAsState()
+    val lang by viewModel.appLanguage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(notice) {
         if (!notice.isNullOrBlank()) {
@@ -70,11 +72,34 @@ fun MainAppScreen(viewModel: VendorViewModel) {
         }
     }
 
-    // Force RTL for authentic Persian typography and layout
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        // System BackHandler
-        BackHandler(enabled = currentScreen != AppScreen.MAIN_TABS) {
-            viewModel.navigateBack()
+    // Dynamic RTL for Persian, LTR for English
+    val layoutDirection = if (lang == AppLanguage.FA) LayoutDirection.Rtl else LayoutDirection.Ltr
+
+    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+        // Smart Back Navigation to prevent accidental exit
+        BackHandler {
+            when {
+                currentScreen != AppScreen.MAIN_TABS -> {
+                    viewModel.navigateBack()
+                }
+                currentTab != MainTab.HOME -> {
+                    viewModel.currentTab.value = MainTab.HOME
+                }
+                else -> {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastBackPressTime < 2000L) {
+                        (context as? Activity)?.finish()
+                    } else {
+                        lastBackPressTime = currentTime
+                        val exitMsg = if (lang == AppLanguage.FA) {
+                            "برای خروج از برنامه، دوباره دکمه بازگشت را بزنید"
+                        } else {
+                            "Press back again to exit"
+                        }
+                        Toast.makeText(context, exitMsg, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
 
         Scaffold(
@@ -83,6 +108,7 @@ fun MainAppScreen(viewModel: VendorViewModel) {
                 if (currentScreen == AppScreen.MAIN_TABS) {
                     AppBottomNavigationBar(
                         currentTab = currentTab,
+                        lang = lang,
                         onTabSelected = { viewModel.currentTab.value = it }
                     )
                 }
@@ -134,7 +160,8 @@ fun MainAppScreen(viewModel: VendorViewModel) {
                                 }
 
                                 MainTab.CATALOG -> {
-                                    CatalogScreen(
+                                    // Fallback if somehow triggered
+                                    SearchScreen(
                                         viewModel = viewModel,
                                         onVendorClick = { id -> viewModel.openVendorDetail(id) }
                                     )
@@ -184,6 +211,7 @@ fun MainAppScreen(viewModel: VendorViewModel) {
 @Composable
 fun AppBottomNavigationBar(
     currentTab: MainTab,
+    lang: AppLanguage,
     onTabSelected: (MainTab) -> Unit
 ) {
     NavigationBar(
@@ -199,10 +227,10 @@ fun AppBottomNavigationBar(
             icon = {
                 Icon(
                     imageVector = if (currentTab == MainTab.HOME) Icons.Filled.Home else Icons.Outlined.Home,
-                    contentDescription = "خانه"
+                    contentDescription = Localization.get("tab_home", lang)
                 )
             },
-            label = { Text("خانه", style = MaterialTheme.typography.labelSmall) },
+            label = { Text(Localization.get("tab_home", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = NavyDeep,
                 selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -219,10 +247,10 @@ fun AppBottomNavigationBar(
             icon = {
                 Icon(
                     imageVector = if (currentTab == MainTab.SEARCH) Icons.Filled.Search else Icons.Outlined.Search,
-                    contentDescription = "جستجو"
+                    contentDescription = Localization.get("tab_search", lang)
                 )
             },
-            label = { Text("جستجو", style = MaterialTheme.typography.labelSmall) },
+            label = { Text(Localization.get("tab_search", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = NavyDeep,
                 selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -239,10 +267,10 @@ fun AppBottomNavigationBar(
             icon = {
                 Icon(
                     imageVector = if (currentTab == MainTab.FAVORITES) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = "علاقه‌مندی‌ها"
+                    contentDescription = Localization.get("tab_favorites", lang)
                 )
             },
-            label = { Text("نشان‌شده‌ها", style = MaterialTheme.typography.labelSmall) },
+            label = { Text(Localization.get("tab_favorites", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = NavyDeep,
                 selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -254,35 +282,15 @@ fun AppBottomNavigationBar(
         )
 
         NavigationBarItem(
-            selected = currentTab == MainTab.CATALOG,
-            onClick = { onTabSelected(MainTab.CATALOG) },
-            icon = {
-                Icon(
-                    imageVector = if (currentTab == MainTab.CATALOG) Icons.Filled.Inventory2 else Icons.Outlined.Inventory2,
-                    contentDescription = "کاتالوگ"
-                )
-            },
-            label = { Text("کاتالوگ", style = MaterialTheme.typography.labelSmall) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = NavyDeep,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
-                indicatorColor = TealPrimary,
-                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            modifier = Modifier.testTag("tab_catalog")
-        )
-
-        NavigationBarItem(
             selected = currentTab == MainTab.SETTINGS,
             onClick = { onTabSelected(MainTab.SETTINGS) },
             icon = {
                 Icon(
                     imageVector = if (currentTab == MainTab.SETTINGS) Icons.Filled.Settings else Icons.Outlined.Settings,
-                    contentDescription = "تنظیمات"
+                    contentDescription = Localization.get("tab_settings", lang)
                 )
             },
-            label = { Text("بیشتر", style = MaterialTheme.typography.labelSmall) },
+            label = { Text(Localization.get("tab_settings", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = NavyDeep,
                 selectedTextColor = MaterialTheme.colorScheme.primary,

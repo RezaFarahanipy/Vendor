@@ -86,6 +86,9 @@ import com.example.ui.theme.RedFavorite
 import com.example.ui.theme.TealDark
 import com.example.ui.theme.TealPrimary
 import com.example.ui.viewmodel.VendorViewModel
+import androidx.compose.material.icons.filled.Language
+import com.example.util.AppLanguage
+import com.example.util.Localization
 import com.example.util.PersianUtils
 
 @Composable
@@ -94,6 +97,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val isDark by viewModel.isDarkMode.collectAsState()
+    val lang by viewModel.appLanguage.collectAsState()
     val allActivityTypes by viewModel.allActivityTypes.collectAsState()
     val allCategories by viewModel.allCategories.collectAsState()
 
@@ -105,6 +109,9 @@ fun SettingsScreen(
     var csvInputText by remember { mutableStateOf("") }
     var showResetDialog by remember { mutableStateOf(false) }
     var showDatabaseInfoDialog by remember { mutableStateOf(false) }
+
+    var activityTypeToDelete by remember { mutableStateOf<ActivityType?>(null) }
+    var categoryToDelete by remember { mutableStateOf<Category?>(null) }
 
     Column(
         modifier = Modifier
@@ -286,6 +293,58 @@ fun SettingsScreen(
                                 checkedTrackColor = TealDark
                             )
                         )
+                    }
+                }
+            }
+
+            // Language Selection Card
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            SettingsIconBadge(icon = Icons.Default.Language, tint = TealPrimary)
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column {
+                                Text(
+                                    text = if (lang == AppLanguage.FA) "زبان برنامه" else "App Language",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (lang == AppLanguage.FA) "فارسی (Persian) / انگلیسی (English)" else "English / Persian",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Button(
+                            onClick = { viewModel.toggleLanguage() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = TealPrimary,
+                                contentColor = NavyDeep
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text(
+                                text = if (lang == AppLanguage.FA) "English" else "فارسی",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
             }
@@ -571,7 +630,7 @@ fun SettingsScreen(
                                     Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(16.dp))
                                 }
                                 IconButton(
-                                    onClick = { viewModel.deleteActivityType(act.id) },
+                                    onClick = { activityTypeToDelete = act },
                                     modifier = Modifier.size(32.dp)
                                 ) {
                                     Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(16.dp))
@@ -687,7 +746,7 @@ fun SettingsScreen(
                                     Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(16.dp))
                                 }
                                 IconButton(
-                                    onClick = { viewModel.deleteCategory(cat.id) },
+                                    onClick = { categoryToDelete = cat },
                                     modifier = Modifier.size(32.dp)
                                 ) {
                                     Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(16.dp))
@@ -700,6 +759,82 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = { showCategoryManageDialog = false }) {
                     Text("بستن")
+                }
+            }
+        )
+    }
+
+    // Confirmation Dialog for Activity Type Deletion
+    if (activityTypeToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { activityTypeToDelete = null },
+            title = {
+                Text(
+                    text = if (lang == AppLanguage.FA) "تأیید حذف نوع فعالیت" else "Confirm Delete Activity Type",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = if (lang == AppLanguage.FA) {
+                        "آیا از حذف نوع فعالیت «${activityTypeToDelete!!.name}» اطمینان دارید؟ این عمل قابل بازگشت نیست."
+                    } else {
+                        "Are you sure you want to delete '${activityTypeToDelete!!.name}'? This action cannot be undone."
+                    }
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteActivityType(activityTypeToDelete!!.id)
+                        activityTypeToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = RedFavorite)
+                ) {
+                    Text(if (lang == AppLanguage.FA) "حذف" else "Delete", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { activityTypeToDelete = null }) {
+                    Text(if (lang == AppLanguage.FA) "انصراف" else "Cancel")
+                }
+            }
+        )
+    }
+
+    // Confirmation Dialog for Category Deletion
+    if (categoryToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { categoryToDelete = null },
+            title = {
+                Text(
+                    text = if (lang == AppLanguage.FA) "تأیید حذف زمینه فعالیت" else "Confirm Delete Category",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = if (lang == AppLanguage.FA) {
+                        "آیا از حذف زمینه فعالیت «${categoryToDelete!!.name}» اطمینان دارید؟ این عمل قابل بازگشت نیست."
+                    } else {
+                        "Are you sure you want to delete '${categoryToDelete!!.name}'? This action cannot be undone."
+                    }
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteCategory(categoryToDelete!!.id)
+                        categoryToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = RedFavorite)
+                ) {
+                    Text(if (lang == AppLanguage.FA) "حذف" else "Delete", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { categoryToDelete = null }) {
+                    Text(if (lang == AppLanguage.FA) "انصراف" else "Cancel")
                 }
             }
         )

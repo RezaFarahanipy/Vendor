@@ -22,12 +22,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apartment
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
-import androidx.compose.material.icons.filled.ViewAgenda
-import androidx.compose.material.icons.filled.ViewHeadline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -48,6 +49,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,17 +59,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.VendorCard
 import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.RedFavorite
 import com.example.ui.theme.TealPrimary
+import com.example.ui.viewmodel.MainTab
 import com.example.ui.viewmodel.SortOption
 import com.example.ui.viewmodel.VendorViewModel
+import com.example.util.AppLanguage
+import com.example.util.Localization
 import com.example.util.PersianUtils
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,29 +89,51 @@ fun SearchScreen(
 ) {
     val query by viewModel.searchQuery.collectAsState()
     val filteredVendors by viewModel.filteredVendors.collectAsState()
+    val allVendors by viewModel.allVendors.collectAsState()
+    val favoriteVendors by viewModel.favoriteVendors.collectAsState()
+    val recentVendors by viewModel.recentVendors.collectAsState()
+    val categories by viewModel.allCategories.collectAsState()
+
     val selectedCategory by viewModel.selectedCategoryFilter.collectAsState()
     val isCardView by viewModel.isCardViewMode.collectAsState()
     val sortOption by viewModel.sortOption.collectAsState()
     val selectedCity by viewModel.selectedCityFilter.collectAsState()
     val onlyVerified by viewModel.onlyVerifiedFilter.collectAsState()
     val onlyCatalog by viewModel.onlyCatalogFilter.collectAsState()
+    val lang by viewModel.appLanguage.collectAsState()
 
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
-    val categoryChips = listOf("همه", "صنعتی", "بازرگانی", "استیل", "صنایع غذایی", "برق", "مواد اولیه", "شیرآلات")
+    // Auto-focus and open soft keyboard when entering Search screen
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(Unit) {
+        delay(200)
+        try {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        } catch (_: Exception) {}
+    }
+
+    val categoryChips = remember(categories, lang) {
+        val allLabel = if (lang == AppLanguage.FA) "همه" else "All"
+        val names = if (categories.isNotEmpty()) categories.map { it.name } else listOf("صنعتی", "بازرگانی", "استیل", "صنایع غذایی", "برق")
+        listOf(allLabel) + names
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Search bar at top
+        // Top Surface: Search Bar and Category Chips
         Surface(
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 2.dp,
+            tonalElevation = 3.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
@@ -108,19 +141,20 @@ fun SearchScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
+                // Search Input with auto-focus
                 OutlinedTextField(
                     value = query,
                     onValueChange = { viewModel.searchQuery.value = it },
                     placeholder = {
                         Text(
-                            text = "جستجوی پیشرفته وندور، محصول، شهر...",
+                            text = Localization.get("search_placeholder", lang),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "جستجو",
+                            contentDescription = Localization.get("search", lang),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     },
@@ -129,14 +163,14 @@ fun SearchScreen(
                             IconButton(onClick = { viewModel.searchQuery.value = "" }) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
-                                    contentDescription = "پاک کردن",
+                                    contentDescription = "Clear",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.background,
                         unfocusedContainerColor = MaterialTheme.colorScheme.background,
@@ -145,6 +179,7 @@ fun SearchScreen(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
+                        .focusRequester(focusRequester)
                         .testTag("search_text_field")
                 )
 
@@ -156,10 +191,12 @@ fun SearchScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(categoryChips) { cat ->
-                        val isSelected = selectedCategory == cat
+                        val isSelected = selectedCategory == cat || (selectedCategory == "همه" && cat == (if (lang == AppLanguage.FA) "همه" else "All"))
                         FilterChip(
                             selected = isSelected,
-                            onClick = { viewModel.selectedCategoryFilter.value = cat },
+                            onClick = {
+                                viewModel.selectedCategoryFilter.value = if (cat == "All" || cat == "همه") "همه" else cat
+                            },
                             label = {
                                 Text(
                                     text = cat,
@@ -178,11 +215,51 @@ fun SearchScreen(
             }
         }
 
-        // View Mode + Sort bar
+        // Dashboard StatCards moved here as requested: "در صفحه جستجو کارتهای داشبورد قرار بده"
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            DashboardMiniStatCard(
+                modifier = Modifier.weight(1f),
+                title = Localization.get("stat_total_vendors", lang),
+                count = if (lang == AppLanguage.FA) PersianUtils.toPersianDigits(allVendors.size) else allVendors.size.toString(),
+                icon = Icons.Default.Apartment,
+                iconTint = TealPrimary,
+                onClick = {
+                    viewModel.searchQuery.value = ""
+                    viewModel.selectedCategoryFilter.value = "همه"
+                }
+            )
+
+            DashboardMiniStatCard(
+                modifier = Modifier.weight(1f),
+                title = Localization.get("stat_favorites", lang),
+                count = if (lang == AppLanguage.FA) PersianUtils.toPersianDigits(favoriteVendors.size) else favoriteVendors.size.toString(),
+                icon = Icons.Default.Favorite,
+                iconTint = RedFavorite,
+                onClick = {
+                    viewModel.currentTab.value = MainTab.FAVORITES
+                }
+            )
+
+            DashboardMiniStatCard(
+                modifier = Modifier.weight(1f),
+                title = Localization.get("stat_recent_calls", lang),
+                count = if (lang == AppLanguage.FA) PersianUtils.toPersianDigits(recentVendors.size) else recentVendors.size.toString(),
+                icon = Icons.Default.Call,
+                iconTint = Color(0xFF00A389),
+                onClick = {}
+            )
+        }
+
+        // View Mode + Sort bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -203,7 +280,7 @@ fun SearchScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "فهرست",
+                        text = if (lang == AppLanguage.FA) "فهرست" else "List",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (!isCardView) FontWeight.Bold else FontWeight.Normal,
                         color = if (!isCardView) NavyDeep else MaterialTheme.colorScheme.onSurface
@@ -217,7 +294,7 @@ fun SearchScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "کارت‌ها",
+                        text = if (lang == AppLanguage.FA) "کارت‌ها" else "Cards",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (isCardView) FontWeight.Bold else FontWeight.Normal,
                         color = if (isCardView) NavyDeep else MaterialTheme.colorScheme.onSurface
@@ -237,7 +314,7 @@ fun SearchScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Sort,
-                            contentDescription = "مرتب‌سازی",
+                            contentDescription = "Sort",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -276,7 +353,7 @@ fun SearchScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.FilterList,
-                        contentDescription = "فیلتر پیشرفته",
+                        contentDescription = "Filter",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
@@ -292,8 +369,9 @@ fun SearchScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val countStr = if (lang == AppLanguage.FA) "${PersianUtils.toPersianDigits(filteredVendors.size)} وندور یافت شد" else "${filteredVendors.size} vendors found"
             Text(
-                text = "${PersianUtils.toPersianDigits(filteredVendors.size)} وندور یافت شد",
+                text = countStr,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -308,7 +386,7 @@ fun SearchScreen(
                     }
                 ) {
                     Text(
-                        text = "پاک کردن فیلترها",
+                        text = if (lang == AppLanguage.FA) "پاک کردن فیلترها" else "Clear Filters",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -333,14 +411,14 @@ fun SearchScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "وندوری با مشخصات مورد نظر یافت نشد",
+                        text = if (lang == AppLanguage.FA) "وندوری با مشخصات مورد نظر یافت نشد" else "No matching vendors found",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "کلمات جستجو یا فیلترهای انتخابی را تغییر دهید.",
+                        text = if (lang == AppLanguage.FA) "کلمات جستجو یا فیلترهای انتخابی را تغییر دهید." else "Try modifying search terms or filter criteria.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -375,7 +453,7 @@ fun SearchScreen(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "فیلترهای پیشرفته وندور",
+                    text = if (lang == AppLanguage.FA) "فیلترهای پیشرفته وندور" else "Advanced Vendor Filters",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -385,7 +463,7 @@ fun SearchScreen(
 
                 // City filter
                 Text(
-                    text = "استان و شهر:",
+                    text = if (lang == AppLanguage.FA) "استان و شهر:" else "Province & City:",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -419,7 +497,7 @@ fun SearchScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "فقط وندورهای تأیید شده و دارای پروانه",
+                        text = if (lang == AppLanguage.FA) "فقط وندورهای تأیید شده و دارای پروانه" else "Only verified & licensed vendors",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -440,7 +518,7 @@ fun SearchScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "فقط وندورهای دارای کاتالوگ PDF",
+                        text = if (lang == AppLanguage.FA) "فقط وندورهای دارای کاتالوگ PDF" else "Only vendors with technical catalog PDF",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -459,7 +537,7 @@ fun SearchScreen(
                             viewModel.onlyCatalogFilter.value = false
                         }
                     ) {
-                        Text("بازنشانی", color = MaterialTheme.colorScheme.error)
+                        Text(if (lang == AppLanguage.FA) "بازنشانی" else "Reset", color = MaterialTheme.colorScheme.error)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
@@ -471,10 +549,68 @@ fun SearchScreen(
                             }
                         }
                     ) {
-                        Text("اعمال فیلتر", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text(if (lang == AppLanguage.FA) "اعمال فیلتر" else "Apply Filter", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun DashboardMiniStatCard(
+    title: String,
+    count: String,
+    icon: ImageVector,
+    iconTint: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .clickable { onClick() },
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(iconTint.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = count,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 10.sp,
+                maxLines = 1
+            )
         }
     }
 }

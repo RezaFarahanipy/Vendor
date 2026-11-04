@@ -179,230 +179,216 @@ fun VendorDetailScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Hero Image + Header Actions
+        // Top Action Bar
         item {
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(240.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.industrial_pump_system),
-                    contentDescription = "کارخانه و تجهیزات",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Gradient overlay
-                Box(
+                IconButton(
+                    onClick = onBack,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    NavyDeep.copy(alpha = 0.7f),
-                                    Color.Transparent,
-                                    NavyDeep.copy(alpha = 0.85f)
-                                )
-                            )
-                        )
-                )
-
-                // Top action bar
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 32.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .testTag("detail_back_button")
                 ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "بازگشت",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
-                        onClick = onBack,
+                        onClick = { shareVendor(context, vendor) },
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(NavyDeep.copy(alpha = 0.6f))
-                            .testTag("detail_back_button")
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = "اشتراک‌گذاری", tint = MaterialTheme.colorScheme.onSurface)
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    IconButton(
+                        onClick = { viewModel.toggleVendorFavorite(vendor) },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .testTag("favorite_button")
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "بازگشت",
-                            tint = Color.White
+                            imageVector = if (vendor.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "علاقه‌مندی",
+                            tint = if (vendor.isFavorite) RedFavorite else MaterialTheme.colorScheme.onSurface
                         )
                     }
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(
-                            onClick = { shareVendor(context, vendor) },
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(NavyDeep.copy(alpha = 0.6f))
-                        ) {
-                            Icon(Icons.Default.Share, contentDescription = "اشتراک‌گذاری", tint = Color.White)
-                        }
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        IconButton(
-                            onClick = { viewModel.toggleVendorFavorite(vendor) },
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(NavyDeep.copy(alpha = 0.6f))
-                                .testTag("favorite_button")
-                        ) {
-                            Icon(
-                                imageVector = if (vendor.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = "علاقه‌مندی",
-                                tint = if (vendor.isFavorite) RedFavorite else Color.White
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        IconButton(
-                            onClick = { onEditVendor(vendor) },
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(NavyDeep.copy(alpha = 0.6f))
-                        ) {
-                            Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = Color.White)
-                        }
-                    }
-                }
-
-                // Company Logo badge floating at bottom
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .size(76.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(
-                            Brush.linearGradient(listOf(NavyDeep, TealDark))
-                        )
-                        .border(3.dp, MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (vendor.logoUri.isNotBlank() && File(vendor.logoUri).exists()) {
-                        AsyncImage(
-                            model = File(vendor.logoUri),
-                            contentDescription = "لوگوی شرکت",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Text(
-                            text = vendor.name.take(2),
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 26.sp
-                        )
+                    IconButton(
+                        onClick = { onEditVendor(vendor) },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
         }
 
-        // Title and Basic Info
+        // Elegant Header Card: Logo Side-by-Side with Company Name & Info
         item {
-            Column(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
                 ) {
-                    Text(
-                        text = vendor.name,
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    if (vendor.isVerified) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "تأیید شده",
-                            tint = GreenVerified,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-
-                Text(
-                    text = "${vendor.activityType} • ${vendor.province}، ${vendor.city}",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = vendor.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Rating & Reviews count
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    repeat(5) { index ->
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = null,
-                            tint = if (index < vendor.rating.toInt()) AmberRating else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = PersianUtils.toPersianDigits(vendor.rating.toString()),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "(${PersianUtils.toPersianDigits(vendor.reviewCount)} نظر)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Category Chips
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    (vendor.categories.split(",") + vendor.tags.split(","))
-                        .map { it.trim() }
-                        .filter { it.isNotBlank() }
-                        .forEach { tag ->
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Company Logo
+                        Box(
+                            modifier = Modifier
+                                .size(74.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(
+                                    Brush.linearGradient(listOf(NavyDeep, TealDark))
+                                )
+                                .border(2.dp, TealPrimary.copy(alpha = 0.6f), RoundedCornerShape(18.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (vendor.logoUri.isNotBlank() && File(vendor.logoUri).exists()) {
+                                AsyncImage(
+                                    model = File(vendor.logoUri),
+                                    contentDescription = "لوگوی شرکت",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
                                 Text(
-                                    text = tag,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    text = vendor.name.take(2),
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 24.sp
                                 )
                             }
                         }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = vendor.name,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 2
+                                )
+                                if (vendor.isVerified) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = "تأیید شده",
+                                        tint = GreenVerified,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(3.dp))
+
+                            Text(
+                                text = "${vendor.activityType} • ${vendor.province}، ${vendor.city}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            // Rating Stars
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                repeat(5) { index ->
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = null,
+                                        tint = if (index < vendor.rating.toInt()) AmberRating else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = PersianUtils.toPersianDigits(vendor.rating.toString()),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "(${PersianUtils.toPersianDigits(vendor.reviewCount)} نظر)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+
+                    if (vendor.description.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = vendor.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Category Chips
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        (vendor.categories.split(",") + vendor.tags.split(","))
+                            .map { it.trim() }
+                            .filter { it.isNotBlank() }
+                            .forEach { tag ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(TealPrimary.copy(alpha = 0.12f))
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = tag,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TealDark,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                    }
                 }
             }
         }
@@ -420,7 +406,7 @@ fun VendorDetailScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp)
+                        .padding(14.dp)
                 ) {
                     DirectContactActionsRow(
                         phone = vendor.phone,
@@ -430,33 +416,22 @@ fun VendorDetailScreen(
                         address = vendor.address
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "ارسال پیام به شماره‌های وندور در پیام‌رسان‌ها:",
+                        text = "ارتباط سریع با وندور در پیام‌رسان‌ها:",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(6.dp))
 
                     val activePhone = vendor.mobile.ifBlank { vendor.phone }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround
-                    ) {
-                        MessengerTile(label = "واتس‌اپ", color = Color(0xFF25D366)) {
-                            MessengerUtils.openWhatsApp(context, activePhone, "سلام، از طریق اپلیکیشن وندوریاب با شما تماس می‌گیرم.")
-                        }
-                        MessengerTile(label = "تلگرام", color = Color(0xFF229ED9)) {
-                            MessengerUtils.openTelegram(context, activePhone)
-                        }
-                        MessengerTile(label = "بله", color = Color(0xFF1E88E5)) {
-                            MessengerUtils.openBale(context, activePhone)
-                        }
-                        MessengerTile(label = "روبیکا", color = Color(0xFFE91E63)) {
-                            MessengerUtils.openRubika(context, activePhone)
-                        }
-                    }
+                    com.example.ui.components.MessengerActionBar(
+                        mobile = vendor.mobile,
+                        phone = vendor.phone,
+                        companyName = vendor.name
+                    )
                 }
             }
         }
@@ -703,30 +678,6 @@ fun VendorDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
-
-                        Button(
-                            onClick = {
-                                editingContact = null
-                                contactName = ""
-                                contactRole = "مدیرعامل"
-                                contactMobile = ""
-                                contactPhone = vendor.phone
-                                contactExt = "101"
-                                contactEmail = ""
-                                showContactDialog = true
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            modifier = Modifier.height(34.dp)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("افزودن پرسنل", style = MaterialTheme.typography.labelSmall)
-                        }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -956,60 +907,6 @@ fun VendorDetailScreen(
             }
         }
 
-        // Location & Map Preview Card
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(22.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "موقعیت جغرافیایی و مسیریابی",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Button(
-                            onClick = { onOpenMap(vendor.id) },
-                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("مشاهده نقشه کامل", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    Text(
-                        text = vendor.address.ifBlank { "آدرس: ${vendor.province}، ${vendor.city}" },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Text(
-                        text = "مختصات ثبت‌شده GPS: ${PersianUtils.toPersianDigits(String.format("%.4f", vendor.latitude))}, ${PersianUtils.toPersianDigits(String.format("%.4f", vendor.longitude))}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-        }
 
         // Internal Notes Section
         item {

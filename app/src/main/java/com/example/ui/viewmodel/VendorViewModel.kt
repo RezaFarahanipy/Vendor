@@ -59,6 +59,15 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     val selectedVendorId = MutableStateFlow<Long?>(null)
     val editingVendor = MutableStateFlow<Vendor?>(null)
     val isDarkMode = MutableStateFlow(false)
+    val appLanguage = MutableStateFlow(com.example.util.AppLanguage.FA)
+
+    fun toggleLanguage() {
+        appLanguage.value = if (appLanguage.value == com.example.util.AppLanguage.FA) {
+            com.example.util.AppLanguage.EN
+        } else {
+            com.example.util.AppLanguage.FA
+        }
+    }
 
     // Search and filters
     val searchQuery = MutableStateFlow("")
