@@ -7,10 +7,13 @@ import com.example.data.model.ContactPerson
 import com.example.data.model.Product
 import com.example.data.model.Vendor
 import com.example.data.sample.SampleData
-import com.example.util.CsvUtils
+import androidx.room.withTransaction
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import com.example.util.CsvUtils
+import com.example.util.PersianUtils
 import kotlinx.coroutines.withContext
 
 class VendorRepository(private val database: AppDatabase) {
@@ -26,6 +29,7 @@ class VendorRepository(private val database: AppDatabase) {
     val recentVendors: Flow<List<Vendor>> = vendorDao.getRecentContactedVendors()
     val allCategories: Flow<List<Category>> = categoryDao.getAllCategories()
     val allProducts: Flow<List<Product>> = productDao.getAllProducts()
+    val allContacts: Flow<List<ContactPerson>> = contactPersonDao.getAllContacts()
     val favoriteProducts: Flow<List<Product>> = productDao.getFavoriteProducts()
     val allActivityTypes: Flow<List<ActivityType>> = activityTypeDao.getAllActivityTypes()
 
@@ -41,20 +45,19 @@ class VendorRepository(private val database: AppDatabase) {
     fun getContactsByVendor(vendorId: Long): Flow<List<ContactPerson>> =
         contactPersonDao.getContactsByVendor(vendorId)
 
-    suspend fun ensureSampleDataLoaded() = withContext(Dispatchers.IO) {
-        val currentVendors = allVendors.first()
-        if (currentVendors.isEmpty()) {
-            vendorDao.insertVendors(SampleData.initialVendors)
-            categoryDao.insertCategories(SampleData.initialCategories)
-            productDao.insertProducts(SampleData.initialProducts)
-            contactPersonDao.insertContacts(SampleData.initialContacts)
+    suspend fun ensureBaselineTaxonomy() = withContext(Dispatchers.IO) {
+        val currentTypes = allActivityTypes.first()
+        if (currentTypes.isEmpty()) {
             activityTypeDao.insertActivityTypes(SampleData.initialActivityTypes)
-        } else {
-            val currentTypes = allActivityTypes.first()
-            if (currentTypes.isEmpty()) {
-                activityTypeDao.insertActivityTypes(SampleData.initialActivityTypes)
-            }
         }
+        val currentCategories = allCategories.first()
+        if (currentCategories.isEmpty()) {
+            categoryDao.insertCategories(SampleData.initialCategories)
+        }
+    }
+
+    suspend fun ensureSampleDataLoaded() = withContext(Dispatchers.IO) {
+        ensureBaselineTaxonomy()
     }
 
     suspend fun saveVendor(vendor: Vendor): Long = withContext(Dispatchers.IO) {
@@ -66,13 +69,82 @@ class VendorRepository(private val database: AppDatabase) {
         }
     }
 
+    suspend fun saveVendorWithRelations(
+        vendor: Vendor,
+        contacts: List<ContactPerson>,
+        products: List<Product>
+    ): Long = withContext(Dispatchers.IO) {
+        database.withTransaction {
+            val savedVendorId = if (vendor.id == 0L) {
+                vendorDao.insertVendor(vendor)
+            } else {
+                vendorDao.updateVendor(vendor)
+                vendor.id
+            }
+
+            // Sync contacts: remove deleted ones, insert/update remaining
+            val existingContacts = contactPersonDao.getContactsByVendor(savedVendorId).first()
+            val currentContactIds = contacts.mapNotNull { if (it.id > 0L) it.id else null }.toSet()
+            for (existing in existingContacts) {
+                if (existing.id !in currentContactIds) {
+                    contactPersonDao.deleteContactById(existing.id)
+                }
+            }
+            for (c in contacts) {
+                val toSave = c.copy(vendorId = savedVendorId)
+                if (toSave.id == 0L) {
+                    contactPersonDao.insertContact(toSave)
+                } else {
+                    contactPersonDao.updateContact(toSave)
+                }
+            }
+
+            // Sync products: remove deleted ones, insert/update remaining
+            val existingProducts = productDao.getProductsByVendor(savedVendorId).first()
+            val currentProductIds = products.mapNotNull { if (it.id > 0L) it.id else null }.toSet()
+            for (existing in existingProducts) {
+                if (existing.id !in currentProductIds) {
+                    productDao.deleteProductById(existing.id)
+                }
+            }
+            for (p in products) {
+                val toSave = p.copy(vendorId = savedVendorId)
+                if (toSave.id == 0L) {
+                    productDao.insertProduct(toSave)
+                } else {
+                    productDao.updateProduct(toSave)
+                }
+            }
+
+            savedVendorId
+        }
+    }
+
     suspend fun deleteVendor(vendorId: Long) = withContext(Dispatchers.IO) {
-        vendorDao.deleteVendorById(vendorId)
-        // Also delete associated contacts and products
-        val contacts = contactPersonDao.getContactsByVendor(vendorId).first()
-        contacts.forEach { contactPersonDao.deleteContactById(it.id) }
-        val products = productDao.getProductsByVendor(vendorId).first()
-        products.forEach { productDao.deleteProductById(it.id) }
+        val vendor = vendorDao.getVendorById(vendorId).first()
+        database.withTransaction {
+            val contacts = contactPersonDao.getContactsByVendor(vendorId).first()
+            contacts.forEach { contactPersonDao.deleteContactById(it.id) }
+            val products = productDao.getProductsByVendor(vendorId).first()
+            products.forEach { productDao.deleteProductById(it.id) }
+            vendorDao.deleteVendorById(vendorId)
+        }
+
+        // Clean up associated local files to avoid orphan files
+        if (vendor != null) {
+            if (vendor.logoUri.isNotBlank()) {
+                try {
+                    val file = File(vendor.logoUri)
+                    if (file.exists() && file.isFile) file.delete()
+                } catch (_: Exception) {}
+            }
+            if (vendor.catalogLocalPath.isNotBlank()) {
+                try {
+                    val file = File(vendor.catalogLocalPath)
+                    if (file.exists() && file.isFile) file.delete()
+                } catch (_: Exception) {}
+            }
+        }
     }
 
     suspend fun toggleVendorFavorite(vendorId: Long, currentFavorite: Boolean) = withContext(Dispatchers.IO) {
@@ -145,8 +217,23 @@ class VendorRepository(private val database: AppDatabase) {
         activityTypeDao.deleteActivityTypeById(activityTypeId)
     }
 
-    suspend fun checkDuplicate(name: String): Boolean = withContext(Dispatchers.IO) {
-        vendorDao.findByName(name.trim()) != null
+    suspend fun checkDuplicateVendor(
+        name: String,
+        nationalId: String = "",
+        mobile: String = "",
+        currentVendorId: Long = 0L
+    ): Vendor? = withContext(Dispatchers.IO) {
+        val normName = PersianUtils.normalize(name).trim()
+        val normNational = nationalId.trim().filter { it.isDigit() }
+        val normMobile = PersianUtils.normalizePhone(mobile)
+        val all = allVendors.first()
+        all.firstOrNull { v ->
+            if (v.id == currentVendorId) return@firstOrNull false
+            val matchName = normName.isNotBlank() && PersianUtils.normalize(v.name).trim() == normName
+            val matchNational = normNational.isNotBlank() && v.nationalId.filter { it.isDigit() } == normNational
+            val matchMobile = normMobile.isNotBlank() && PersianUtils.normalizePhone(v.mobile) == normMobile
+            matchName || matchNational || matchMobile
+        }
     }
 
     suspend fun exportCsv(): String = withContext(Dispatchers.IO) {
@@ -154,19 +241,69 @@ class VendorRepository(private val database: AppDatabase) {
         CsvUtils.exportVendorsToCsv(vendors)
     }
 
-    suspend fun importCsv(csvContent: String): Int = withContext(Dispatchers.IO) {
+    suspend fun importCsv(csvContent: String): com.example.util.ImportSummary = withContext(Dispatchers.IO) {
         val parsed = CsvUtils.parseCsvToVendors(csvContent)
-        if (parsed.isNotEmpty()) {
-            vendorDao.insertVendors(parsed)
+        val currentVendors = allVendors.first()
+        val summary = CsvUtils.deduplicateVendors(parsed, currentVendors)
+        if (summary.vendorsToInsert.isNotEmpty()) {
+            database.withTransaction {
+                vendorDao.insertVendors(summary.vendorsToInsert)
+            }
         }
-        parsed.size
+        summary
+    }
+
+    suspend fun exportFullBackupJson(): String = withContext(Dispatchers.IO) {
+        val vendors = allVendors.first()
+        val contacts = allContacts.first()
+        val products = allProducts.first()
+        CsvUtils.exportFullBackupJson(vendors, contacts, products)
+    }
+
+    suspend fun restoreFullBackupJson(jsonString: String): Pair<Int, Int> = withContext(Dispatchers.IO) {
+        val backup = CsvUtils.parseFullBackupJson(jsonString) ?: return@withContext Pair(0, 0)
+        database.withTransaction {
+            val existing = allVendors.first()
+            val existingNormalizedNames = existing.map { PersianUtils.normalize(it.name).trim() }.filter { it.isNotBlank() }.toSet()
+            val existingNationalIds = existing.map { it.nationalId.filter { c -> c.isDigit() } }.filter { it.isNotBlank() }.toSet()
+
+            var insertedVendors = 0
+            var skipped = 0
+
+            for (v in backup.vendors) {
+                val normName = PersianUtils.normalize(v.name).trim()
+                val normNational = v.nationalId.filter { it.isDigit() }
+                if (normName in existingNormalizedNames || (normNational.isNotBlank() && normNational in existingNationalIds)) {
+                    skipped++
+                    continue
+                }
+                val oldId = v.id
+                val newVendorId = vendorDao.insertVendor(v.copy(id = 0L))
+                insertedVendors++
+
+                backup.contacts.filter { it.vendorId == oldId }.forEach { c ->
+                    contactPersonDao.insertContact(c.copy(id = 0L, vendorId = newVendorId))
+                }
+                backup.products.filter { it.vendorId == oldId }.forEach { p ->
+                    productDao.insertProduct(p.copy(id = 0L, vendorId = newVendorId))
+                }
+            }
+            Pair(insertedVendors, skipped)
+        }
     }
 
     suspend fun restoreSampleData() = withContext(Dispatchers.IO) {
-        vendorDao.insertVendors(SampleData.initialVendors)
-        categoryDao.insertCategories(SampleData.initialCategories)
-        productDao.insertProducts(SampleData.initialProducts)
-        contactPersonDao.insertContacts(SampleData.initialContacts)
-        activityTypeDao.insertActivityTypes(SampleData.initialActivityTypes)
+        database.withTransaction {
+            ensureBaselineTaxonomy()
+            SampleData.initialVendors.forEach { v ->
+                val newVendorId = vendorDao.insertVendor(v.copy(id = 0L))
+                SampleData.initialContacts.filter { it.vendorId == v.id }.forEach { c ->
+                    contactPersonDao.insertContact(c.copy(id = 0L, vendorId = newVendorId))
+                }
+                SampleData.initialProducts.filter { it.vendorId == v.id }.forEach { p ->
+                    productDao.insertProduct(p.copy(id = 0L, vendorId = newVendorId))
+                }
+            }
+        }
     }
 }

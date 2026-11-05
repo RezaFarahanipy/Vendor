@@ -300,20 +300,22 @@ fun VendorCard(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = null,
-                            tint = AmberRating,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Text(
-                            text = PersianUtils.toPersianDigits(vendor.rating.toString()),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        if (vendor.rating > 0f) {
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = AmberRating,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(
+                                text = PersianUtils.toPersianDigits(String.format("%.1f", vendor.rating)),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
 
@@ -422,20 +424,6 @@ fun MessengerActionBar(
                 modifier = Modifier.weight(1f),
                 onClick = {
                     com.example.util.MessengerUtils.openBale(context, targetPhone)
-                }
-            )
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            // Rubika Button (#7B1FA2)
-            BrandedMessengerButton(
-                label = "روبیکا",
-                icon = Icons.Default.Star,
-                bgColor = Color(0xFF8E24AA),
-                textColor = Color.White,
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    com.example.util.MessengerUtils.openRubika(context, targetPhone)
                 }
             )
         }

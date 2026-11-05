@@ -42,19 +42,25 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Create temporary debug keystore
+      - name: Set up persistent debug keystore
+        env:
+          KEYSTORE_BASE64_SECRET: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
         run: |
           KEYSTORE_PATH="./debug.keystore"
-          if [ ! -f "$KEYSTORE_PATH" ]; then
-            echo "Debug keystore not found at $KEYSTORE_PATH. Generating temporary keystore..."
+          if [ -n "$KEYSTORE_BASE64_SECRET" ]; then
+            echo "Decoding debug keystore from repository secret..."
+            echo "$KEYSTORE_BASE64_SECRET" | base64 -d > "$KEYSTORE_PATH"
+          elif [ -f "./debug.keystore.base64" ]; then
+            echo "Decoding debug keystore from tracked debug.keystore.base64..."
+            base64 -d ./debug.keystore.base64 > "$KEYSTORE_PATH"
+          elif [ ! -f "$KEYSTORE_PATH" ]; then
+            echo "Warning: Keystore not found. Generating fallback debug keystore..."
             keytool -genkey -v -keystore "$KEYSTORE_PATH" \
               -storepass android -alias androiddebugkey -keypass android \
               -keyalg RSA -keysize 2048 -validity 10000 \
               -dname "CN=Android Debug,O=Android,C=US"
-            echo "Temporary debug keystore created successfully."
-          else
-            echo "Debug keystore already exists at $KEYSTORE_PATH."
           fi
+          echo "Debug keystore configured successfully at $KEYSTORE_PATH."
 
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace --no-daemon

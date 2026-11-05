@@ -11,6 +11,10 @@ import com.example.data.model.Product
 import com.example.data.model.Vendor
 import com.example.data.repository.VendorRepository
 import com.example.util.PersianUtils
+import com.example.data.preferences.AppSettingsDataStore
+import com.example.data.preferences.ThemeMode
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -52,32 +56,59 @@ data class VendorStats(
 class VendorViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = VendorRepository(AppDatabase.getDatabase(application))
+    private val settingsDataStore = AppSettingsDataStore(application)
 
     // Navigation and display state
     val currentScreen = MutableStateFlow(AppScreen.MAIN_TABS)
     val currentTab = MutableStateFlow(MainTab.HOME)
     val selectedVendorId = MutableStateFlow<Long?>(null)
     val editingVendor = MutableStateFlow<Vendor?>(null)
+
+    // Persistent State (Theme, Language, CardView)
+    val themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     val isDarkMode = MutableStateFlow(false)
     val appLanguage = MutableStateFlow(com.example.util.AppLanguage.FA)
+    val isCardViewMode = MutableStateFlow(true) // Cards vs List
+
+    fun setThemeMode(mode: ThemeMode) {
+        themeMode.value = mode
+        isDarkMode.value = (mode == ThemeMode.DARK)
+        viewModelScope.launch {
+            settingsDataStore.setThemeMode(mode)
+        }
+    }
 
     fun toggleLanguage() {
-        appLanguage.value = if (appLanguage.value == com.example.util.AppLanguage.FA) {
+        val nextLang = if (appLanguage.value == com.example.util.AppLanguage.FA) {
             com.example.util.AppLanguage.EN
         } else {
             com.example.util.AppLanguage.FA
         }
+        appLanguage.value = nextLang
+        viewModelScope.launch {
+            settingsDataStore.setAppLanguage(nextLang)
+        }
     }
 
-    // Search and filters
-    val searchQuery = MutableStateFlow("")
+    fun setCardViewMode(isCard: Boolean) {
+        isCardViewMode.value = isCard
+        viewModelScope.launch {
+            settingsDataStore.setCardViewMode(isCard)
+        }
+    }
+
+    // Separate search queries with debounce (~250ms)
+    val vendorSearchQuery = MutableStateFlow("")
+    val productSearchQuery = MutableStateFlow("")
+    // Alias for backwards compatibility
+    val searchQuery get() = vendorSearchQuery
+
     val selectedCategoryFilter = MutableStateFlow("همه")
     val selectedActivityTypeFilter = MutableStateFlow("همه")
     val selectedCityFilter = MutableStateFlow("همه")
     val onlyVerifiedFilter = MutableStateFlow(false)
     val onlyCatalogFilter = MutableStateFlow(false)
     val sortOption = MutableStateFlow(SortOption.RELEVANCE)
-    val isCardViewMode = MutableStateFlow(true) // Cards vs List
 
     // Product screen category filter
     val selectedProductCategory = MutableStateFlow("همه")
@@ -101,22 +132,33 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     val allProducts: StateFlow<List<Product>> = repository.allProducts
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val allContacts: StateFlow<List<ContactPerson>> = repository.allContacts
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val favoriteProducts: StateFlow<List<Product>> = repository.favoriteProducts
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val allActivityTypes: StateFlow<List<ActivityType>> = repository.allActivityTypes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Filtered vendors reacting to search, category, activity type, city, verification, and sort
+    @OptIn(FlowPreview::class)
+    private val debouncedVendorQuery = vendorSearchQuery.debounce(250L)
+
+    @OptIn(FlowPreview::class)
+    private val debouncedProductQuery = productSearchQuery.debounce(250L)
+
+    // Filtered vendors reacting to search, category, activity type, city, verification, sort, personnel, and products
     val filteredVendors: StateFlow<List<Vendor>> = combine(
         allVendors,
-        searchQuery,
+        debouncedVendorQuery,
         selectedCategoryFilter,
         selectedActivityTypeFilter,
         selectedCityFilter,
         onlyVerifiedFilter,
         onlyCatalogFilter,
-        sortOption
+        sortOption,
+        allContacts,
+        allProducts
     ) { args: Array<Any> ->
         @Suppress("UNCHECKED_CAST")
         val vendors = args[0] as List<Vendor>
@@ -127,23 +169,47 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         val verifiedOnly = args[5] as Boolean
         val catalogOnly = args[6] as Boolean
         val sort = args[7] as SortOption
+        @Suppress("UNCHECKED_CAST")
+        val contacts = args[8] as List<ContactPerson>
+        @Suppress("UNCHECKED_CAST")
+        val products = args[9] as List<Product>
+
+        val contactsByVendor = contacts.groupBy { it.vendorId }
+        val productsByVendor = products.groupBy { it.vendorId }
 
         vendors.filter { vendor ->
-            // Search query matching
+            // Search query matching: vendor attributes, phones without dashes, personnel name/phone, products
             val matchesQuery = if (query.isBlank()) true else {
                 PersianUtils.matchesSearch(vendor.name, query) ||
                         PersianUtils.matchesSearch(vendor.description, query) ||
                         PersianUtils.matchesSearch(vendor.categories, query) ||
                         PersianUtils.matchesSearch(vendor.tags, query) ||
                         PersianUtils.matchesSearch(vendor.city, query) ||
-                        PersianUtils.matchesSearch(vendor.phone, query) ||
-                        PersianUtils.matchesSearch(vendor.mobile, query) ||
-                        PersianUtils.matchesSearch(vendor.secondaryPhones, query) ||
-                        PersianUtils.matchesSearch(vendor.additionalMobiles, query) ||
+                        PersianUtils.matchesSearch(vendor.province, query) ||
+                        PersianUtils.matchesSearch(vendor.address, query) ||
+                        PersianUtils.matchesSearch(vendor.notes, query) ||
                         PersianUtils.matchesSearch(vendor.economicCode, query) ||
                         PersianUtils.matchesSearch(vendor.nationalId, query) ||
                         PersianUtils.matchesSearch(vendor.registrationNumber, query) ||
-                        PersianUtils.matchesSearch(vendor.ceoName, query)
+                        PersianUtils.matchesSearch(vendor.ceoName, query) ||
+                        PersianUtils.matchesPhone(vendor.phone, query) ||
+                        PersianUtils.matchesPhone(vendor.mobile, query) ||
+                        PersianUtils.matchesPhone(vendor.secondaryPhones, query) ||
+                        PersianUtils.matchesPhone(vendor.additionalMobiles, query) ||
+                        (contactsByVendor[vendor.id]?.any { c ->
+                            PersianUtils.matchesSearch(c.name, query) ||
+                                    PersianUtils.matchesSearch(c.role, query) ||
+                                    PersianUtils.matchesPhone(c.mobile, query) ||
+                                    PersianUtils.matchesPhone(c.phone, query)
+                        } == true) ||
+                        (productsByVendor[vendor.id]?.any { p ->
+                            PersianUtils.matchesSearch(p.name, query) ||
+                                    PersianUtils.matchesSearch(p.brand, query) ||
+                                    PersianUtils.matchesSearch(p.model, query) ||
+                                    PersianUtils.matchesSearch(p.technicalCode, query) ||
+                                    PersianUtils.matchesSearch(p.specifications, query) ||
+                                    PersianUtils.matchesSearch(p.description, query)
+                        } == true)
             }
 
             // Category matching
@@ -178,11 +244,11 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Filtered products
+    // Filtered products reacting to debounced product query and category
     val filteredProducts: StateFlow<List<Product>> = combine(
         allProducts,
         selectedProductCategory,
-        searchQuery
+        debouncedProductQuery
     ) { products, cat, query ->
         products.filter { p ->
             val matchCat = if (cat == "همه") true else PersianUtils.matchesSearch(p.category, cat)
@@ -190,7 +256,9 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
                 PersianUtils.matchesSearch(p.name, query) ||
                         PersianUtils.matchesSearch(p.model, query) ||
                         PersianUtils.matchesSearch(p.specifications, query) ||
-                        PersianUtils.matchesSearch(p.brand, query)
+                        PersianUtils.matchesSearch(p.brand, query) ||
+                        PersianUtils.matchesSearch(p.technicalCode, query) ||
+                        PersianUtils.matchesSearch(p.description, query)
             }
             matchCat && matchQuery
         }
@@ -213,7 +281,23 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
 
     init {
         viewModelScope.launch {
-            repository.ensureSampleDataLoaded()
+            settingsDataStore.themeModeFlow.collect { mode ->
+                themeMode.value = mode
+                isDarkMode.value = (mode == ThemeMode.DARK)
+            }
+        }
+        viewModelScope.launch {
+            settingsDataStore.appLanguageFlow.collect { lang ->
+                appLanguage.value = lang
+            }
+        }
+        viewModelScope.launch {
+            settingsDataStore.isCardViewModeFlow.collect { isCard ->
+                isCardViewMode.value = isCard
+            }
+        }
+        viewModelScope.launch {
+            repository.ensureBaselineTaxonomy()
         }
     }
 
@@ -277,6 +361,35 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
             val savedId = repository.saveVendor(vendor)
             userNotice.value = "اطلاعات وندور با موفقیت ذخیره شد"
             onComplete(savedId)
+        }
+    }
+
+    fun saveVendorWithRelations(
+        vendor: Vendor,
+        contacts: List<ContactPerson>,
+        products: List<Product>,
+        onComplete: (Long) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val savedId = repository.saveVendorWithRelations(vendor, contacts, products)
+                userNotice.value = "اطلاعات وندور و جزئیات با موفقیت ذخیره شد"
+                onComplete(savedId)
+            } catch (e: Exception) {
+                userNotice.value = "خطا در ذخیره‌سازی: ${e.localizedMessage}"
+            }
+        }
+    }
+
+    fun loadSampleData(onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            try {
+                repository.restoreSampleData()
+                userNotice.value = "داده‌های نمونه با موفقیت بارگذاری شدند"
+                onComplete?.invoke()
+            } catch (e: Exception) {
+                userNotice.value = "خطا در بارگذاری داده‌های نمونه: ${e.localizedMessage}"
+            }
         }
     }
 
@@ -370,6 +483,16 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    // Duplicate check
+    suspend fun checkDuplicateVendor(
+        name: String,
+        nationalId: String = "",
+        mobile: String = "",
+        currentId: Long = 0L
+    ): Vendor? {
+        return repository.checkDuplicateVendor(name, nationalId, mobile, currentId)
+    }
+
     // Export / Import / Reset
     fun exportToCsv(onSuccess: (String) -> Unit) {
         viewModelScope.launch {
@@ -379,10 +502,27 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun importFromCsv(csv: String) {
+    fun importFromCsv(csv: String, onComplete: ((com.example.util.ImportSummary) -> Unit)? = null) {
         viewModelScope.launch {
-            val count = repository.importCsv(csv)
-            userNotice.value = "$count وندور از فایل با موفقیت وارد شد"
+            val summary = repository.importCsv(csv)
+            userNotice.value = "تعداد ${summary.newCount} وندور جدید وارد شد. ${summary.duplicateSkippedCount} مورد تکراری رد شد."
+            onComplete?.invoke(summary)
+        }
+    }
+
+    fun exportFullBackupJson(onSuccess: (String) -> Unit) {
+        viewModelScope.launch {
+            val json = repository.exportFullBackupJson()
+            onSuccess(json)
+            userNotice.value = "فایل پشتیبان کامل JSON آماده شد"
+        }
+    }
+
+    fun restoreFullBackupJson(jsonString: String, onComplete: ((inserted: Int, skipped: Int) -> Unit)? = null) {
+        viewModelScope.launch {
+            val (inserted, skipped) = repository.restoreFullBackupJson(jsonString)
+            userNotice.value = "پشتیبان بازیابی شد: $inserted وندور جدید، $skipped تکراری رد شد."
+            onComplete?.invoke(inserted, skipped)
         }
     }
 
@@ -394,7 +534,8 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun toggleDarkMode() {
-        isDarkMode.value = !isDarkMode.value
+        val nextMode = if (themeMode.value == ThemeMode.DARK) ThemeMode.LIGHT else ThemeMode.DARK
+        setThemeMode(nextMode)
     }
 
     fun clearNotice() {

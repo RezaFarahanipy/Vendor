@@ -100,6 +100,9 @@ import com.example.R
 import com.example.data.model.ContactPerson
 import com.example.data.model.Product
 import com.example.data.model.Vendor
+import com.example.ui.screens.vendor_detail.VendorDetailHeaderCard
+import com.example.ui.screens.vendor_detail.VendorDetailLegalBankSection
+import com.example.ui.screens.vendor_detail.VendorDetailPersonnelSection
 import com.example.ui.components.CatalogViewerDialog
 import com.example.ui.components.DirectContactActionsRow
 import com.example.ui.components.dialPhone
@@ -248,149 +251,7 @@ fun VendorDetailScreen(
 
         // Elegant Header Card: Logo Side-by-Side with Company Name & Info
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Company Logo
-                        Box(
-                            modifier = Modifier
-                                .size(74.dp)
-                                .clip(RoundedCornerShape(18.dp))
-                                .background(
-                                    Brush.linearGradient(listOf(NavyDeep, TealDark))
-                                )
-                                .border(2.dp, TealPrimary.copy(alpha = 0.6f), RoundedCornerShape(18.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (vendor.logoUri.isNotBlank() && File(vendor.logoUri).exists()) {
-                                AsyncImage(
-                                    model = File(vendor.logoUri),
-                                    contentDescription = "لوگوی شرکت",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Text(
-                                    text = vendor.name.take(2),
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 24.sp
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = vendor.name,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 2
-                                )
-                                if (vendor.isVerified) {
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Icon(
-                                        imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = "تأیید شده",
-                                        tint = GreenVerified,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(3.dp))
-
-                            Text(
-                                text = "${vendor.activityType} • ${vendor.province}، ${vendor.city}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold
-                            )
-
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            // Rating Stars
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                repeat(5) { index ->
-                                    Icon(
-                                        imageVector = Icons.Default.Star,
-                                        contentDescription = null,
-                                        tint = if (index < vendor.rating.toInt()) AmberRating else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = PersianUtils.toPersianDigits(vendor.rating.toString()),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "(${PersianUtils.toPersianDigits(vendor.reviewCount)} نظر)",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 11.sp
-                                )
-                            }
-                        }
-                    }
-
-                    if (vendor.description.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = vendor.description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Category Chips
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        (vendor.categories.split(",") + vendor.tags.split(","))
-                            .map { it.trim() }
-                            .filter { it.isNotBlank() }
-                            .forEach { tag ->
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(TealPrimary.copy(alpha = 0.12f))
-                                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = tag,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = TealDark,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                    }
-                }
-            }
+            VendorDetailHeaderCard(vendor = vendor)
         }
 
         // Direct Actions & Instant Messengers
@@ -533,182 +394,29 @@ fun VendorDetailScreen(
             }
         }
 
-        // Legal & Financial Card (اطلاعات ثبتی، کد اقتصادی، شناسه ملی، حساب‌های بانکی و شبا)
+        // Legal & Financial Section
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.AccountBalance, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(22.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "اطلاعات حقوقی، ثبتی و بانکی",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    // Registration codes
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        if (vendor.economicCode.isNotBlank()) {
-                            LegalCodeBadge(label = "کد اقتصادی", code = vendor.economicCode, modifier = Modifier.weight(1f))
-                        }
-                        if (vendor.nationalId.isNotBlank()) {
-                            LegalCodeBadge(label = "شناسه ملی", code = vendor.nationalId, modifier = Modifier.weight(1f))
-                        }
-                        if (vendor.registrationNumber.isNotBlank()) {
-                            LegalCodeBadge(label = "شماره ثبت", code = vendor.registrationNumber, modifier = Modifier.weight(1f))
-                        }
-                    }
-
-                    // Bank accounts
-                    val bankAccounts = vendor.getBankAccountsList()
-                    if (bankAccounts.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "حساب‌های بانکی و شماره‌های شبا:",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        bankAccounts.forEachIndexed { idx, acc ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(10.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = "${acc.bankName.ifBlank { "بانک" }} ${if (acc.branch.isNotBlank()) "• شعبه ${acc.branch}" else ""}",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        if (acc.accountNumber.isNotBlank()) {
-                                            Text(
-                                                text = "حساب: ${PersianUtils.toPersianDigits(acc.accountNumber)}",
-                                                style = MaterialTheme.typography.bodySmall
-                                            )
-                                        }
-                                    }
-
-                                    if (acc.iban.isNotBlank()) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = "شبا: ${acc.iban}",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                            IconButton(
-                                                onClick = {
-                                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                    clipboard.setPrimaryClip(ClipData.newPlainText("IBAN", acc.iban))
-                                                    Toast.makeText(context, "شماره شبا در حافظه کپی شد", Toast.LENGTH_SHORT).show()
-                                                },
-                                                modifier = Modifier.size(24.dp)
-                                            ) {
-                                                Icon(Icons.Default.ContentCopy, contentDescription = "کپی شبا", tint = TealPrimary, modifier = Modifier.size(16.dp))
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            VendorDetailLegalBankSection(vendor = vendor)
         }
 
         // Personnel Management Section
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .animateContentSize(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.People, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(22.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "پرسنل و مدیران ارتباطی (${PersianUtils.toPersianDigits(contacts.size)} نفر)",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    if (contacts.isEmpty()) {
-                        Text(
-                            text = "هنوز پرسنلی برای این شرکت ثبت نشده است.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        contacts.forEach { contact ->
-                            PersonnelCardItem(
-                                contact = contact,
-                                onEdit = {
-                                    editingContact = contact
-                                    contactName = contact.name
-                                    contactRole = contact.role
-                                    contactMobile = contact.mobile
-                                    contactPhone = contact.phone
-                                    contactExt = contact.extension
-                                    contactEmail = contact.email
-                                    showContactDialog = true
-                                },
-                                onDelete = { viewModel.deleteContact(contact.id) }
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
+            VendorDetailPersonnelSection(
+                contacts = contacts,
+                onEditContact = { contact ->
+                    editingContact = contact
+                    contactName = contact.name
+                    contactRole = contact.role
+                    contactMobile = contact.mobile
+                    contactPhone = contact.phone
+                    contactExt = contact.extension
+                    contactEmail = contact.email
+                    showContactDialog = true
+                },
+                onDeleteContact = { contactId ->
+                    viewModel.deleteContact(contactId)
                 }
-            }
+            )
         }
 
         // Full PDF Catalog Card
@@ -1309,116 +1017,6 @@ private fun MessengerTile(label: String, color: Color, onClick: () -> Unit) {
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(text = label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-private fun PersonnelCardItem(
-    contact: ContactPerson,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit
-) {
-    val context = LocalContext.current
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(listOf(NavyDeep, TealDark))
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
-                }
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = contact.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(
-                        text = "${contact.role} ${if (contact.extension.isNotBlank()) "• داخلی ${PersianUtils.toPersianDigits(contact.extension)}" else ""}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(18.dp))
-                }
-
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(18.dp))
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Direct Communication Actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                if (contact.mobile.isNotBlank()) {
-                    OutlinedButton(
-                        onClick = { dialPhone(context, contact.mobile) },
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
-                    ) {
-                        Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("تماس", fontSize = 11.sp)
-                    }
-
-                    OutlinedButton(
-                        onClick = { sendSms(context, contact.mobile) },
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
-                    ) {
-                        Icon(Icons.Default.Message, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("پیامک", fontSize = 11.sp)
-                    }
-
-                    IconButton(
-                        onClick = {
-                            MessengerUtils.openWhatsApp(context, contact.mobile, "سلام جناب ${contact.name}")
-                        },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(Icons.Default.Send, contentDescription = "واتس‌اپ", tint = Color(0xFF25D366), modifier = Modifier.size(18.dp))
-                    }
-                }
-
-                if (contact.phone.isNotBlank()) {
-                    OutlinedButton(
-                        onClick = { dialPhone(context, contact.phone) },
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
-                    ) {
-                        Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("داخلی", fontSize = 11.sp)
-                    }
-                }
-            }
-        }
     }
 }
 

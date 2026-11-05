@@ -127,7 +127,14 @@ fun MainAppScreen(viewModel: VendorViewModel) {
                     when (screen) {
                         AppScreen.ONBOARDING -> {
                             OnboardingScreen(
-                                onStartClick = { viewModel.currentScreen.value = AppScreen.MAIN_TABS }
+                                onStartEmpty = {
+                                    viewModel.currentScreen.value = AppScreen.MAIN_TABS
+                                },
+                                onLoadSampleData = {
+                                    viewModel.loadSampleData {
+                                        viewModel.currentScreen.value = AppScreen.MAIN_TABS
+                                    }
+                                }
                             )
                         }
 

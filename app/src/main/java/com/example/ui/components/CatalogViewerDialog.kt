@@ -58,33 +58,6 @@ import java.io.FileOutputStream
 
 object CatalogFileUtils {
 
-    fun ensureSampleCatalogFile(context: Context, vendorName: String, catalogTitle: String): File {
-        val dir = File(context.filesDir, "catalogs")
-        if (!dir.exists()) dir.mkdirs()
-        val safeName = vendorName.replace(" ", "_")
-        val file = File(dir, "catalog_${safeName}.pdf")
-        if (!file.exists()) {
-            try {
-                FileOutputStream(file).use { out ->
-                    // Standard minimal valid PDF binary stream header
-                    val pdfContent = "%PDF-1.4\n" +
-                            "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n" +
-                            "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n" +
-                            "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >> endobj\n" +
-                            "4 0 obj << /Length 55 >> stream\n" +
-                            "BT /F1 18 Tf 50 700 Td (VendorYab Industrial Catalog: $vendorName) Tj ET\n" +
-                            "endstream endobj\n" +
-                            "xref\n0 5\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000214 00000 n \n" +
-                            "trailer << /Size 5 /Root 1 0 R >>\nstartxref\n320\n%%EOF"
-                    out.write(pdfContent.toByteArray(Charsets.US_ASCII))
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        return file
-    }
-
     fun openPdfFile(context: Context, file: File) {
         try {
             val uri = FileProvider.getUriForFile(
@@ -99,7 +72,7 @@ object CatalogFileUtils {
             }
             context.startActivity(Intent.createChooser(intent, "مشاهده کاتالوگ با PDFخوان"))
         } catch (e: Exception) {
-            Toast.makeText(context, "برنامه پی‌دی‌اف‌خوان روی دستگاه یافت نشد. کاتالوگ در برنامه آماده نمایش است.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "برنامه پی‌دی‌اف‌خوان روی دستگاه یافت نشد.", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -133,15 +106,8 @@ fun CatalogViewerDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-
-    // Resolve or generate local PDF file
-    val targetFile = if (catalogLocalPath.isNotBlank() && File(catalogLocalPath).exists()) {
-        File(catalogLocalPath)
-    } else {
-        CatalogFileUtils.ensureSampleCatalogFile(context, vendorName, catalogTitle)
-    }
-
-    val fileSizeKb = (targetFile.length() / 1024L).coerceAtLeast(145L)
+    val hasValidCatalog = catalogLocalPath.isNotBlank() && File(catalogLocalPath).exists()
+    val targetFile = if (hasValidCatalog) File(catalogLocalPath) else null
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -151,20 +117,20 @@ fun CatalogViewerDialog(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(RedFavorite),
+                        .background(if (hasValidCatalog) RedFavorite else MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.PictureAsPdf,
+                        imageVector = if (hasValidCatalog) Icons.Default.PictureAsPdf else Icons.Default.Description,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = if (hasValidCatalog) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "کاتالوگ دیجیتال و مشخصات فنی",
+                        text = if (hasValidCatalog) "کاتالوگ دیجیتال و مشخصات فنی" else "وضعیت کاتالوگ",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -177,77 +143,91 @@ fun CatalogViewerDialog(
             }
         },
         text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Card(
+            if (hasValidCatalog && targetFile != null) {
+                val fileSizeKb = (targetFile.length() / 1024L).coerceAtLeast(1L)
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     ) {
-                        Text(
-                            text = catalogTitle.ifBlank { "کاتالوگ جامع محصولات و مشخصات فنی" },
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "شامل دیاگرام‌های هیدرولیکی، جدول متریال استیل، نمودارهای کارکرد و ابعاد نصب",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = "حجم فایل: ${PersianUtils.toPersianDigits(fileSizeKb)} کیلوبایت",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
+                                text = catalogTitle.ifBlank { "کاتالوگ فنی محصولات" },
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                            Text(
-                                text = "فرمت: PDF استاندارد صنعتی",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.outline
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "حجم فایل: ${PersianUtils.toPersianDigits(fileSizeKb)} کیلوبایت",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "فرمت: PDF",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
                         }
                     }
-                }
 
-                // Interactive Action Buttons
-                Button(
-                    onClick = {
-                        CatalogFileUtils.openPdfFile(context, targetFile)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = TealPrimary,
-                        contentColor = NavyDeep
-                    ),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("باز کردن با برنامه PDFخوان", fontWeight = FontWeight.Bold)
-                }
+                    Button(
+                        onClick = { CatalogFileUtils.openPdfFile(context, targetFile) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = TealPrimary,
+                            contentColor = NavyDeep
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("باز کردن با برنامه PDFخوان", fontWeight = FontWeight.Bold)
+                    }
 
-                OutlinedButton(
-                    onClick = {
-                        CatalogFileUtils.sharePdfFile(context, targetFile, "$vendorName - $catalogTitle")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
+                    OutlinedButton(
+                        onClick = { CatalogFileUtils.sharePdfFile(context, targetFile, "$vendorName - $catalogTitle") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("اشتراک‌گذاری فایل کاتالوگ")
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("اشتراک‌گذاری فایل کاتالوگ")
+                    Text(
+                        text = "کاتالوگ ثبت نشده است",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "برای این وندور هنوز فایل کاتالوگ یا بروشور فنی بارگذاری نشده است. می‌توانید در بخش ویرایش وندور، فایل PDF کاتالوگ را اضافه نمایید.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         },

@@ -9,9 +9,11 @@ object MessengerUtils {
 
     /**
      * Formats Iranian numbers to international format (e.g., 0912... -> 98912...)
+     * Converts Persian/Arabic digits first to prevent stripping digits.
      */
     fun cleanPhoneForMessenger(phone: String): String {
-        var clean = phone.replace(Regex("[^0-9+]"), "")
+        val english = PersianUtils.toEnglishDigits(phone)
+        var clean = english.replace(Regex("[^0-9+]"), "")
         if (clean.startsWith("+")) clean = clean.substring(1)
         if (clean.startsWith("0")) {
             clean = "98" + clean.substring(1)
@@ -51,16 +53,6 @@ object MessengerUtils {
             context.startActivity(intent)
         } catch (_: Exception) {
             Toast.makeText(context, "پیام‌رسان بله باز نشد", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun openRubika(context: Context, rawPhone: String) {
-        try {
-            val phone = cleanPhoneForMessenger(rawPhone)
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://rubika.ir/joinc/$phone"))
-            context.startActivity(intent)
-        } catch (_: Exception) {
-            Toast.makeText(context, "پیام‌رسان روبیکا باز نشد", Toast.LENGTH_SHORT).show()
         }
     }
 }

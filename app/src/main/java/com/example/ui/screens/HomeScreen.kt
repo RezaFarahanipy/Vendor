@@ -525,32 +525,25 @@ private fun CompactCategoryTile(
                 )
             }
             Spacer(modifier = Modifier.width(6.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = category.name,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontSize = 11.sp
-                )
-                Text(
-                    text = if (lang == AppLanguage.FA) "${PersianUtils.toPersianDigits(category.vendorCount)} وندور" else "${category.vendorCount} items",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 9.sp
-                )
-            }
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                fontSize = 11.sp,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
 
 private fun defaultCategories() = listOf(
-    Category(name = "صنعتی", vendorCount = 345),
-    Category(name = "ساختمان و عمرانی", vendorCount = 287),
-    Category(name = "ماشین‌آلات", vendorCount = 219),
-    Category(name = "مواد غذایی", vendorCount = 97),
-    Category(name = "مواد شیمیایی", vendorCount = 143),
-    Category(name = "برق و الکترونیک", vendorCount = 182)
+    Category(name = "صنعتی", vendorCount = 0),
+    Category(name = "ساختمان و عمرانی", vendorCount = 0),
+    Category(name = "ماشین‌آلات", vendorCount = 0),
+    Category(name = "مواد غذایی", vendorCount = 0),
+    Category(name = "مواد شیمیایی", vendorCount = 0),
+    Category(name = "برق و الکترونیک", vendorCount = 0)
 )

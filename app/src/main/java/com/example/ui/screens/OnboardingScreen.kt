@@ -48,7 +48,8 @@ import com.example.ui.theme.TealPrimary
 
 @Composable
 fun OnboardingScreen(
-    onStartClick: () -> Unit
+    onStartEmpty: () -> Unit,
+    onLoadSampleData: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -157,11 +158,11 @@ fun OnboardingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Button(
-                    onClick = onStartClick,
+                    onClick = onStartEmpty,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp)
-                        .testTag("start_button"),
+                        .testTag("start_empty_button"),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = TealPrimary,
                         contentColor = NavyDeep
@@ -173,7 +174,7 @@ fun OnboardingScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "شروع کنید",
+                            text = "شروع با پایگاه داده خالی",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -186,17 +187,37 @@ fun OnboardingScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                TextButton(
-                    onClick = onStartClick,
-                    modifier = Modifier.testTag("login_button")
+                Button(
+                    onClick = onLoadSampleData,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .testTag("load_sample_button"),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF132B45),
+                        contentColor = TealLight
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text(
-                        text = "ورود به حساب کاربری",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFFCBD5E1)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Inventory2,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = TealLight
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "بارگذاری با داده‌های نمونه جهت آزمایش",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
         }

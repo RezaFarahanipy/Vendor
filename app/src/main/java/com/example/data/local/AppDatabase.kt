@@ -19,7 +19,7 @@ import com.example.data.model.Vendor
         ActivityType::class
     ],
     version = 3,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun vendorDao(): VendorDao
@@ -39,7 +39,6 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "vendorlist_database"
                 )
-                    .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                 INSTANCE = instance
                 instance

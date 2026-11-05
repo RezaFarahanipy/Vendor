@@ -52,6 +52,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,6 +81,7 @@ import com.example.data.model.ActivityType
 import com.example.data.model.Category
 import com.example.ui.components.AppHeader
 import com.example.ui.components.sendEmail
+import com.example.ui.screens.settings.*
 import com.example.ui.theme.GreenVerified
 import com.example.ui.theme.NavyDeep
 import com.example.ui.theme.RedFavorite
@@ -87,6 +89,9 @@ import com.example.ui.theme.TealDark
 import com.example.ui.theme.TealPrimary
 import com.example.ui.viewmodel.VendorViewModel
 import androidx.compose.material.icons.filled.Language
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.data.preferences.ThemeMode
 import com.example.util.AppLanguage
 import com.example.util.Localization
 import com.example.util.PersianUtils
@@ -96,17 +101,92 @@ fun SettingsScreen(
     viewModel: VendorViewModel
 ) {
     val context = LocalContext.current
+    val themeMode by viewModel.themeMode.collectAsState()
     val isDark by viewModel.isDarkMode.collectAsState()
     val lang by viewModel.appLanguage.collectAsState()
     val allActivityTypes by viewModel.allActivityTypes.collectAsState()
     val allCategories by viewModel.allCategories.collectAsState()
 
+    // Export CSV document launcher (UTF-8 with BOM for Excel)
+    val exportCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportToCsv { csvContent ->
+                try {
+                    context.contentResolver.openOutputStream(uri)?.use { out ->
+                        out.write(csvContent.toByteArray(Charsets.UTF_8))
+                    }
+                    Toast.makeText(context, "فایل اکسل با موفقیت ذخیره شد", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "خطا در ذخیره‌سازی فایل: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    // Import CSV document launcher
+    val importCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val content = context.contentResolver.openInputStream(uri)?.use { stream ->
+                    stream.bufferedReader(Charsets.UTF_8).readText()
+                }
+                if (!content.isNullOrBlank()) {
+                    viewModel.importFromCsv(content)
+                } else {
+                    Toast.makeText(context, "فایل انتخاب‌شده خالی است", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "خطا در خواندن فایل CSV: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Full JSON Backup Export
+    val exportJsonLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportFullBackupJson { jsonContent ->
+                try {
+                    context.contentResolver.openOutputStream(uri)?.use { out ->
+                        out.write(jsonContent.toByteArray(Charsets.UTF_8))
+                    }
+                    Toast.makeText(context, "فایل پشتیبان کامل با موفقیت ذخیره شد", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "خطا در ذخیره‌سازی پشتیبان: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    // Full JSON Backup Restore
+    val importJsonLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val content = context.contentResolver.openInputStream(uri)?.use { stream ->
+                    stream.bufferedReader(Charsets.UTF_8).readText()
+                }
+                if (!content.isNullOrBlank()) {
+                    viewModel.restoreFullBackupJson(content)
+                } else {
+                    Toast.makeText(context, "فایل انتخاب‌شده خالی است", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "خطا در خواندن فایل پشتیبان: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     var showAboutDialog by remember { mutableStateOf(false) }
     var showFeaturesDialog by remember { mutableStateOf(false) }
     var showActivityTypeManageDialog by remember { mutableStateOf(false) }
     var showCategoryManageDialog by remember { mutableStateOf(false) }
-    var showCsvImportDialog by remember { mutableStateOf(false) }
-    var csvInputText by remember { mutableStateOf("") }
     var showResetDialog by remember { mutableStateOf(false) }
     var showDatabaseInfoDialog by remember { mutableStateOf(false) }
 
@@ -254,45 +334,66 @@ fun SettingsScreen(
                 }
             }
 
-            // Dark Mode Toggle
+            // Theme Selection Card (3-state: System, Light, Dark)
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(),
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             SettingsIconBadge(icon = Icons.Default.DarkMode, tint = TealPrimary)
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
-                                    text = "حالت تاریک (Dark Mode)",
+                                    text = "پوسته و حالت تاریک",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = if (isDark) "فعال (کنتراست بالا و بهینه برای چشم)" else "غیرفعال (تم روشن تجاری)",
+                                    text = when (themeMode) {
+                                        ThemeMode.SYSTEM -> "پیرو تنظیمات سیستم عامل"
+                                        ThemeMode.LIGHT -> "حالت روشن تجاری"
+                                        ThemeMode.DARK -> "حالت تاریک بهینه"
+                                    },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
-                        Switch(
-                            checked = isDark,
-                            onCheckedChange = { viewModel.isDarkMode.value = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = TealPrimary,
-                                checkedTrackColor = TealDark
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FilterChip(
+                                selected = themeMode == ThemeMode.SYSTEM,
+                                onClick = { viewModel.setThemeMode(ThemeMode.SYSTEM) },
+                                label = { Text("پیرو سیستم", fontSize = 11.sp) },
+                                modifier = Modifier.weight(1f)
                             )
-                        )
+                            FilterChip(
+                                selected = themeMode == ThemeMode.LIGHT,
+                                onClick = { viewModel.setThemeMode(ThemeMode.LIGHT) },
+                                label = { Text("روشن", fontSize = 11.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = themeMode == ThemeMode.DARK,
+                                onClick = { viewModel.setThemeMode(ThemeMode.DARK) },
+                                label = { Text("تاریک", fontSize = 11.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
             }
@@ -379,27 +480,51 @@ fun SettingsScreen(
                 )
             }
 
-            // Export to CSV
+            // Export to CSV / Excel
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.FileUpload,
                     title = "خروجی اکسل / CSV",
-                    subtitle = "دریافت فایل پشتیبان کامل اطلاعات وندورها",
+                    subtitle = "ذخیره فایل جدول اکسل استاندارد UTF-8 با BOM",
                     onClick = {
-                        viewModel.exportToCsv { csv ->
-                            shareCsvText(context, csv)
-                        }
+                        exportCsvLauncher.launch("vendoryab_vendors.csv")
                     }
                 )
             }
 
-            // Import from CSV
+            // Import from CSV / Excel
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.FileDownload,
-                    title = "ورود اطلاعات از CSV",
-                    subtitle = "افزودن دسته‌جمعی وندورها از فایل اکسل",
-                    onClick = { showCsvImportDialog = true }
+                    title = "ورود اطلاعات از فایل اکسل / CSV",
+                    subtitle = "انتخاب فایل و بارگذاری وندورها با رد کردن تکراری‌ها",
+                    onClick = {
+                        importCsvLauncher.launch(arrayOf("text/comma-separated-values", "text/csv", "application/vnd.ms-excel", "*/*"))
+                    }
+                )
+            }
+
+            // Full JSON Backup Export
+            item {
+                SettingsClickableCard(
+                    icon = Icons.Default.Code,
+                    title = "پشتیبان‌گیری کامل (JSON)",
+                    subtitle = "استخراج کامل وندورها، پرسنل و محصولات در قالب فایل JSON",
+                    onClick = {
+                        exportJsonLauncher.launch("vendoryab_full_backup.json")
+                    }
+                )
+            }
+
+            // Full JSON Backup Restore
+            item {
+                SettingsClickableCard(
+                    icon = Icons.Default.Restore,
+                    title = "بازیابی از فایل پشتیبان (JSON)",
+                    subtitle = "بازگردانی کامل کلیه اطلاعات از فایل پشتیبان JSON",
+                    onClick = {
+                        importJsonLauncher.launch(arrayOf("application/json", "*/*"))
+                    }
                 )
             }
 
@@ -443,583 +568,76 @@ fun SettingsScreen(
 
     // Full Features and Capabilities Dialog
     if (showFeaturesDialog) {
-        AlertDialog(
-            onDismissRequest = { showFeaturesDialog = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.FeaturedPlayList, contentDescription = null, tint = TealPrimary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("قابلیت‌ها و امکانات کامل وندوریاب", fontWeight = FontWeight.Bold)
-                }
-            },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    FeatureItem(
-                        number = "۱",
-                        title = "مدیریت جامع وندورها و تأمین‌کنندگان",
-                        desc = "ثبت، ویرایش، حذف، برچسب‌گذاری، وضعیت تأییدیه رسمی و ثبت یادداشت‌های محرمانه داخلی برای هر شرکت."
-                    )
-                    FeatureItem(
-                        number = "۲",
-                        title = "سیستم چندشماره‌ای تماس و ارتباطات",
-                        desc = "پشتیبانی از چندین خط ثابت و چندین شماره همراه برای هر وندور به همراه دکمه‌های مستقیم تماس و پیامک."
-                    )
-                    FeatureItem(
-                        number = "۳",
-                        title = "ارتباط سریع با پیام‌رسان‌های مطرح",
-                        desc = "امکان ارسال مستقیم پیام در واتس‌اپ، تلگرام، بله و روبیکا به شماره‌های شرکت و تک‌تک پرسنل."
-                    )
-                    FeatureItem(
-                        number = "۴",
-                        title = "مدیریت پرسنل و مدیران ارتباطی در فرم وندور",
-                        desc = "ثبت و ویرایش مدیرعامل، مسئول فروش، کارشناسان فنی با نام، سمت، داخلی و شماره همراه در حین افزودن و ویرایش وندور."
-                    )
-                    FeatureItem(
-                        number = "۵",
-                        title = "انتخاب و ویرایش لوگوی شرکت",
-                        desc = "انتخاب لوگوی واقعی از گالری گوشی (Photo Picker استاندارد) و ذخیره‌سازی محلی به همراه نشان‌های اختصاری شکیل."
-                    )
-                    FeatureItem(
-                        number = "۶",
-                        title = "آپلود و نمایش کاتالوگ دیجیتال (PDF)",
-                        desc = "بارگذاری فایل‌های PDF کاتالوگ و بروشورها، پیش‌نمایش و باز کردن مستقیم با برنامه‌های PDFخوان و امکان اشتراک‌گذاری."
-                    )
-                    FeatureItem(
-                        number = "۷",
-                        title = "مدیریت کامل محصولات و تجهیزات وندور",
-                        desc = "امکان افزودن، ویرایش و حذف تک‌تک محصولات صنعتی، مدل‌ها، کدهای فنی و مشخصات هیدرولیکی/مکانیکی."
-                    )
-                    FeatureItem(
-                        number = "۸",
-                        title = "موقعیت‌یابی تعاملی روی نقشه (GPS)",
-                        desc = "نقشه لمسی تعاملی با قابلیت جابجایی پین، ورودی دستی طول و عرض جغرافیایی، انتخاب شهرک‌های صنعتی ایران و اتصال به نشان و بلد."
-                    )
-                    FeatureItem(
-                        number = "۹",
-                        title = "اطلاعات مالی، بانکی و ثبتی",
-                        desc = "امکان ثبت چندین حساب بانکی با نام بانک، شعبه، شماره حساب و شماره شبا با دکمه کپی، به همراه کد اقتصادی، شناسه ملی و شماره ثبت."
-                    )
-                    FeatureItem(
-                        number = "۱۰",
-                        title = "مدیریت پویای انواع فعالیت و دسته‌بندی‌ها",
-                        desc = "امکان تعریف، ویرایش و حذف انواع فعالیت (تولیدی، بازرگانی و...) و زمینه‌های صنعتی مستقیماً از بخش تنظیمات."
-                    )
-                    FeatureItem(
-                        number = "۱۱",
-                        title = "موتور جستجوی بلادرنگ و فیلترهای پیشرفته",
-                        desc = "جستجوی هوشمند با اصلاح ی/ک عربی و نیم‌فاصله، فیلتر شهر، تأییدیه، کاتالوگ و مرتب‌سازی بر اساس امتیاز و جدیدترین‌ها."
-                    )
-                    FeatureItem(
-                        number = "۱۲",
-                        title = "دیتابیس بومی ۱۰۰٪ آفلاین (Room Database)",
-                        desc = "ذخیره‌سازی کامل بر روی حافظه گوشی بدون نیاز به اینترنت، با پشتیبانی کامل از خروجی و ورودی فایل اکسل و CSV."
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showFeaturesDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
-                ) {
-                    Text("بستن")
-                }
-            }
-        )
+        FeaturesDialog(onDismiss = { showFeaturesDialog = false })
     }
 
     // Manage Activity Types Dialog (انواع فعالیت)
     if (showActivityTypeManageDialog) {
-        var newActName by remember { mutableStateOf("") }
-        var editingActType by remember { mutableStateOf<ActivityType?>(null) }
-        var editActName by remember { mutableStateOf("") }
-
-        AlertDialog(
-            onDismissRequest = { showActivityTypeManageDialog = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.BusinessCenter, contentDescription = null, tint = TealPrimary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("مدیریت انواع فعالیت شرکت‌ها", fontWeight = FontWeight.Bold)
-                }
-            },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "انواع فعالیت قابل انتخاب در فرم ثبت وندور:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    // Input to add new activity type
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = newActName,
-                            onValueChange = { newActName = it },
-                            placeholder = { Text("نوع جدید (مثال: بازرگانی)") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Button(
-                            onClick = {
-                                if (newActName.isNotBlank()) {
-                                    viewModel.addActivityType(newActName)
-                                    newActName = ""
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
-                        ) {
-                            Text("افزودن")
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    allActivityTypes.forEach { act ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (editingActType?.id == act.id) {
-                                OutlinedTextField(
-                                    value = editActName,
-                                    onValueChange = { editActName = it },
-                                    singleLine = true,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                IconButton(onClick = {
-                                    if (editActName.isNotBlank()) {
-                                        viewModel.updateActivityType(act.copy(name = editActName.trim()))
-                                        editingActType = null
-                                    }
-                                }) {
-                                    Icon(Icons.Default.CheckCircle, contentDescription = "تأیید", tint = TealPrimary)
-                                }
-                            } else {
-                                Text(
-                                    text = act.name,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                IconButton(
-                                    onClick = {
-                                        editingActType = act
-                                        editActName = act.name
-                                    },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(16.dp))
-                                }
-                                IconButton(
-                                    onClick = { activityTypeToDelete = act },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(16.dp))
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showActivityTypeManageDialog = false }) {
-                    Text("بستن")
-                }
-            }
+        ManageActivityTypesDialog(
+            allActivityTypes = allActivityTypes,
+            onAdd = { viewModel.addActivityType(it) },
+            onUpdate = { viewModel.updateActivityType(it) },
+            onRequestDelete = { activityTypeToDelete = it },
+            onDismiss = { showActivityTypeManageDialog = false }
         )
     }
 
     // Manage Categories Dialog (زمینه‌های فعالیت)
     if (showCategoryManageDialog) {
-        var newCatName by remember { mutableStateOf("") }
-        var editingCategory by remember { mutableStateOf<Category?>(null) }
-        var editCatName by remember { mutableStateOf("") }
-
-        AlertDialog(
-            onDismissRequest = { showCategoryManageDialog = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Category, contentDescription = null, tint = TealPrimary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("مدیریت زمینه‌های فعالیت و دسته‌ها", fontWeight = FontWeight.Bold)
-                }
-            },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "دسته‌بندی‌های صنعتی فعال در برنامه:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    // Add category input
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = newCatName,
-                            onValueChange = { newCatName = it },
-                            placeholder = { Text("نام زمینه (مثال: ابزار دقیق)") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Button(
-                            onClick = {
-                                if (newCatName.isNotBlank()) {
-                                    viewModel.addCategory(newCatName)
-                                    newCatName = ""
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
-                        ) {
-                            Text("افزودن")
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    allCategories.forEach { cat ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (editingCategory?.id == cat.id) {
-                                OutlinedTextField(
-                                    value = editCatName,
-                                    onValueChange = { editCatName = it },
-                                    singleLine = true,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                IconButton(onClick = {
-                                    if (editCatName.isNotBlank()) {
-                                        viewModel.updateCategory(cat.copy(name = editCatName.trim()))
-                                        editingCategory = null
-                                    }
-                                }) {
-                                    Icon(Icons.Default.CheckCircle, contentDescription = "تأیید", tint = TealPrimary)
-                                }
-                            } else {
-                                Text(
-                                    text = cat.name,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                IconButton(
-                                    onClick = {
-                                        editingCategory = cat
-                                        editCatName = cat.name
-                                    },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(16.dp))
-                                }
-                                IconButton(
-                                    onClick = { categoryToDelete = cat },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(16.dp))
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showCategoryManageDialog = false }) {
-                    Text("بستن")
-                }
-            }
+        ManageCategoriesDialog(
+            allCategories = allCategories,
+            onAdd = { viewModel.addCategory(it) },
+            onUpdate = { viewModel.updateCategory(it) },
+            onRequestDelete = { categoryToDelete = it },
+            onDismiss = { showCategoryManageDialog = false }
         )
     }
 
     // Confirmation Dialog for Activity Type Deletion
-    if (activityTypeToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { activityTypeToDelete = null },
-            title = {
-                Text(
-                    text = if (lang == AppLanguage.FA) "تأیید حذف نوع فعالیت" else "Confirm Delete Activity Type",
-                    fontWeight = FontWeight.Bold
-                )
+    activityTypeToDelete?.let { act ->
+        ConfirmDeleteActivityTypeDialog(
+            act = act,
+            lang = lang,
+            onConfirm = {
+                viewModel.deleteActivityType(act.id)
+                activityTypeToDelete = null
             },
-            text = {
-                Text(
-                    text = if (lang == AppLanguage.FA) {
-                        "آیا از حذف نوع فعالیت «${activityTypeToDelete!!.name}» اطمینان دارید؟ این عمل قابل بازگشت نیست."
-                    } else {
-                        "Are you sure you want to delete '${activityTypeToDelete!!.name}'? This action cannot be undone."
-                    }
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteActivityType(activityTypeToDelete!!.id)
-                        activityTypeToDelete = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = RedFavorite)
-                ) {
-                    Text(if (lang == AppLanguage.FA) "حذف" else "Delete", color = Color.White)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { activityTypeToDelete = null }) {
-                    Text(if (lang == AppLanguage.FA) "انصراف" else "Cancel")
-                }
-            }
+            onDismiss = { activityTypeToDelete = null }
         )
     }
 
     // Confirmation Dialog for Category Deletion
-    if (categoryToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { categoryToDelete = null },
-            title = {
-                Text(
-                    text = if (lang == AppLanguage.FA) "تأیید حذف زمینه فعالیت" else "Confirm Delete Category",
-                    fontWeight = FontWeight.Bold
-                )
+    categoryToDelete?.let { cat ->
+        ConfirmDeleteCategoryDialog(
+            cat = cat,
+            lang = lang,
+            onConfirm = {
+                viewModel.deleteCategory(cat.id)
+                categoryToDelete = null
             },
-            text = {
-                Text(
-                    text = if (lang == AppLanguage.FA) {
-                        "آیا از حذف زمینه فعالیت «${categoryToDelete!!.name}» اطمینان دارید؟ این عمل قابل بازگشت نیست."
-                    } else {
-                        "Are you sure you want to delete '${categoryToDelete!!.name}'? This action cannot be undone."
-                    }
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteCategory(categoryToDelete!!.id)
-                        categoryToDelete = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = RedFavorite)
-                ) {
-                    Text(if (lang == AppLanguage.FA) "حذف" else "Delete", color = Color.White)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { categoryToDelete = null }) {
-                    Text(if (lang == AppLanguage.FA) "انصراف" else "Cancel")
-                }
-            }
+            onDismiss = { categoryToDelete = null }
         )
     }
 
     // Database Architecture explanation dialog
     if (showDatabaseInfoDialog) {
-        AlertDialog(
-            onDismissRequest = { showDatabaseInfoDialog = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Storage, contentDescription = null, tint = TealPrimary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("محل و نحوه ذخیره‌سازی داده‌ها", fontWeight = FontWeight.Bold)
-                }
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "اطلاعات به صورت کاملاً پایدار و آفلاین در دیتابیس بومی زیر ذخیره می‌شوند:",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("• دیتابیس محلی: Room Database مبتنی بر SQLite")
-                    Text("• جدول‌های فعال: vendors (وندورها), contact_persons (پرسنل), categories (دسته‌ها), products (محصولات), activity_types (انواع فعالیت)")
-                    Text("• ماندگاری: اطلاعات با بستن یا راه‌اندازی مجدد گوشی هرگز پاک نمی‌شوند.")
-                    Text("• فایل‌های کاتالوگ و لوگوها: در پوشه اختصاصی امن برنامه (filesDir) به شکل آفلاین نگهداری می‌شوند.")
-                    Text("• پشتیبان‌گیری: امکان استخراج فایل استاندارد CSV / Excel و ورود مجدد آن در هر زمان فراهم است.")
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showDatabaseInfoDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
-                ) {
-                    Text("متوجه شدم")
-                }
-            }
-        )
-    }
-
-    // CSV Import Dialog
-    if (showCsvImportDialog) {
-        AlertDialog(
-            onDismissRequest = { showCsvImportDialog = false },
-            title = { Text("ورود اطلاعات وندورها از CSV", fontWeight = FontWeight.Bold) },
-            text = {
-                Column {
-                    Text(
-                        text = "سطرهای CSV را در کادر زیر وارد کنید:",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = csvInputText,
-                        onValueChange = { csvInputText = it },
-                        placeholder = { Text("نام شرکت,مدیرعامل,تلفن,موبایل,ایمیل,وبسایت,استان,شهر,آدرس,نوع فعالیت...") },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 4
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (csvInputText.isNotBlank()) {
-                            viewModel.importFromCsv(csvInputText)
-                            csvInputText = ""
-                            showCsvImportDialog = false
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
-                ) {
-                    Text("وارد کردن داده‌ها")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCsvImportDialog = false }) {
-                    Text("انصراف")
-                }
-            }
-        )
+        DatabaseInfoDialog(onDismiss = { showDatabaseInfoDialog = false })
     }
 
     // Reset Dialog
     if (showResetDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetDialog = false },
-            title = { Text("بازیابی اطلاعات نمونه", fontWeight = FontWeight.Bold) },
-            text = { Text("آیا مایلید اطلاعات اولیه و نمونه‌های آزمایشی مجدداً در دیتابیس بارگذاری شوند؟") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showResetDialog = false
-                        viewModel.resetToSampleData()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
-                ) {
-                    Text("تأیید و بازیابی")
-                }
+        ResetSampleDataDialog(
+            onConfirm = {
+                showResetDialog = false
+                viewModel.resetToSampleData()
             },
-            dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) {
-                    Text("انصراف")
-                }
-            }
+            onDismiss = { showResetDialog = false }
         )
     }
 
     // About Dialog
     if (showAboutDialog) {
-        AlertDialog(
-            onDismissRequest = { showAboutDialog = false },
-            title = { Text("سامانه وندوریاب (VendorYab)", fontWeight = FontWeight.Bold) },
-            text = {
-                Column {
-                    Text("نسخه: ۱.۱.۰")
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("برنامه‌نویس و توسعه‌دهنده:")
-                    Text("رضا فراهانی", fontWeight = FontWeight.Bold)
-                    Text("ایمیل: Rezafarahani2008@gmail.com")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("امکانات برجسته:")
-                    Text("• سیستم چندشماره‌ای تماس و ارتباط در واتس‌اپ، تلگرام، بله و روبیکا")
-                    Text("• نقشه تعاملی با موقعیت‌یاب لمسی GPS")
-                    Text("• آپلود و نمایش کاتالوگ دیجیتال PDF")
-                    Text("• ثبت شماره شبا، بانک، شعبه و کدهای ثبتی")
-                    Text("• مدیریت و ویرایش محصولات و پرسنل وندور")
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showAboutDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
-                ) {
-                    Text("بستن")
-                }
-            }
-        )
-    }
-}
-
-@Composable
-private fun FeatureItem(number: String, title: String, desc: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(TealPrimary),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = PersianUtils.toPersianDigits(number),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = NavyDeep
-                )
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = desc,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        AboutAppDialog(onDismiss = { showAboutDialog = false })
     }
 }
 

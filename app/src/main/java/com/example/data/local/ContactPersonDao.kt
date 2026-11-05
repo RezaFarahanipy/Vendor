@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ContactPersonDao {
+    @Query("SELECT * FROM contact_persons")
+    fun getAllContacts(): Flow<List<ContactPerson>>
+
     @Query("SELECT * FROM contact_persons WHERE vendorId = :vendorId ORDER BY id ASC")
     fun getContactsByVendor(vendorId: Long): Flow<List<ContactPerson>>
 

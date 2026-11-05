@@ -19,16 +19,16 @@ object SampleData {
     )
 
     val initialCategories = listOf(
-        Category(id = 1, name = "صنعتی", iconName = "precision_manufacturing", vendorCount = 345),
-        Category(id = 2, name = "ساختمان و عمرانی", iconName = "apartment", vendorCount = 287),
-        Category(id = 3, name = "ماشین‌آلات", iconName = "agriculture", vendorCount = 219),
-        Category(id = 4, name = "مواد غذایی", iconName = "restaurant", vendorCount = 97),
-        Category(id = 5, name = "مواد شیمیایی", iconName = "science", vendorCount = 143),
-        Category(id = 6, name = "برق و الکترونیک", iconName = "bolt", vendorCount = 182),
+        Category(id = 1, name = "صنعتی", iconName = "precision_manufacturing", vendorCount = 0),
+        Category(id = 2, name = "ساختمان و عمرانی", iconName = "apartment", vendorCount = 0),
+        Category(id = 3, name = "ماشین‌آلات", iconName = "agriculture", vendorCount = 0),
+        Category(id = 4, name = "مواد غذایی", iconName = "restaurant", vendorCount = 0),
+        Category(id = 5, name = "مواد شیمیایی", iconName = "science", vendorCount = 0),
+        Category(id = 6, name = "برق و الکترونیک", iconName = "bolt", vendorCount = 0),
         // Subcategories
-        Category(id = 7, name = "پمپ‌های صنعتی", parentId = 1, iconName = "water", vendorCount = 120),
-        Category(id = 8, name = "شیرآلات صنعتی", parentId = 1, iconName = "tune", vendorCount = 85),
-        Category(id = 9, name = "تجهیزات استیل", parentId = 1, iconName = "shield", vendorCount = 64)
+        Category(id = 7, name = "پمپ‌های صنعتی", parentId = 1, iconName = "water", vendorCount = 0),
+        Category(id = 8, name = "شیرآلات صنعتی", parentId = 1, iconName = "tune", vendorCount = 0),
+        Category(id = 9, name = "تجهیزات استیل", parentId = 1, iconName = "shield", vendorCount = 0)
     )
 
     val initialVendors = listOf(

@@ -89,14 +89,98 @@ object PersianUtils {
     }
 
     /**
-     * Checks if a target string contains a query using Persian normalization
+     * Normalizes phone numbers by converting digits to English and stripping dashes, spaces, and separators.
      */
-    fun matchesSearch(target: String?, query: String?): Boolean {
-        if (query.isNullOrBlank()) return true
-        if (target.isNullOrBlank()) return false
-        val normalizedTarget = normalizeForSearch(target)
-        val normalizedQuery = normalizeForSearch(query)
-        return normalizedTarget.contains(normalizedQuery) ||
-                normalizedTarget.replace(" ", "").contains(normalizedQuery.replace(" ", ""))
+    fun normalizePhone(phone: String?): String {
+        if (phone.isNullOrBlank()) return ""
+        var english = toEnglishDigits(phone)
+        english = english.replace(Regex("[^0-9]"), "")
+        if (english.startsWith("98") && english.length > 10) {
+            english = "0" + english.substring(2)
+        }
+        return english
     }
+
+    /**
+     * Checks if target phone number matches query even when one has dashes and the other doesn't
+     */
+    fun matchesPhone(targetPhone: String?, query: String?): Boolean {
+        if (query.isNullOrBlank()) return true
+        if (targetPhone.isNullOrBlank()) return false
+        val cleanTarget = normalizePhone(targetPhone)
+        val cleanQuery = normalizePhone(query)
+        if (cleanQuery.isBlank()) return false
+        return cleanTarget.contains(cleanQuery)
+    }
+
+    /**
+     * Validates 11-digit Iranian mobile numbers (e.g. 09123456789)
+     */
+    fun isValidIranianMobile(mobile: String?): Boolean {
+        if (mobile.isNullOrBlank()) return false
+        val clean = normalizePhone(mobile)
+        return clean.matches(Regex("^09\\d{9}$"))
+    }
+
+    /**
+     * Validates 10-digit Iranian National Code (کد ملی) or 11-digit Company National ID (شناسه ملی)
+     */
+    fun isValidNationalIdOrCode(input: String?): Boolean {
+        if (input.isNullOrBlank()) return false
+        val digits = toEnglishDigits(input).filter { it.isDigit() }
+        return when (digits.length) {
+            10 -> isValidIranianNationalCode(digits)
+            11 -> isValidIranianCompanyNationalId(digits)
+            else -> false
+        }
+    }
+
+    /**
+     * 10-digit Iranian National Code checksum validation
+     */
+    fun isValidIranianNationalCode(code: String): Boolean {
+        if (code.length != 10) return false
+        if (code.all { it == code[0] }) return false // All identical digits are invalid
+        val checkDigit = code[9].digitToInt()
+        var sum = 0
+        for (i in 0 until 9) {
+            sum += code[i].digitToInt() * (10 - i)
+        }
+        val remainder = sum % 11
+        return if (remainder < 2) checkDigit == remainder else checkDigit == (11 - remainder)
+    }
+
+    /**
+     * 11-digit Iranian Legal Entity National ID (شناسه ملی شرکت) checksum validation
+     */
+    fun isValidIranianCompanyNationalId(id: String): Boolean {
+        if (id.length != 11) return false
+        val checkDigit = id[10].digitToInt()
+        val tenth = id[9].digitToInt()
+        val p = tenth + 2
+        val multipliers = intArrayOf(29, 27, 23, 19, 17, 29, 27, 23, 19, 17)
+        var sum = 0
+        for (i in 0 until 10) {
+            sum += (id[i].digitToInt() + p) * multipliers[i]
+        }
+        val remainder = sum % 11
+        val expected = if (remainder == 10) 0 else remainder
+        return checkDigit == expected
+    }
+
+    /**
+     * Checks if normalized text contains normalized query (with space/ZWNJ tolerance)
+     */
+    fun matchesSearch(text: String?, query: String?): Boolean {
+        if (query.isNullOrBlank()) return true
+        if (text.isNullOrBlank()) return false
+        val nText = normalizeForSearch(text)
+        val nQuery = normalizeForSearch(query)
+        if (nText.contains(nQuery)) return true
+        val noSpaceText = nText.replace(" ", "")
+        val noSpaceQuery = nQuery.replace(" ", "")
+        return noSpaceText.contains(noSpaceQuery)
+    }
+
+    fun normalize(input: String?): String = normalizeForSearch(input)
 }
