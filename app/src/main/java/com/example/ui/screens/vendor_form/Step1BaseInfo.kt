@@ -58,6 +58,7 @@ import java.io.File
 fun Step1BaseInfo(
     name: String,
     onNameChange: (String) -> Unit,
+    nameError: String? = null,
     ceoName: String,
     onCeoNameChange: (String) -> Unit,
     logoUri: String,
@@ -167,6 +168,8 @@ fun Step1BaseInfo(
         onValueChange = onNameChange,
         label = { Text("نام شرکت یا وندور *") },
         placeholder = { Text("مثال: بازرگانی پارس تجهیز") },
+        isError = nameError != null,
+        supportingText = if (nameError != null) { { Text(nameError, color = MaterialTheme.colorScheme.error) } } else null,
         singleLine = true,
         modifier = Modifier
             .fillMaxWidth()

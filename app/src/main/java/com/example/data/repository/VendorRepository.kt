@@ -8,12 +8,20 @@ import com.example.data.model.Product
 import com.example.data.model.Vendor
 import com.example.data.sample.SampleData
 import androidx.room.withTransaction
+import android.content.Context
 import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import com.example.util.CsvUtils
 import com.example.util.PersianUtils
+import com.example.data.model.BankAccount
+import com.example.data.model.Tag
+import com.example.data.model.VendorCategoryCrossRef
+import com.example.data.model.VendorPhone
+import com.example.data.model.VendorTagCrossRef
 import kotlinx.coroutines.withContext
 
 class VendorRepository(private val database: AppDatabase) {
@@ -23,6 +31,7 @@ class VendorRepository(private val database: AppDatabase) {
     private val productDao = database.productDao()
     private val contactPersonDao = database.contactPersonDao()
     private val activityTypeDao = database.activityTypeDao()
+    private val relationDao = database.relationDao()
 
     val allVendors: Flow<List<Vendor>> = vendorDao.getAllVendors()
     val favoriteVendors: Flow<List<Vendor>> = vendorDao.getFavoriteVendors()
@@ -32,6 +41,7 @@ class VendorRepository(private val database: AppDatabase) {
     val allContacts: Flow<List<ContactPerson>> = contactPersonDao.getAllContacts()
     val favoriteProducts: Flow<List<Product>> = productDao.getFavoriteProducts()
     val allActivityTypes: Flow<List<ActivityType>> = activityTypeDao.getAllActivityTypes()
+    val allTags: Flow<List<Tag>> = relationDao.getAllTags()
 
     val totalVendorsCount: Flow<Int> = vendorDao.getVendorCount()
     val totalFavoritesCount: Flow<Int> = vendorDao.getFavoriteCount()
@@ -45,6 +55,21 @@ class VendorRepository(private val database: AppDatabase) {
     fun getContactsByVendor(vendorId: Long): Flow<List<ContactPerson>> =
         contactPersonDao.getContactsByVendor(vendorId)
 
+    fun getPhonesByVendor(vendorId: Long): Flow<List<VendorPhone>> =
+        relationDao.getPhonesForVendor(vendorId)
+
+    fun getBankAccountsByVendor(vendorId: Long): Flow<List<BankAccount>> =
+        relationDao.getBankAccountsForVendor(vendorId)
+
+    fun getTagsByVendor(vendorId: Long): Flow<List<Tag>> =
+        relationDao.getTagsForVendor(vendorId)
+
+    fun getCategoriesByVendor(vendorId: Long): Flow<List<Category>> =
+        relationDao.getCategoriesForVendor(vendorId)
+
+    fun searchVendors(query: String): Flow<List<Vendor>> =
+        vendorDao.searchVendors(query)
+
     suspend fun ensureBaselineTaxonomy() = withContext(Dispatchers.IO) {
         val currentTypes = allActivityTypes.first()
         if (currentTypes.isEmpty()) {
@@ -56,30 +81,32 @@ class VendorRepository(private val database: AppDatabase) {
         }
     }
 
-    suspend fun ensureSampleDataLoaded() = withContext(Dispatchers.IO) {
-        ensureBaselineTaxonomy()
-    }
-
-    suspend fun saveVendor(vendor: Vendor): Long = withContext(Dispatchers.IO) {
-        if (vendor.id == 0L) {
-            vendorDao.insertVendor(vendor)
-        } else {
-            vendorDao.updateVendor(vendor)
-            vendor.id
-        }
-    }
-
     suspend fun saveVendorWithRelations(
         vendor: Vendor,
         contacts: List<ContactPerson>,
         products: List<Product>
     ): Long = withContext(Dispatchers.IO) {
         database.withTransaction {
-            val savedVendorId = if (vendor.id == 0L) {
-                vendorDao.insertVendor(vendor)
+            val searchIdx = PersianUtils.generateSearchIndex(
+                name = vendor.name,
+                ceoName = vendor.ceoName,
+                city = vendor.city,
+                categories = vendor.categories,
+                tags = vendor.tags,
+                phone = vendor.phone,
+                mobile = vendor.mobile,
+                secondaryPhones = vendor.secondaryPhones,
+                additionalMobiles = vendor.additionalMobiles,
+                economicCode = vendor.economicCode,
+                nationalId = vendor.nationalId
+            )
+            val vendorWithIndex = vendor.copy(searchIndex = searchIdx)
+
+            val savedVendorId = if (vendorWithIndex.id == 0L) {
+                vendorDao.insertVendor(vendorWithIndex)
             } else {
-                vendorDao.updateVendor(vendor)
-                vendor.id
+                vendorDao.updateVendor(vendorWithIndex)
+                vendorWithIndex.id
             }
 
             // Sync contacts: remove deleted ones, insert/update remaining
@@ -113,6 +140,69 @@ class VendorRepository(private val database: AppDatabase) {
                     productDao.insertProduct(toSave)
                 } else {
                     productDao.updateProduct(toSave)
+                }
+            }
+
+            // Sync normalized vendor_phones
+            relationDao.deleteVendorPhonesByVendorId(savedVendorId)
+            val phonesToInsert = mutableListOf<VendorPhone>()
+            if (vendor.phone.isNotBlank()) {
+                phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "LANDLINE", number = vendor.phone.trim(), label = "تلفن ثابت"))
+            }
+            if (vendor.mobile.isNotBlank()) {
+                phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "MOBILE", number = vendor.mobile.trim(), label = "موبایل اصلی"))
+            }
+            if (vendor.secondaryPhones.isNotBlank()) {
+                vendor.secondaryPhones.split(",", "،", "\n").map { it.trim() }.filter { it.isNotBlank() }.forEach { sec ->
+                    phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "LANDLINE", number = sec, label = "تلفن فرعی"))
+                }
+            }
+            if (vendor.additionalMobiles.isNotBlank()) {
+                vendor.additionalMobiles.split(",", "،", "\n").map { it.trim() }.filter { it.isNotBlank() }.forEach { mob ->
+                    phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "MOBILE", number = mob, label = "موبایل فرعی"))
+                }
+            }
+            if (phonesToInsert.isNotEmpty()) {
+                relationDao.insertVendorPhones(phonesToInsert)
+            }
+
+            // Sync normalized bank_accounts
+            relationDao.deleteBankAccountsByVendorId(savedVendorId)
+            val accountsList = vendor.getBankAccountsList()
+            if (accountsList.isNotEmpty()) {
+                val bankEntities = accountsList.map {
+                    it.copy(id = 0L, vendorId = savedVendorId)
+                }
+                relationDao.insertBankAccounts(bankEntities)
+            }
+
+            // Sync tags
+            relationDao.deleteVendorTagsByVendorId(savedVendorId)
+            if (vendor.tags.isNotBlank()) {
+                val tagList = vendor.tags.split(",", "،", "\n").map { it.trim() }.filter { it.isNotBlank() }.distinct()
+                val tagCrossRefs = mutableListOf<VendorTagCrossRef>()
+                for (tagName in tagList) {
+                    val existingTag = relationDao.findTagByName(tagName)
+                    val tagId = existingTag?.id ?: relationDao.insertTag(Tag(name = tagName))
+                    tagCrossRefs.add(VendorTagCrossRef(vendorId = savedVendorId, tagId = tagId))
+                }
+                if (tagCrossRefs.isNotEmpty()) {
+                    relationDao.insertVendorTags(tagCrossRefs)
+                }
+            }
+
+            // Sync categories
+            relationDao.deleteVendorCategoriesByVendorId(savedVendorId)
+            if (vendor.categories.isNotBlank()) {
+                val catNames = vendor.categories.split(",", "،", "\n").map { it.trim() }.filter { it.isNotBlank() }.distinct()
+                val allCats = categoryDao.getAllCategories().first()
+                val catCrossRefs = catNames.mapNotNull { cName ->
+                    allCats.firstOrNull { it.name.trim() == cName }?.let { matchedCat ->
+                        VendorCategoryCrossRef(vendorId = savedVendorId, categoryId = matchedCat.id)
+                    }
+                }
+                if (catCrossRefs.isNotEmpty()) {
+                    relationDao.insertVendorCategories(catCrossRefs)
                 }
             }
 
@@ -200,8 +290,20 @@ class VendorRepository(private val database: AppDatabase) {
         categoryDao.updateCategory(category)
     }
 
-    suspend fun deleteCategory(categoryId: Long) = withContext(Dispatchers.IO) {
+    suspend fun canDeleteCategory(categoryId: Long): Boolean = withContext(Dispatchers.IO) {
+        val countInCrossRef = relationDao.getVendorCountForCategoryId(categoryId)
+        if (countInCrossRef > 0) return@withContext false
+        val cat = allCategories.first().firstOrNull { it.id == categoryId } ?: return@withContext true
+        val countInVendors = allVendors.first().count { it.categories.contains(cat.name) }
+        countInVendors == 0
+    }
+
+    suspend fun deleteCategory(categoryId: Long): Boolean = withContext(Dispatchers.IO) {
+        if (!canDeleteCategory(categoryId)) {
+            return@withContext false
+        }
         categoryDao.deleteCategoryById(categoryId)
+        true
     }
 
     // Activity Types CRUD
@@ -213,8 +315,18 @@ class VendorRepository(private val database: AppDatabase) {
         activityTypeDao.updateActivityType(activityType)
     }
 
-    suspend fun deleteActivityType(activityTypeId: Long) = withContext(Dispatchers.IO) {
+    suspend fun canDeleteActivityType(activityTypeId: Long): Boolean = withContext(Dispatchers.IO) {
+        val type = allActivityTypes.first().firstOrNull { it.id == activityTypeId } ?: return@withContext true
+        val count = allVendors.first().count { it.activityTypeId == activityTypeId || it.activityType == type.name }
+        count == 0
+    }
+
+    suspend fun deleteActivityType(activityTypeId: Long): Boolean = withContext(Dispatchers.IO) {
+        if (!canDeleteActivityType(activityTypeId)) {
+            return@withContext false
+        }
         activityTypeDao.deleteActivityTypeById(activityTypeId)
+        true
     }
 
     suspend fun checkDuplicateVendor(
@@ -260,9 +372,25 @@ class VendorRepository(private val database: AppDatabase) {
         CsvUtils.exportFullBackupJson(vendors, contacts, products)
     }
 
+    suspend fun exportFullBackupZip(context: Context, outputStream: OutputStream) = withContext(Dispatchers.IO) {
+        val vendors = allVendors.first()
+        val contacts = allContacts.first()
+        val products = allProducts.first()
+        CsvUtils.exportFullBackupZip(context, outputStream, vendors, contacts, products)
+    }
+
+    suspend fun restoreFullBackupStream(context: Context, inputStream: InputStream): Pair<Int, Int> = withContext(Dispatchers.IO) {
+        val backup = CsvUtils.importFullBackupZipOrJson(context, inputStream) ?: return@withContext Pair(0, 0)
+        restoreBackupData(backup)
+    }
+
     suspend fun restoreFullBackupJson(jsonString: String): Pair<Int, Int> = withContext(Dispatchers.IO) {
         val backup = CsvUtils.parseFullBackupJson(jsonString) ?: return@withContext Pair(0, 0)
-        database.withTransaction {
+        restoreBackupData(backup)
+    }
+
+    private suspend fun restoreBackupData(backup: com.example.util.FullBackupData): Pair<Int, Int> {
+        return database.withTransaction {
             val existing = allVendors.first()
             val existingNormalizedNames = existing.map { PersianUtils.normalize(it.name).trim() }.filter { it.isNotBlank() }.toSet()
             val existingNationalIds = existing.map { it.nationalId.filter { c -> c.isDigit() } }.filter { it.isNotBlank() }.toSet()

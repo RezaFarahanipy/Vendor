@@ -1,10 +1,21 @@
 package com.example.util
 
+import android.content.Context
+import android.net.Uri
 import com.example.data.model.ContactPerson
 import com.example.data.model.Product
 import com.example.data.model.Vendor
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.BufferedInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 data class FullBackupData(
     val version: Int = 1,
@@ -449,6 +460,236 @@ object CsvUtils {
                 contacts = contactsList,
                 products = productsList
             )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Exports complete application state (vendors, contacts, products) along with
+     * all local logo images and PDF catalog files packaged into a single ZIP archive.
+     */
+    fun exportFullBackupZip(
+        context: Context,
+        outputStream: OutputStream,
+        vendors: List<Vendor>,
+        contacts: List<ContactPerson>,
+        products: List<Product>
+    ) {
+        val zipOut = ZipOutputStream(outputStream)
+        val filesWritten = mutableSetOf<String>()
+
+        val root = JSONObject()
+        root.put("version", 2)
+        root.put("timestamp", System.currentTimeMillis())
+        root.put("appName", "VendorYab")
+
+        val vendorsArray = JSONArray()
+        for (v in vendors) {
+            val vo = JSONObject()
+            vo.put("id", v.id)
+            vo.put("name", v.name)
+            vo.put("ceoName", v.ceoName)
+            vo.put("description", v.description)
+            vo.put("activityType", v.activityType)
+            vo.put("phone", v.phone)
+            vo.put("secondaryPhones", v.secondaryPhones)
+            vo.put("mobile", v.mobile)
+            vo.put("additionalMobiles", v.additionalMobiles)
+            vo.put("email", v.email)
+            vo.put("website", v.website)
+            vo.put("province", v.province)
+            vo.put("city", v.city)
+            vo.put("address", v.address)
+            vo.put("latitude", v.latitude)
+            vo.put("longitude", v.longitude)
+            vo.put("logoDrawable", v.logoDrawable)
+            vo.put("logoUri", v.logoUri)
+            vo.put("catalogTitle", v.catalogTitle)
+            vo.put("catalogLocalPath", v.catalogLocalPath)
+            vo.put("catalogFileName", v.catalogFileName)
+            vo.put("isVerified", v.isVerified)
+            vo.put("isFavorite", v.isFavorite)
+            vo.put("rating", v.rating.toDouble())
+            vo.put("reviewCount", v.reviewCount)
+            vo.put("categories", v.categories)
+            vo.put("tags", v.tags)
+            vo.put("notes", v.notes)
+            vo.put("economicCode", v.economicCode)
+            vo.put("nationalId", v.nationalId)
+            vo.put("registrationNumber", v.registrationNumber)
+            vo.put("bankAccounts", v.bankAccounts)
+            vo.put("createdAt", v.createdAt)
+
+            // Pack logo file if present locally
+            if (v.logoUri.isNotBlank()) {
+                val logoFile = resolveLocalFile(context, v.logoUri)
+                if (logoFile != null && logoFile.exists() && logoFile.isFile) {
+                    val entryName = "files/logos/v_${v.id}_${logoFile.name}"
+                    if (filesWritten.add(entryName)) {
+                        zipOut.putNextEntry(ZipEntry(entryName))
+                        logoFile.inputStream().use { input -> input.copyTo(zipOut) }
+                        zipOut.closeEntry()
+                    }
+                    vo.put("relativeLogoPath", entryName)
+                }
+            }
+
+            // Pack catalog PDF if present locally
+            if (v.catalogLocalPath.isNotBlank()) {
+                val catFile = File(v.catalogLocalPath)
+                if (catFile.exists() && catFile.isFile) {
+                    val entryName = "files/catalogs/v_${v.id}_${catFile.name}"
+                    if (filesWritten.add(entryName)) {
+                        zipOut.putNextEntry(ZipEntry(entryName))
+                        catFile.inputStream().use { input -> input.copyTo(zipOut) }
+                        zipOut.closeEntry()
+                    }
+                    vo.put("relativeCatalogPath", entryName)
+                }
+            }
+
+            vendorsArray.put(vo)
+        }
+        root.put("vendors", vendorsArray)
+
+        val contactsArray = JSONArray()
+        for (c in contacts) {
+            val co = JSONObject()
+            co.put("id", c.id)
+            co.put("vendorId", c.vendorId)
+            co.put("name", c.name)
+            co.put("role", c.role)
+            co.put("mobile", c.mobile)
+            co.put("phone", c.phone)
+            co.put("extension", c.extension)
+            co.put("email", c.email)
+            contactsArray.put(co)
+        }
+        root.put("contacts", contactsArray)
+
+        val productsArray = JSONArray()
+        for (p in products) {
+            val po = JSONObject()
+            po.put("id", p.id)
+            po.put("vendorId", p.vendorId)
+            po.put("name", p.name)
+            po.put("brand", p.brand)
+            po.put("model", p.model)
+            po.put("technicalCode", p.technicalCode)
+            po.put("specifications", p.specifications)
+            po.put("description", p.description)
+            po.put("category", p.category)
+            po.put("isFavorite", p.isFavorite)
+            productsArray.put(po)
+        }
+        root.put("products", productsArray)
+
+        // Write backup.json root descriptor
+        zipOut.putNextEntry(ZipEntry("backup.json"))
+        zipOut.write(root.toString(2).toByteArray(Charsets.UTF_8))
+        zipOut.closeEntry()
+
+        zipOut.finish()
+    }
+
+    /**
+     * Imports a full backup package, automatically detecting whether the input
+     * is a comprehensive ZIP archive (with bundled logo & PDF files) or a legacy JSON file.
+     */
+    fun importFullBackupZipOrJson(context: Context, inputStream: InputStream): FullBackupData? {
+        val bufferedInput = if (inputStream is BufferedInputStream) inputStream else BufferedInputStream(inputStream)
+        bufferedInput.mark(16)
+        val header = ByteArray(4)
+        val bytesRead = bufferedInput.read(header)
+        bufferedInput.reset()
+
+        val isZip = bytesRead == 4 &&
+                header[0] == 0x50.toByte() &&
+                header[1] == 0x4B.toByte() &&
+                header[2] == 0x03.toByte() &&
+                header[3] == 0x04.toByte()
+
+        return if (isZip) {
+            parseZipBackup(context, bufferedInput)
+        } else {
+            val jsonText = bufferedInput.bufferedReader(Charsets.UTF_8).readText()
+            parseFullBackupJson(jsonText)
+        }
+    }
+
+    private fun parseZipBackup(context: Context, inputStream: InputStream): FullBackupData? {
+        val zipIn = ZipInputStream(inputStream)
+        var jsonContent: String? = null
+        val extractedFiles = mutableMapOf<String, String>()
+
+        var entry = zipIn.nextEntry
+        while (entry != null) {
+            val name = entry.name
+            if (name == "backup.json") {
+                val baos = ByteArrayOutputStream()
+                val buffer = ByteArray(4096)
+                var len: Int
+                while (zipIn.read(buffer).also { len = it } > 0) {
+                    baos.write(buffer, 0, len)
+                }
+                jsonContent = baos.toString(Charsets.UTF_8.name())
+            } else if (name.startsWith("files/") && !entry.isDirectory) {
+                val relativePath = name.removePrefix("files/")
+                val targetFile = File(context.filesDir, relativePath)
+                targetFile.parentFile?.mkdirs()
+                FileOutputStream(targetFile).use { fos ->
+                    val buffer = ByteArray(4096)
+                    var len: Int
+                    while (zipIn.read(buffer).also { len = it } > 0) {
+                        fos.write(buffer, 0, len)
+                    }
+                }
+                extractedFiles[name] = targetFile.absolutePath
+            }
+            zipIn.closeEntry()
+            entry = zipIn.nextEntry
+        }
+
+        if (jsonContent.isNullOrBlank()) return null
+        val baseData = parseFullBackupJson(jsonContent) ?: return null
+
+        val root = try { JSONObject(jsonContent) } catch (_: Exception) { null }
+        val vendorsArray = root?.optJSONArray("vendors")
+
+        val remappedVendors = baseData.vendors.mapIndexed { index, vendor ->
+            var updated = vendor
+            val vo = vendorsArray?.optJSONObject(index)
+            if (vo != null) {
+                val relLogo = vo.optString("relativeLogoPath", "")
+                if (relLogo.isNotBlank() && extractedFiles.containsKey(relLogo)) {
+                    val localFile = File(extractedFiles[relLogo]!!)
+                    updated = updated.copy(logoUri = Uri.fromFile(localFile).toString())
+                }
+                val relCat = vo.optString("relativeCatalogPath", "")
+                if (relCat.isNotBlank() && extractedFiles.containsKey(relCat)) {
+                    val localCatFile = File(extractedFiles[relCat]!!)
+                    updated = updated.copy(catalogLocalPath = localCatFile.absolutePath)
+                }
+            }
+            updated
+        }
+
+        return baseData.copy(vendors = remappedVendors)
+    }
+
+    private fun resolveLocalFile(context: Context, pathOrUri: String): File? {
+        if (pathOrUri.isBlank()) return null
+        return try {
+            if (pathOrUri.startsWith("file://")) {
+                val uri = Uri.parse(pathOrUri)
+                uri.path?.let { File(it) }
+            } else if (pathOrUri.startsWith("/")) {
+                File(pathOrUri)
+            } else {
+                val fileInFilesDir = File(context.filesDir, pathOrUri)
+                if (fileInFilesDir.exists()) fileInFilesDir else null
+            }
         } catch (_: Exception) {
             null
         }

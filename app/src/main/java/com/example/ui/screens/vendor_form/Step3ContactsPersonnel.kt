@@ -53,9 +53,11 @@ import com.example.util.PersianUtils
 fun Step3ContactsPersonnel(
     primaryPhone: String,
     onPrimaryPhoneChange: (String) -> Unit,
+    phoneError: String? = null,
     additionalPhones: SnapshotStateList<String>,
     primaryMobile: String,
     onPrimaryMobileChange: (String) -> Unit,
+    mobileError: String? = null,
     additionalMobiles: SnapshotStateList<String>,
     email: String,
     onEmailChange: (String) -> Unit,
@@ -127,12 +129,15 @@ fun Step3ContactsPersonnel(
         fontWeight = FontWeight.Bold
     )
 
+    val isMobError = mobileError != null || (primaryMobile.isNotBlank() && !PersianUtils.isValidIranianMobile(primaryMobile))
     OutlinedTextField(
         value = primaryMobile,
         onValueChange = onPrimaryMobileChange,
         label = { Text("شماره همراه اصلی") },
         placeholder = { Text("0912-3456789") },
         singleLine = true,
+        isError = isMobError,
+        supportingText = if (isMobError) { { Text(mobileError ?: "شماره همراه باید با ۰۹ آغاز شده و ۱۱ رقم باشد", color = MaterialTheme.colorScheme.error) } } else null,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
         modifier = Modifier.fillMaxWidth()
     )

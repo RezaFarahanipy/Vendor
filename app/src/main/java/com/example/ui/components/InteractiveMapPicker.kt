@@ -89,6 +89,38 @@ val POPULAR_ZONES = listOf(
     IndustrialZone("شهرک صنعتی البرز", "قزوین", "البرز", 36.21540, 50.05210)
 )
 
+object MapLinkUtils {
+    private val AT_COORDS_REGEX = Regex("@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)")
+    private val Q_COORDS_REGEX = Regex("[?&]q=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)")
+    private val BALAD_COORDS_REGEX = Regex("lat=(-?\\d+\\.\\d+).*?lng=(-?\\d+\\.\\d+)")
+    private val RAW_COORDS_REGEX = Regex("(-?\\d{1,2}\\.\\d{4,})[\\s,،]+(-?\\d{1,3}\\.\\d{4,})")
+
+    fun extractCoordinates(text: String): Pair<Double, Double>? {
+        val clean = text.trim()
+        AT_COORDS_REGEX.find(clean)?.let { m ->
+            val lat = m.groupValues[1].toDoubleOrNull()
+            val lng = m.groupValues[2].toDoubleOrNull()
+            if (lat != null && lng != null) return Pair(lat, lng)
+        }
+        Q_COORDS_REGEX.find(clean)?.let { m ->
+            val lat = m.groupValues[1].toDoubleOrNull()
+            val lng = m.groupValues[2].toDoubleOrNull()
+            if (lat != null && lng != null) return Pair(lat, lng)
+        }
+        BALAD_COORDS_REGEX.find(clean)?.let { m ->
+            val lat = m.groupValues[1].toDoubleOrNull()
+            val lng = m.groupValues[2].toDoubleOrNull()
+            if (lat != null && lng != null) return Pair(lat, lng)
+        }
+        RAW_COORDS_REGEX.find(clean)?.let { m ->
+            val lat = m.groupValues[1].toDoubleOrNull()
+            val lng = m.groupValues[2].toDoubleOrNull()
+            if (lat != null && lng != null) return Pair(lat, lng)
+        }
+        return null
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InteractiveMapPicker(
@@ -102,6 +134,8 @@ fun InteractiveMapPicker(
     var latInput by remember(latitude) { mutableStateOf(String.format("%.5f", latitude)) }
     var lngInput by remember(longitude) { mutableStateOf(String.format("%.5f", longitude)) }
     var zoomLevel by remember { mutableFloatStateOf(1.0f) }
+    var mapLinkInput by remember { mutableStateOf("") }
+    var mapLinkError by remember { mutableStateOf<String?>(null) }
 
     Card(
         modifier = modifier
@@ -361,6 +395,35 @@ fun InteractiveMapPicker(
                     }
                 }
             }
+
+            // Link Paste & Auto Coordinate Extraction
+            OutlinedTextField(
+                value = mapLinkInput,
+                onValueChange = { input ->
+                    mapLinkInput = input
+                    val coords = MapLinkUtils.extractCoordinates(input)
+                    if (coords != null) {
+                        mapLinkError = null
+                        latInput = String.format("%.5f", coords.first)
+                        lngInput = String.format("%.5f", coords.second)
+                        onLocationChange(coords.first, coords.second, null, null)
+                        android.widget.Toast.makeText(context, "مختصات نقشه از لینک استخراج شد", android.widget.Toast.LENGTH_SHORT).show()
+                    } else if (input.isNotBlank() && (input.startsWith("http") || input.contains(","))) {
+                        mapLinkError = "مختصات جغرافیایی در لینک یافت نشد"
+                    } else {
+                        mapLinkError = null
+                    }
+                },
+                label = { Text("الصاق لینک نقشه (نشان، بلد، Google Maps)") },
+                placeholder = { Text("لینک نشان، بلد یا گوگل‌مپ را اینجا الصاق کنید") },
+                isError = mapLinkError != null,
+                supportingText = if (mapLinkError != null) { { Text(mapLinkError!!, color = MaterialTheme.colorScheme.error) } } else null,
+                leadingIcon = {
+                    Icon(Icons.Default.Map, contentDescription = null, tint = TealPrimary)
+                },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             // Numeric Coordinate Fields
             Row(

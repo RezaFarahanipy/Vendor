@@ -158,6 +158,9 @@ fun AddEditVendorScreen(
 
     // Step 1: Base info & Logo
     var name by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.name ?: "") }
+    var nameError by rememberSaveable { mutableStateOf<String?>(null) }
+    var nationalIdError by rememberSaveable { mutableStateOf<String?>(null) }
+    var mobileError by rememberSaveable { mutableStateOf<String?>(null) }
     var ceoName by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.ceoName ?: "") }
     var activityType by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.activityType ?: "تولیدکننده") }
     var description by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.description ?: "") }
@@ -285,6 +288,29 @@ fun AddEditVendorScreen(
     var prodSpecsInput by remember { mutableStateOf("") }
     var prodDescInput by remember { mutableStateOf("") }
     var prodCategoryInput by remember { mutableStateOf("") }
+    var prodImageUriInput by remember { mutableStateOf("") }
+
+    // Photo picker for product image
+    val productPhotoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val prodDir = File(context.filesDir, "product_images")
+                if (!prodDir.exists()) prodDir.mkdirs()
+                val imgFile = File(prodDir, "prod_${System.currentTimeMillis()}.png")
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    FileOutputStream(imgFile).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                prodImageUriInput = imgFile.absolutePath
+                Toast.makeText(context, "تصویر محصول انتخاب شد", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "خطا در ذخیره تصویر محصول", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     // Photo picker for logo
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -401,7 +427,11 @@ fun AddEditVendorScreen(
                     when (step) {
                         1 -> Step1BaseInfo(
                             name = name,
-                            onNameChange = { name = it },
+                            onNameChange = {
+                                name = it
+                                if (it.isNotBlank()) nameError = null
+                            },
+                            nameError = nameError,
                             ceoName = ceoName,
                             onCeoNameChange = { ceoName = it },
                             logoUri = logoUri,
@@ -424,7 +454,11 @@ fun AddEditVendorScreen(
                             economicCode = economicCode,
                             onEconomicCodeChange = { economicCode = it },
                             nationalId = nationalId,
-                            onNationalIdChange = { nationalId = it },
+                            onNationalIdChange = {
+                                nationalId = it
+                                if (nationalIdError != null) nationalIdError = null
+                            },
+                            nationalIdError = nationalIdError,
                             registrationNumber = registrationNumber,
                             onRegistrationNumberChange = { registrationNumber = it },
                             bankAccountsList = bankAccountsList
@@ -434,7 +468,11 @@ fun AddEditVendorScreen(
                             onPrimaryPhoneChange = { primaryPhone = it },
                             additionalPhones = additionalPhones,
                             primaryMobile = primaryMobile,
-                            onPrimaryMobileChange = { primaryMobile = it },
+                            onPrimaryMobileChange = {
+                                primaryMobile = it
+                                if (mobileError != null) mobileError = null
+                            },
+                            mobileError = mobileError,
                             additionalMobiles = additionalMobiles,
                             email = email,
                             onEmailChange = { email = it },
@@ -490,6 +528,7 @@ fun AddEditVendorScreen(
                                 prodSpecsInput = ""
                                 prodDescInput = ""
                                 prodCategoryInput = "پمپ‌های سانتریفیوژ"
+                                prodImageUriInput = ""
                                 showProductDialog = true
                             },
                             onEditProductClick = { index, prod ->
@@ -501,6 +540,7 @@ fun AddEditVendorScreen(
                                 prodSpecsInput = prod.specifications
                                 prodDescInput = prod.description
                                 prodCategoryInput = prod.category
+                                prodImageUriInput = prod.imageDrawable
                                 showProductDialog = true
                             },
                             catalogTitle = catalogTitle,
@@ -553,11 +593,28 @@ fun AddEditVendorScreen(
                 if (currentStep < 5) {
                     Button(
                         onClick = {
-                            if (name.isBlank()) {
-                                Toast.makeText(context, "لطفاً نام شرکت را وارد نمایید", Toast.LENGTH_SHORT).show()
-                            } else {
-                                currentStep++
+                            if (currentStep == 1) {
+                                if (name.isBlank()) {
+                                    nameError = "لطفاً نام شرکت را وارد نمایید"
+                                    return@Button
+                                }
+                                nameError = null
+                            } else if (currentStep == 2) {
+                                val nat = nationalId.trim()
+                                if (nat.isNotBlank() && !PersianUtils.isValidNationalIdOrCode(nat)) {
+                                    nationalIdError = "شناسه ملی یا کد ملی نامعتبر است"
+                                    return@Button
+                                }
+                                nationalIdError = null
+                            } else if (currentStep == 3) {
+                                val mob = primaryMobile.trim()
+                                if (mob.isNotBlank() && !PersianUtils.isValidIranianMobile(mob)) {
+                                    mobileError = "شماره همراه باید ۱۱ رقم و با ۰۹ آغاز شود"
+                                    return@Button
+                                }
+                                mobileError = null
                             }
+                            currentStep++
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = TealPrimary,
@@ -889,6 +946,54 @@ fun AddEditVendorScreen(
                         minLines = 2,
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // Product Image Picker
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(54.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (prodImageUriInput.isNotBlank() && File(prodImageUriInput).exists()) {
+                                AsyncImage(
+                                    model = File(prodImageUriInput),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(Icons.Default.Inventory, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Button(
+                            onClick = {
+                                productPhotoPickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (prodImageUriInput.isNotBlank()) "تغییر تصویر" else "انتخاب تصویر محصول", fontSize = 11.sp)
+                        }
+                        if (prodImageUriInput.isNotBlank()) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            OutlinedButton(
+                                onClick = { prodImageUriInput = "" },
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("حذف", fontSize = 11.sp, color = RedFavorite)
+                            }
+                        }
+                    }
                 }
             },
             confirmButton = {
@@ -908,6 +1013,7 @@ fun AddEditVendorScreen(
                             specifications = prodSpecsInput.trim(),
                             description = prodDescInput.trim(),
                             category = prodCategoryInput.trim(),
+                            imageDrawable = prodImageUriInput.ifBlank { "industrial_pump_system" },
                             isFavorite = if (editingProductIndex >= 0) vendorProductsList[editingProductIndex].isFavorite else false
                         )
                         if (editingProductIndex >= 0) {

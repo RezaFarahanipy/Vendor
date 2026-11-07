@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Message
@@ -55,6 +56,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -202,6 +204,17 @@ fun StatCard(
     }
 }
 
+private val AVATAR_PALETTE = listOf(
+    Color(0xFF00897B), Color(0xFF1E88E5), Color(0xFF5E35B1),
+    Color(0xFF3949AB), Color(0xFF00ACC1), Color(0xFFD81B60),
+    Color(0xFFFB8C00), Color(0xFF43A047), Color(0xFF8E24AA)
+)
+
+fun getAvatarColor(name: String): Color {
+    val hash = kotlin.math.abs(name.hashCode())
+    return AVATAR_PALETTE[hash % AVATAR_PALETTE.size]
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VendorCard(
@@ -210,6 +223,9 @@ fun VendorCard(
     onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val avatarColor = remember(vendor.name) { getAvatarColor(vendor.name) }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -228,31 +244,33 @@ fun VendorCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Logo badge
+                // Colored Letter Avatar or Custom Logo
                 Box(
                     modifier = Modifier
-                        .size(46.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(
-                            Brush.linearGradient(
-                                listOf(NavyDeep, TealDark)
-                            )
+                            if (vendor.logoUri.isNotBlank() && File(vendor.logoUri).exists()) {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            } else {
+                                avatarColor
+                            }
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     if (vendor.logoUri.isNotBlank() && File(vendor.logoUri).exists()) {
                         AsyncImage(
                             model = File(vendor.logoUri),
-                            contentDescription = "لوگوی وندور",
+                            contentDescription = "لوگوی ${vendor.name}",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
                     } else {
                         Text(
-                            text = vendor.name.take(2),
+                            text = vendor.name.trim().take(1),
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                            fontSize = 18.sp
                         )
                     }
                 }
@@ -321,7 +339,7 @@ fun VendorCard(
 
                 IconButton(
                     onClick = onFavoriteClick,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
                         imageVector = if (vendor.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -356,6 +374,98 @@ fun VendorCard(
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             fontSize = 11.sp
                         )
+                    }
+                }
+            }
+
+            // Quick Contact Action Row (Call, WhatsApp, Route/Map) with 48dp touch targets
+            val callNumber = vendor.phone.ifBlank { vendor.mobile }
+            val waNumber = vendor.mobile.ifBlank { vendor.phone }
+            val hasLocation = vendor.address.isNotBlank() || (vendor.latitude != 0.0 && vendor.longitude != 0.0)
+
+            if (callNumber.isNotBlank() || waNumber.isNotBlank() || hasLocation) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (callNumber.isNotBlank()) {
+                        IconButton(
+                            onClick = { dialPhone(context, callNumber) },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(TealPrimary.copy(alpha = 0.14f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Call,
+                                    contentDescription = "تماس تلفنی با ${vendor.name}",
+                                    tint = TealPrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    if (waNumber.isNotBlank()) {
+                        IconButton(
+                            onClick = {
+                                com.example.util.MessengerUtils.openWhatsApp(
+                                    context,
+                                    waNumber,
+                                    "سلام، از طریق اپلیکیشن وندوریاب با شما در ارتباط هستم."
+                                )
+                            },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF25D366).copy(alpha = 0.14f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Message,
+                                    contentDescription = "پیام واتس‌اپ به ${vendor.name}",
+                                    tint = Color(0xFF25D366),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    if (hasLocation) {
+                        IconButton(
+                            onClick = {
+                                if (vendor.latitude != 0.0 && vendor.longitude != 0.0) {
+                                    openMap(context, vendor.latitude, vendor.longitude, vendor.name)
+                                } else {
+                                    openMap(context, "${vendor.city} ${vendor.address}")
+                                }
+                            },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(BlueAccent.copy(alpha = 0.14f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.LocationOn,
+                                    contentDescription = "مسیریابی به ${vendor.name}",
+                                    tint = BlueAccent,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -654,14 +764,24 @@ fun ProductItemRow(
                 modifier = Modifier
                     .size(54.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(NavyDeep)
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.industrial_pump_system),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                if (product.imageDrawable.isNotBlank() && File(product.imageDrawable).exists()) {
+                    AsyncImage(
+                        model = File(product.imageDrawable),
+                        contentDescription = product.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Inventory,
+                        contentDescription = product.name,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(12.dp))

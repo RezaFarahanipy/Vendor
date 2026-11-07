@@ -1,6 +1,26 @@
 package com.example.data.model
 
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+
+@Entity(
+    tableName = "bank_accounts",
+    foreignKeys = [
+        ForeignKey(
+            entity = Vendor::class,
+            parentColumns = ["id"],
+            childColumns = ["vendorId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("vendorId")]
+)
 data class BankAccount(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val vendorId: Long = 0,
     val bankName: String = "",
     val accountNumber: String = "",
     val iban: String = "", // شماره شبا

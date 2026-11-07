@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
@@ -69,6 +70,17 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     val isDarkMode = MutableStateFlow(false)
     val appLanguage = MutableStateFlow(com.example.util.AppLanguage.FA)
     val isCardViewMode = MutableStateFlow(true) // Cards vs List
+    val isAppLockEnabled = MutableStateFlow(false)
+    val isScreenshotBlockEnabled = MutableStateFlow(false)
+    val isDynamicColorEnabled = MutableStateFlow(false)
+    val isAppLocked = MutableStateFlow(false)
+
+    fun setDynamicColorEnabled(enabled: Boolean) {
+        isDynamicColorEnabled.value = enabled
+        viewModelScope.launch {
+            settingsDataStore.setDynamicColorEnabled(enabled)
+        }
+    }
 
     fun setThemeMode(mode: ThemeMode) {
         themeMode.value = mode
@@ -94,6 +106,31 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         isCardViewMode.value = isCard
         viewModelScope.launch {
             settingsDataStore.setCardViewMode(isCard)
+        }
+    }
+
+    fun setAppLockEnabled(enabled: Boolean) {
+        isAppLockEnabled.value = enabled
+        if (!enabled) isAppLocked.value = false
+        viewModelScope.launch {
+            settingsDataStore.setAppLockEnabled(enabled)
+        }
+    }
+
+    fun setScreenshotBlockEnabled(enabled: Boolean) {
+        isScreenshotBlockEnabled.value = enabled
+        viewModelScope.launch {
+            settingsDataStore.setScreenshotBlockEnabled(enabled)
+        }
+    }
+
+    fun unlockApp() {
+        isAppLocked.value = false
+    }
+
+    fun lockApp() {
+        if (isAppLockEnabled.value) {
+            isAppLocked.value = true
         }
     }
 
@@ -297,6 +334,21 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
         viewModelScope.launch {
+            settingsDataStore.isAppLockEnabledFlow.collect { enabled ->
+                isAppLockEnabled.value = enabled
+            }
+        }
+        viewModelScope.launch {
+            settingsDataStore.isScreenshotBlockEnabledFlow.collect { enabled ->
+                isScreenshotBlockEnabled.value = enabled
+            }
+        }
+        viewModelScope.launch {
+            settingsDataStore.isDynamicColorEnabledFlow.collect { enabled ->
+                isDynamicColorEnabled.value = enabled
+            }
+        }
+        viewModelScope.launch {
             repository.ensureBaselineTaxonomy()
         }
     }
@@ -353,14 +405,6 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             repository.updateNotes(vendorId, notes)
             userNotice.value = "یادداشت با موفقیت ذخیره شد"
-        }
-    }
-
-    fun saveVendor(vendor: Vendor, onComplete: (Long) -> Unit) {
-        viewModelScope.launch {
-            val savedId = repository.saveVendor(vendor)
-            userNotice.value = "اطلاعات وندور با موفقیت ذخیره شد"
-            onComplete(savedId)
         }
     }
 
@@ -515,6 +559,22 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
             val json = repository.exportFullBackupJson()
             onSuccess(json)
             userNotice.value = "فایل پشتیبان کامل JSON آماده شد"
+        }
+    }
+
+    fun exportFullBackupZip(context: Context, outputStream: java.io.OutputStream, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            repository.exportFullBackupZip(context, outputStream)
+            userNotice.value = "فایل پشتیبان کامل (ZIP شامل تصاویر و کاتالوگ‌ها) با موفقیت ذخیره شد"
+            onComplete()
+        }
+    }
+
+    fun restoreFullBackupStream(context: Context, inputStream: java.io.InputStream, onComplete: ((inserted: Int, skipped: Int) -> Unit)? = null) {
+        viewModelScope.launch {
+            val (inserted, skipped) = repository.restoreFullBackupStream(context, inputStream)
+            userNotice.value = "پشتیبان بازیابی شد: $inserted وندور جدید، $skipped تکراری رد شد."
+            onComplete?.invoke(inserted, skipped)
         }
     }
 

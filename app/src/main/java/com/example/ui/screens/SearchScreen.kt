@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -361,6 +362,72 @@ fun SearchScreen(
             }
         }
 
+        // Active clearable filter chips row
+        val hasActiveFilters = selectedCategory != "همه" || selectedCity != "همه" || onlyVerified || onlyCatalog || query.isNotBlank()
+        if (hasActiveFilters) {
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (query.isNotBlank()) {
+                    item {
+                        ActiveFilterChip(
+                            label = "جستجو: $query",
+                            onClear = { viewModel.searchQuery.value = "" }
+                        )
+                    }
+                }
+                if (selectedCategory != "همه") {
+                    item {
+                        ActiveFilterChip(
+                            label = "دسته: $selectedCategory",
+                            onClear = { viewModel.selectedCategoryFilter.value = "همه" }
+                        )
+                    }
+                }
+                if (selectedCity != "همه") {
+                    item {
+                        ActiveFilterChip(
+                            label = "شهر: $selectedCity",
+                            onClear = { viewModel.selectedCityFilter.value = "همه" }
+                        )
+                    }
+                }
+                if (onlyVerified) {
+                    item {
+                        ActiveFilterChip(
+                            label = "فقط تأیید شده",
+                            onClear = { viewModel.onlyVerifiedFilter.value = false }
+                        )
+                    }
+                }
+                if (onlyCatalog) {
+                    item {
+                        ActiveFilterChip(
+                            label = "دارای کاتالوگ",
+                            onClear = { viewModel.onlyCatalogFilter.value = false }
+                        )
+                    }
+                }
+                item {
+                    TextButton(
+                        onClick = {
+                            viewModel.searchQuery.value = ""
+                            viewModel.selectedCategoryFilter.value = "همه"
+                            viewModel.selectedCityFilter.value = "همه"
+                            viewModel.onlyVerifiedFilter.value = false
+                            viewModel.onlyCatalogFilter.value = false
+                        }
+                    ) {
+                        Text("پاک‌سازی همه", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+        }
+
         // Result count header
         Row(
             modifier = Modifier
@@ -614,3 +681,40 @@ fun DashboardMiniStatCard(
         }
     }
 }
+
+@Composable
+fun ActiveFilterChip(
+    label: String,
+    onClear: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+        modifier = Modifier.padding(vertical = 2.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(start = 10.dp, end = 4.dp, top = 2.dp, bottom = 2.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            IconButton(
+                onClick = onClear,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = "حذف فیلتر",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
+    }
+}
+

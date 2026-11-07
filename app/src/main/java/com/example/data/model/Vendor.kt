@@ -1,9 +1,16 @@
 package com.example.data.model
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "vendors")
+@Entity(
+    tableName = "vendors",
+    indices = [
+        Index("searchIndex"),
+        Index("activityTypeId")
+    ]
+)
 data class Vendor(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -11,6 +18,7 @@ data class Vendor(
     val ceoName: String = "",
     val description: String = "",
     val activityType: String = "تولیدکننده", // تولیدکننده, بازرگانی, واردکننده, ...
+    val activityTypeId: Long? = null,
     val phone: String = "",
     val mobile: String = "",
     val secondaryPhones: String = "", // Additional landline numbers (comma-separated)
@@ -40,6 +48,7 @@ data class Vendor(
     val nationalId: String = "", // شناسه ملی
     val registrationNumber: String = "", // شماره ثبت
     val bankAccounts: String = "", // Serialized BankAccounts via BankAccountUtils
+    val searchIndex: String = "", // Precomputed Persian normalized search text
     val lastContactDate: Long? = null,
     val createdAt: Long = System.currentTimeMillis()
 ) {

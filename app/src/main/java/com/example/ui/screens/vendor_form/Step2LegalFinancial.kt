@@ -53,6 +53,7 @@ fun Step2LegalFinancial(
     onEconomicCodeChange: (String) -> Unit,
     nationalId: String,
     onNationalIdChange: (String) -> Unit,
+    nationalIdError: String? = null,
     registrationNumber: String,
     onRegistrationNumberChange: (String) -> Unit,
     bankAccountsList: SnapshotStateList<BankAccount>
@@ -78,12 +79,15 @@ fun Step2LegalFinancial(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+        val isNatError = nationalIdError != null || (nationalId.isNotBlank() && !PersianUtils.isValidNationalIdOrCode(nationalId))
         OutlinedTextField(
             value = nationalId,
             onValueChange = onNationalIdChange,
             label = { Text("شناسه ملی (۱۱ رقمی)") },
             placeholder = { Text("10103487920") },
             singleLine = true,
+            isError = isNatError,
+            supportingText = if (isNatError) { { Text(nationalIdError ?: "شناسه یا کد ملی نامعتبر است", color = MaterialTheme.colorScheme.error) } } else null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.weight(1f)
         )
@@ -124,7 +128,7 @@ fun Step2LegalFinancial(
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .clickable {
-                bankAccountsList.add(BankAccount("", "", "", ""))
+                bankAccountsList.add(BankAccount())
             },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(

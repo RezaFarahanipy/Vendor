@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.FeaturedPlayList
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Storage
@@ -106,6 +107,9 @@ fun SettingsScreen(
     val lang by viewModel.appLanguage.collectAsState()
     val allActivityTypes by viewModel.allActivityTypes.collectAsState()
     val allCategories by viewModel.allCategories.collectAsState()
+    val isAppLockEnabled by viewModel.isAppLockEnabled.collectAsState()
+    val isScreenshotBlockEnabled by viewModel.isScreenshotBlockEnabled.collectAsState()
+    val isDynamicColorEnabled by viewModel.isDynamicColorEnabled.collectAsState()
 
     // Export CSV document launcher (UTF-8 with BOM for Excel)
     val exportCsvLauncher = rememberLauncherForActivityResult(
@@ -145,37 +149,31 @@ fun SettingsScreen(
         }
     }
 
-    // Full JSON Backup Export
-    val exportJsonLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/json")
+    // Comprehensive ZIP Backup Export (includes DB records + logo files + PDF catalogs)
+    val exportZipLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
         if (uri != null) {
-            viewModel.exportFullBackupJson { jsonContent ->
-                try {
-                    context.contentResolver.openOutputStream(uri)?.use { out ->
-                        out.write(jsonContent.toByteArray(Charsets.UTF_8))
+            try {
+                context.contentResolver.openOutputStream(uri)?.use { out ->
+                    viewModel.exportFullBackupZip(context, out) {
+                        Toast.makeText(context, "فایل پشتیبان جامع (ZIP) با موفقیت ذخیره شد", Toast.LENGTH_SHORT).show()
                     }
-                    Toast.makeText(context, "فایل پشتیبان کامل با موفقیت ذخیره شد", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Toast.makeText(context, "خطا در ذخیره‌سازی پشتیبان: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
+            } catch (e: Exception) {
+                Toast.makeText(context, "خطا در ذخیره‌سازی پشتیبان: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    // Full JSON Backup Restore
-    val importJsonLauncher = rememberLauncherForActivityResult(
+    // Comprehensive Backup Restore (supports new ZIP packages and legacy JSON files)
+    val importBackupLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
             try {
-                val content = context.contentResolver.openInputStream(uri)?.use { stream ->
-                    stream.bufferedReader(Charsets.UTF_8).readText()
-                }
-                if (!content.isNullOrBlank()) {
-                    viewModel.restoreFullBackupJson(content)
-                } else {
-                    Toast.makeText(context, "فایل انتخاب‌شده خالی است", Toast.LENGTH_SHORT).show()
+                context.contentResolver.openInputStream(uri)?.use { stream ->
+                    viewModel.restoreFullBackupStream(context, stream)
                 }
             } catch (e: Exception) {
                 Toast.makeText(context, "خطا در خواندن فایل پشتیبان: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -394,6 +392,33 @@ fun SettingsScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         }
+
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "رنگ‌بندی پویا (Material You)",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "هماهنگی رنگ‌های برنامه با پس‌زمینه دستگاه",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Switch(
+                                    checked = isDynamicColorEnabled,
+                                    onCheckedChange = { viewModel.setDynamicColorEnabled(it) }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -444,6 +469,101 @@ fun SettingsScreen(
                                 text = if (lang == AppLanguage.FA) "English" else "فارسی",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Security & Privacy Card (قفل بیومتریک و FLAG_SECURE)
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            SettingsIconBadge(icon = Icons.Default.Lock, tint = TealPrimary)
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column {
+                                Text(
+                                    text = "امنیت و حریم خصوصی داده‌ها",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "محافظت از اطلاعات حساس بانکی، حقوقی و اسکرین‌شات",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                        // Biometric App Lock Toggle
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "قفل بیومتریک و پین برنامه",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = "قفل خودکار برنامه پس از ۳۰ ثانیه خروج به پس‌زمینه",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = isAppLockEnabled,
+                                onCheckedChange = { viewModel.setAppLockEnabled(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = TealPrimary,
+                                    checkedTrackColor = TealPrimary.copy(alpha = 0.4f)
+                                )
+                            )
+                        }
+
+                        // FLAG_SECURE Screenshot Block Toggle
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "جلوگیری از اسکرین‌شات (FLAG_SECURE)",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = "ممنوعیت عکس و فیلمبرداری از صفحه و مخفی‌سازی در برنامه‌های اخیر",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = isScreenshotBlockEnabled,
+                                onCheckedChange = { viewModel.setScreenshotBlockEnabled(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = TealPrimary,
+                                    checkedTrackColor = TealPrimary.copy(alpha = 0.4f)
+                                )
                             )
                         }
                     }
@@ -504,26 +624,26 @@ fun SettingsScreen(
                 )
             }
 
-            // Full JSON Backup Export
+            // Full Comprehensive Backup Export (ZIP)
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.Code,
-                    title = "پشتیبان‌گیری کامل (JSON)",
-                    subtitle = "استخراج کامل وندورها، پرسنل و محصولات در قالب فایل JSON",
+                    title = "پشتیبان‌گیری کامل جامع (فایل ZIP)",
+                    subtitle = "بسته‌بندی پایگاه داده به همراه تمام فایل‌های کاتالوگ PDF و لوگوها در یک فایل ZIP",
                     onClick = {
-                        exportJsonLauncher.launch("vendoryab_full_backup.json")
+                        exportZipLauncher.launch("vendoryab_full_backup.zip")
                     }
                 )
             }
 
-            // Full JSON Backup Restore
+            // Full Comprehensive Backup Restore (ZIP / JSON)
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.Restore,
-                    title = "بازیابی از فایل پشتیبان (JSON)",
-                    subtitle = "بازگردانی کامل کلیه اطلاعات از فایل پشتیبان JSON",
+                    title = "بازیابی از فایل پشتیبان (ZIP یا JSON)",
+                    subtitle = "بازگردانی کامل اطلاعات، کاتالوگ‌ها و لوگوها (پشتیبانی از ZIP و فایل‌های قدیمی JSON)",
                     onClick = {
-                        importJsonLauncher.launch(arrayOf("application/json", "*/*"))
+                        importBackupLauncher.launch(arrayOf("application/zip", "application/json", "application/octet-stream", "*/*"))
                     }
                 )
             }

@@ -25,6 +25,9 @@ class AppSettingsDataStore(private val context: Context) {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val APP_LANGUAGE = stringPreferencesKey("app_language")
         val IS_CARD_VIEW_MODE = booleanPreferencesKey("is_card_view_mode")
+        val IS_APP_LOCK_ENABLED = booleanPreferencesKey("is_app_lock_enabled")
+        val IS_SCREENSHOT_BLOCK_ENABLED = booleanPreferencesKey("is_screenshot_block_enabled")
+        val IS_DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("is_dynamic_color_enabled")
     }
 
     val themeModeFlow: Flow<ThemeMode> = context.dataStore.data.map { preferences ->
@@ -49,6 +52,18 @@ class AppSettingsDataStore(private val context: Context) {
         preferences[PreferencesKeys.IS_CARD_VIEW_MODE] ?: true
     }
 
+    val isAppLockEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.IS_APP_LOCK_ENABLED] ?: false
+    }
+
+    val isScreenshotBlockEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.IS_SCREENSHOT_BLOCK_ENABLED] ?: false
+    }
+
+    val isDynamicColorEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.IS_DYNAMIC_COLOR_ENABLED] ?: false
+    }
+
     suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.THEME_MODE] = mode.name
@@ -64,6 +79,24 @@ class AppSettingsDataStore(private val context: Context) {
     suspend fun setCardViewMode(isCardView: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_CARD_VIEW_MODE] = isCardView
+        }
+    }
+
+    suspend fun setAppLockEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_APP_LOCK_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setScreenshotBlockEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_SCREENSHOT_BLOCK_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setDynamicColorEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_DYNAMIC_COLOR_ENABLED] = enabled
         }
     }
 }

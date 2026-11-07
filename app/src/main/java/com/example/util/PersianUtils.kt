@@ -1,19 +1,25 @@
 package com.example.util
 
 /**
- * Persian language utilities for normalized smart search and digit conversion
+ * Persian language utilities for normalized smart search and digit conversion.
+ * Regexes are pre-compiled as singleton vals for high performance.
  */
 object PersianUtils {
+
+    private val DIACRITICS_REGEX = Regex("[\u064B-\u065F\u0670]")
+    private val SPACES_REGEX = Regex("\\s+")
+    private val NON_DIGITS_REGEX = Regex("[^0-9]")
+    private val IRANIAN_MOBILE_REGEX = Regex("^09\\d{9}$")
+    private val PERSIAN_DIGITS = charArrayOf('۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹')
 
     /**
      * Converts English numbers ('0'..'9') to Persian numbers ('۰'..'۹')
      */
     fun toPersianDigits(text: String): String {
-        val persianDigits = charArrayOf('۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹')
         val sb = java.lang.StringBuilder()
         for (char in text) {
             if (char in '0'..'9') {
-                sb.append(persianDigits[char - '0'])
+                sb.append(PERSIAN_DIGITS[char - '0'])
             } else {
                 sb.append(char)
             }
@@ -55,7 +61,7 @@ object PersianUtils {
      * - Unifies Arabic 'ة' and 'ه'
      * - Unifies 'آ' and 'ا'
      * - Normalizes or removes ZWNJ (\u200c)
-     * - Removes Arabic/Persian diacritics (َ, ِ, ُ, ً, ٍ, ٌ, ّ, ْ)
+     * - Removes Arabic/Persian diacritics
      * - Converts digits to uniform english digits for matching
      */
     fun normalizeForSearch(input: String?): String {
@@ -71,19 +77,19 @@ object PersianUtils {
         s = s.replace('أ', 'ا')
         s = s.replace('آ', 'ا')
 
-        // Remove ZWNJ (Zero-width non-joiner) and extra spacing
+        // Remove ZWNJ and extra spacing
         s = s.replace("\u200c", "")
         s = s.replace("\u200f", "")
         s = s.replace("\u00a0", " ")
 
-        // Remove diacritics
-        s = s.replace(Regex("[\u064B-\u065F\u0670]"), "")
+        // Remove diacritics using pre-compiled regex
+        s = s.replace(DIACRITICS_REGEX, "")
 
         // Normalize digits
         s = toEnglishDigits(s)
 
-        // Normalize multiple spaces into single space
-        s = s.replace(Regex("\\s+"), " ")
+        // Normalize multiple spaces into single space using pre-compiled regex
+        s = s.replace(SPACES_REGEX, " ")
 
         return s
     }
@@ -94,7 +100,7 @@ object PersianUtils {
     fun normalizePhone(phone: String?): String {
         if (phone.isNullOrBlank()) return ""
         var english = toEnglishDigits(phone)
-        english = english.replace(Regex("[^0-9]"), "")
+        english = english.replace(NON_DIGITS_REGEX, "")
         if (english.startsWith("98") && english.length > 10) {
             english = "0" + english.substring(2)
         }
@@ -119,7 +125,7 @@ object PersianUtils {
     fun isValidIranianMobile(mobile: String?): Boolean {
         if (mobile.isNullOrBlank()) return false
         val clean = normalizePhone(mobile)
-        return clean.matches(Regex("^09\\d{9}$"))
+        return clean.matches(IRANIAN_MOBILE_REGEX)
     }
 
     /**
@@ -140,7 +146,7 @@ object PersianUtils {
      */
     fun isValidIranianNationalCode(code: String): Boolean {
         if (code.length != 10) return false
-        if (code.all { it == code[0] }) return false // All identical digits are invalid
+        if (code.all { it == code[0] }) return false
         val checkDigit = code[9].digitToInt()
         var sum = 0
         for (i in 0 until 9) {
@@ -183,4 +189,50 @@ object PersianUtils {
     }
 
     fun normalize(input: String?): String = normalizeForSearch(input)
+
+    /**
+     * Generates a pre-normalized search index string for fast indexed searching
+     */
+    fun generateSearchIndex(
+        name: String,
+        ceoName: String = "",
+        city: String = "",
+        categories: String = "",
+        tags: String = "",
+        phone: String = "",
+        mobile: String = "",
+        secondaryPhones: String = "",
+        additionalMobiles: String = "",
+        economicCode: String = "",
+        nationalId: String = ""
+    ): String {
+        val tokens = mutableListOf<String>()
+        if (name.isNotBlank()) tokens.add(normalizeForSearch(name))
+        if (ceoName.isNotBlank()) tokens.add(normalizeForSearch(ceoName))
+        if (city.isNotBlank()) tokens.add(normalizeForSearch(city))
+        if (categories.isNotBlank()) tokens.add(normalizeForSearch(categories))
+        if (tags.isNotBlank()) tokens.add(normalizeForSearch(tags))
+
+        val cleanPhone = normalizePhone(phone)
+        if (cleanPhone.isNotBlank()) tokens.add(cleanPhone)
+        val cleanMobile = normalizePhone(mobile)
+        if (cleanMobile.isNotBlank()) tokens.add(cleanMobile)
+
+        if (secondaryPhones.isNotBlank()) {
+            secondaryPhones.split(",", "،", "\n").forEach {
+                val p = normalizePhone(it)
+                if (p.isNotBlank()) tokens.add(p)
+            }
+        }
+        if (additionalMobiles.isNotBlank()) {
+            additionalMobiles.split(",", "،", "\n").forEach {
+                val m = normalizePhone(it)
+                if (m.isNotBlank()) tokens.add(m)
+            }
+        }
+        if (economicCode.isNotBlank()) tokens.add(toEnglishDigits(economicCode).filter { it.isDigit() })
+        if (nationalId.isNotBlank()) tokens.add(toEnglishDigits(nationalId).filter { it.isDigit() })
+
+        return tokens.joinToString(" ")
+    }
 }

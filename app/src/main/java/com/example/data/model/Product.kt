@@ -3,7 +3,21 @@ package com.example.data.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "products")
+import androidx.room.ForeignKey
+import androidx.room.Index
+
+@Entity(
+    tableName = "products",
+    foreignKeys = [
+        ForeignKey(
+            entity = Vendor::class,
+            parentColumns = ["id"],
+            childColumns = ["vendorId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("vendorId")]
+)
 data class Product(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

@@ -193,4 +193,65 @@ class VendorLogicTest {
         val invalidValidation = ShebaUtils.validateSheba(invalidSheba)
         assertFalse(invalidValidation.isValid)
     }
+
+    @Test
+    fun testGenerateSearchIndex() {
+        val index = PersianUtils.generateSearchIndex(
+            name = "شرکت پمپ پارس پيشرو",
+            ceoName = "مهندس محمدی",
+            city = "تهران",
+            categories = "پمپ سانتریفیوژ",
+            tags = "استیل",
+            phone = "021-88776655",
+            mobile = "۰۹۱۲۳۴۵۶۷۸۹",
+            economicCode = "123456789012",
+            nationalId = "10103487920"
+        )
+
+        // Arabic yeh and kaf should be normalized to Persian
+        assertTrue(index.contains("پیشرو"))
+        assertTrue(index.contains("محمدی"))
+        // Phone numbers converted to clean english digits without dashes
+        assertTrue(index.contains("02188776655"))
+        assertTrue(index.contains("09123456789"))
+        assertTrue(index.contains("10103487920"))
+    }
+
+    @Test
+    fun testMapLinkCoordinateExtraction() {
+        // Google Maps URL format with @lat,lng
+        val gmapsUrl = "https://www.google.com/maps/@35.73576,51.44678,15z"
+        val gCoords = com.example.ui.components.MapLinkUtils.extractCoordinates(gmapsUrl)
+        assertNotNull(gCoords)
+        assertEquals(35.73576, gCoords!!.first, 0.0001)
+        assertEquals(51.44678, gCoords.second, 0.0001)
+
+        // Google Maps query format q=lat,lng
+        val gQueryUrl = "https://maps.google.com/?q=35.6892,51.3890"
+        val qCoords = com.example.ui.components.MapLinkUtils.extractCoordinates(gQueryUrl)
+        assertNotNull(qCoords)
+        assertEquals(35.6892, qCoords!!.first, 0.0001)
+        assertEquals(51.3890, qCoords.second, 0.0001)
+
+        // Neshan URL format
+        val neshanUrl = "https://neshan.org/maps/@35.73576,51.44678,14z"
+        val nCoords = com.example.ui.components.MapLinkUtils.extractCoordinates(neshanUrl)
+        assertNotNull(nCoords)
+        assertEquals(35.73576, nCoords!!.first, 0.0001)
+        assertEquals(51.44678, nCoords.second, 0.0001)
+
+        // Balad URL format
+        val baladUrl = "https://balad.ir/location?lat=35.7001&lng=51.3456"
+        val bCoords = com.example.ui.components.MapLinkUtils.extractCoordinates(baladUrl)
+        assertNotNull(bCoords)
+        assertEquals(35.7001, bCoords!!.first, 0.0001)
+        assertEquals(51.3456, bCoords.second, 0.0001)
+
+        // Raw coordinates string
+        val rawCoords = "35.73576, 51.44678"
+        val rCoords = com.example.ui.components.MapLinkUtils.extractCoordinates(rawCoords)
+        assertNotNull(rCoords)
+        assertEquals(35.73576, rCoords!!.first, 0.0001)
+        assertEquals(51.44678, rCoords.second, 0.0001)
+    }
 }

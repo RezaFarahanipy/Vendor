@@ -55,4 +55,14 @@ interface VendorDao {
 
     @Query("SELECT * FROM vendors WHERE name = :name LIMIT 1")
     suspend fun findByName(name: String): Vendor?
+
+    @Query("""
+        SELECT * FROM vendors 
+        WHERE searchIndex LIKE '%' || :query || '%' 
+           OR name LIKE '%' || :query || '%' 
+           OR phone LIKE '%' || :query || '%' 
+           OR mobile LIKE '%' || :query || '%' 
+        ORDER BY name ASC
+    """)
+    fun searchVendors(query: String): Flow<List<Vendor>>
 }
