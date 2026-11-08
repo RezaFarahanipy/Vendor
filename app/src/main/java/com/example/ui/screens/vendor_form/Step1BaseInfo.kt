@@ -94,22 +94,30 @@ fun Step1BaseInfo(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Logo preview box
+            val hasLogo = logoUri.isNotBlank() && File(logoUri).exists()
             Box(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        Brush.linearGradient(listOf(NavyDeep, TealDark))
+                    .then(
+                        if (hasLogo) Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                        else Modifier.background(Brush.linearGradient(listOf(NavyDeep, TealDark)))
                     )
-                    .border(2.dp, TealPrimary, RoundedCornerShape(16.dp)),
+                    .border(
+                        1.5.dp,
+                        if (hasLogo) MaterialTheme.colorScheme.outline.copy(alpha = 0.5f) else TealPrimary,
+                        RoundedCornerShape(16.dp)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                if (logoUri.isNotBlank() && File(logoUri).exists()) {
+                if (hasLogo) {
                     AsyncImage(
                         model = File(logoUri),
                         contentDescription = "لوگوی وندور",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(6.dp),
+                        contentScale = ContentScale.Fit
                     )
                 } else {
                     Text(

@@ -6,6 +6,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BusinessCenter
 import androidx.compose.material.icons.filled.Category
@@ -76,6 +78,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.ActivityType
@@ -205,15 +208,18 @@ fun SettingsScreen(
         ) {
             // Full Features and Capabilities of the App
             item {
+                val cardShape = RoundedCornerShape(18.dp)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateContentSize()
-                        .clickable { showFeaturesDialog = true },
-                    shape = RoundedCornerShape(18.dp),
+                        .clip(cardShape)
+                        .clickable { showFeaturesDialog = true }
+                        .animateContentSize(),
+                    shape = cardShape,
                     colors = CardDefaults.cardColors(
-                        containerColor = TealPrimary.copy(alpha = 0.15f)
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
+                    border = BorderStroke(1.dp, TealPrimary.copy(alpha = 0.35f)),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Row(
@@ -222,7 +228,7 @@ fun SettingsScreen(
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        SettingsIconBadge(icon = Icons.Default.FeaturedPlayList, tint = TealPrimary)
+                        SettingsIconBadge(icon = Icons.Default.FeaturedPlayList, tint = TealDark)
                         Spacer(modifier = Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -238,9 +244,9 @@ fun SettingsScreen(
                             )
                         }
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
-                            tint = TealPrimary,
+                            tint = TealDark,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -376,19 +382,46 @@ fun SettingsScreen(
                             FilterChip(
                                 selected = themeMode == ThemeMode.SYSTEM,
                                 onClick = { viewModel.setThemeMode(ThemeMode.SYSTEM) },
-                                label = { Text("پیرو سیستم", fontSize = 11.sp) },
+                                label = {
+                                    Text(
+                                        text = "پیرو سیستم",
+                                        fontSize = 11.sp,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                },
                                 modifier = Modifier.weight(1f)
                             )
                             FilterChip(
                                 selected = themeMode == ThemeMode.LIGHT,
                                 onClick = { viewModel.setThemeMode(ThemeMode.LIGHT) },
-                                label = { Text("روشن", fontSize = 11.sp) },
+                                label = {
+                                    Text(
+                                        text = "روشن",
+                                        fontSize = 11.sp,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                },
                                 modifier = Modifier.weight(1f)
                             )
                             FilterChip(
                                 selected = themeMode == ThemeMode.DARK,
                                 onClick = { viewModel.setThemeMode(ThemeMode.DARK) },
-                                label = { Text("تاریک", fontSize = 11.sp) },
+                                label = {
+                                    Text(
+                                        text = "تاریک",
+                                        fontSize = 11.sp,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -463,12 +496,15 @@ fun SettingsScreen(
                                 containerColor = TealPrimary,
                                 contentColor = NavyDeep
                             ),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             Text(
                                 text = if (lang == AppLanguage.FA) "English" else "فارسی",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -799,7 +835,7 @@ private fun SettingsClickableCard(
                 )
             }
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier.size(16.dp)

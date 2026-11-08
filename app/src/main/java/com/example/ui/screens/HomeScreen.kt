@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,6 +37,7 @@ import androidx.compose.material.icons.filled.Apartment
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Hardware
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Notifications
@@ -97,42 +99,13 @@ fun HomeScreen(
     val isDark by viewModel.isDarkMode.collectAsState()
     val lang by viewModel.appLanguage.collectAsState()
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onOpenAddVendor,
-                containerColor = TealPrimary,
-                contentColor = NavyDeep,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .testTag("add_vendor_fab")
-                    .animateContentSize(spring(dampingRatio = Spring.DampingRatioMediumBouncy))
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = Localization.get("new_vendor_btn", lang)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = Localization.get("new_vendor_btn", lang),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .animateContentSize(),
-            contentPadding = PaddingValues(bottom = 80.dp)
-        ) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .animateContentSize(),
+        contentPadding = PaddingValues(bottom = 80.dp)
+    ) {
             // Header Bar with Branding, Language & Theme Switcher
             item {
                 HomeHeaderBar(
@@ -236,7 +209,7 @@ fun HomeScreen(
                             Text(
                                 text = Localization.get("view_all", lang),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = TealDark
                             )
                         }
                     }
@@ -246,28 +219,12 @@ fun HomeScreen(
                     val displayCategories = if (categories.isNotEmpty()) categories.take(6) else defaultCategories()
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            displayCategories.take(3).forEach { category ->
-                                CompactCategoryTile(
-                                    category = category,
-                                    lang = lang,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = {
-                                        viewModel.selectedCategoryFilter.value = category.name
-                                        viewModel.currentTab.value = MainTab.SEARCH
-                                    }
-                                )
-                            }
-                        }
-                        if (displayCategories.size > 3) {
+                        displayCategories.chunked(2).forEach { pair ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                displayCategories.drop(3).take(3).forEach { category ->
+                                pair.forEach { category ->
                                     CompactCategoryTile(
                                         category = category,
                                         lang = lang,
@@ -277,6 +234,9 @@ fun HomeScreen(
                                             viewModel.currentTab.value = MainTab.SEARCH
                                         }
                                     )
+                                }
+                                if (pair.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
                         }
@@ -302,7 +262,7 @@ fun HomeScreen(
                     Text(
                         text = if (lang == AppLanguage.FA) "${PersianUtils.toPersianDigits(allVendors.size)} وندور" else "${allVendors.size} Vendors",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        color = TealDark
                     )
                 }
             }
@@ -342,7 +302,6 @@ fun HomeScreen(
             }
         }
     }
-}
 
 @Composable
 private fun HomeHeaderBar(
@@ -503,6 +462,7 @@ private fun CompactCategoryTile(
             val icon = when (category.name) {
                 "صنعتی" -> Icons.Default.PrecisionManufacturing
                 "ساختمان و عمرانی" -> Icons.Default.Apartment
+                "آهن‌آلات", "فلزات و آهن‌آلات" -> Icons.Default.Hardware
                 "ماشین‌آلات" -> Icons.Default.Agriculture
                 "مواد غذایی" -> Icons.Default.Restaurant
                 "مواد شیمیایی" -> Icons.Default.Science
@@ -530,8 +490,9 @@ private fun CompactCategoryTile(
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+                lineHeight = 14.sp,
                 fontSize = 11.sp,
                 modifier = Modifier.weight(1f)
             )
@@ -542,8 +503,8 @@ private fun CompactCategoryTile(
 private fun defaultCategories() = listOf(
     Category(name = "صنعتی", vendorCount = 0),
     Category(name = "ساختمان و عمرانی", vendorCount = 0),
+    Category(name = "آهن‌آلات", vendorCount = 0),
     Category(name = "ماشین‌آلات", vendorCount = 0),
-    Category(name = "مواد غذایی", vendorCount = 0),
     Category(name = "مواد شیمیایی", vendorCount = 0),
     Category(name = "برق و الکترونیک", vendorCount = 0)
 )

@@ -582,7 +582,7 @@ fun AddEditVendorScreen(
                         onClick = { currentStep-- },
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("مرحله قبل")
                     }
@@ -625,7 +625,7 @@ fun AddEditVendorScreen(
                     ) {
                         Text("مرحله بعد", fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
                     }
                 } else {
                     Button(

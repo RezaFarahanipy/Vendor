@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
@@ -22,6 +25,7 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -43,9 +47,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.TealDark
 import com.example.ui.theme.TealPrimary
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.MainTab
@@ -103,7 +109,31 @@ fun MainAppScreen(viewModel: VendorViewModel) {
         }
 
         Scaffold(
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             snackbarHost = { SnackbarHost(snackbarHostState) },
+            floatingActionButton = {
+                if (currentScreen == AppScreen.MAIN_TABS && currentTab == MainTab.HOME) {
+                    ExtendedFloatingActionButton(
+                        onClick = { viewModel.openAddVendor() },
+                        containerColor = TealPrimary,
+                        contentColor = NavyDeep,
+                        shape = CircleShape,
+                        modifier = Modifier.testTag("add_vendor_fab"),
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = Localization.get("new_vendor_btn", lang)
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = Localization.get("new_vendor_btn", lang),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    )
+                }
+            },
             bottomBar = {
                 if (currentScreen == AppScreen.MAIN_TABS) {
                     AppBottomNavigationBar(
@@ -117,7 +147,7 @@ fun MainAppScreen(viewModel: VendorViewModel) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .padding(bottom = innerPadding.calculateBottomPadding())
             ) {
                 AnimatedContent(
                     targetState = currentScreen,
@@ -240,7 +270,7 @@ fun AppBottomNavigationBar(
             label = { Text(Localization.get("tab_home", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = NavyDeep,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = TealDark,
                 indicatorColor = TealPrimary,
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -260,7 +290,7 @@ fun AppBottomNavigationBar(
             label = { Text(Localization.get("tab_search", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = NavyDeep,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = TealDark,
                 indicatorColor = TealPrimary,
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -280,7 +310,7 @@ fun AppBottomNavigationBar(
             label = { Text(Localization.get("tab_favorites", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = NavyDeep,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = TealDark,
                 indicatorColor = TealPrimary,
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -300,7 +330,7 @@ fun AppBottomNavigationBar(
             label = { Text(Localization.get("tab_settings", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = NavyDeep,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = TealDark,
                 indicatorColor = TealPrimary,
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant

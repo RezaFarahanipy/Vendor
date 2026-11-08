@@ -69,22 +69,30 @@ fun VendorDetailHeaderCard(vendor: Vendor) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Company Logo
+                val hasLogo = vendor.logoUri.isNotBlank() && File(vendor.logoUri).exists()
                 Box(
                     modifier = Modifier
                         .size(74.dp)
                         .clip(RoundedCornerShape(18.dp))
-                        .background(
-                            Brush.linearGradient(listOf(NavyDeep, TealDark))
+                        .then(
+                            if (hasLogo) Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                            else Modifier.background(Brush.linearGradient(listOf(NavyDeep, TealDark)))
                         )
-                        .border(2.dp, TealPrimary.copy(alpha = 0.6f), RoundedCornerShape(18.dp)),
+                        .border(
+                            1.5.dp,
+                            if (hasLogo) MaterialTheme.colorScheme.outline.copy(alpha = 0.5f) else TealPrimary.copy(alpha = 0.6f),
+                            RoundedCornerShape(18.dp)
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (vendor.logoUri.isNotBlank() && File(vendor.logoUri).exists()) {
+                    if (hasLogo) {
                         AsyncImage(
                             model = File(vendor.logoUri),
                             contentDescription = "لوگوی شرکت",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(6.dp),
+                            contentScale = ContentScale.Fit
                         )
                     } else {
                         Text(

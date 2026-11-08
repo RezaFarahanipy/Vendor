@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -174,52 +175,65 @@ private fun PersonnelItem(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Direct Communication Actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                if (contact.mobile.isNotBlank()) {
+            if (contact.mobile.isNotBlank()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     OutlinedButton(
                         onClick = { dial(context, contact.mobile) },
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f)
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
                     ) {
-                        Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(14.dp), tint = TealPrimary)
+                        Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(14.dp), tint = TealDark)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("تماس", fontSize = 11.sp)
+                        Text("تماس", fontSize = 11.sp, maxLines = 1, softWrap = false)
                     }
 
                     OutlinedButton(
                         onClick = { sms(context, contact.mobile) },
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f)
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Message, contentDescription = null, modifier = Modifier.size(14.dp), tint = BlueAccent)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("پیامک", fontSize = 11.sp)
+                        Text("پیامک", fontSize = 11.sp, maxLines = 1, softWrap = false)
                     }
 
                     OutlinedButton(
                         onClick = { MessengerUtils.openWhatsApp(context, contact.mobile) },
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f)
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(14.dp), tint = TealDark)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("واتس‌اپ", fontSize = 11.sp)
+                        Text("واتس‌اپ", fontSize = 11.sp, maxLines = 1, softWrap = false)
                     }
                 }
+            }
 
-                if (contact.email.isNotBlank()) {
-                    OutlinedButton(
-                        onClick = { email(context, contact.email) },
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("ایمیل", fontSize = 11.sp)
-                    }
+            if (contact.email.isNotBlank()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                OutlinedButton(
+                    onClick = { email(context, contact.email) },
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp)
+                ) {
+                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(14.dp), tint = TealDark)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("ایمیل", fontSize = 11.sp, maxLines = 1, softWrap = false)
                 }
             }
         }

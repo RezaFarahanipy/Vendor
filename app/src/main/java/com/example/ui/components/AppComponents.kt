@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -97,6 +98,7 @@ fun AppHeader(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -113,7 +115,7 @@ fun AppHeader(
                             .size(40.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "بازگشت",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -262,8 +264,10 @@ fun VendorCard(
                         AsyncImage(
                             model = File(vendor.logoUri),
                             contentDescription = "لوگوی ${vendor.name}",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp),
+                            contentScale = ContentScale.Fit
                         )
                     } else {
                         Text(
@@ -771,8 +775,10 @@ fun ProductItemRow(
                     AsyncImage(
                         model = File(product.imageDrawable),
                         contentDescription = product.name,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp),
+                        contentScale = ContentScale.Fit
                     )
                 } else {
                     Icon(
