@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -90,6 +91,7 @@ import com.example.ui.theme.GreenVerified
 import com.example.ui.theme.NavyDeep
 import com.example.ui.theme.RedFavorite
 import com.example.ui.theme.TealDark
+import com.example.ui.theme.TealLight
 import com.example.ui.theme.TealPrimary
 import com.example.ui.viewmodel.VendorViewModel
 import androidx.compose.material.icons.filled.Language
@@ -208,19 +210,14 @@ fun SettingsScreen(
         ) {
             // Full Features and Capabilities of the App
             item {
-                val cardShape = RoundedCornerShape(18.dp)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(cardShape)
-                        .clickable { showFeaturesDialog = true }
-                        .animateContentSize(),
-                    shape = cardShape,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    border = BorderStroke(1.dp, TealPrimary.copy(alpha = 0.35f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        .animateContentSize()
+                        .clickable { showFeaturesDialog = true },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -228,25 +225,51 @@ fun SettingsScreen(
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        SettingsIconBadge(icon = Icons.Default.FeaturedPlayList, tint = TealDark)
+                        SettingsIconBadge(icon = Icons.Default.FeaturedPlayList, tint = TealPrimary)
+
                         Spacer(modifier = Modifier.width(14.dp))
+
                         Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (lang == AppLanguage.FA) "راهنما و قابلیت‌های برنامه" else Localization.get("features_guide", lang),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(TealPrimary.copy(alpha = 0.15f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (lang == AppLanguage.FA) "۱۲ قابلیت" else "12 Features",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TealDark,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(3.dp))
+
                             Text(
-                                text = "راهنما و قابلیت‌های کامل برنامه",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "مشاهده فهرست جامع ۱۲ قابلیت کلیدی و تجاری وندوریاب",
+                                text = if (lang == AppLanguage.FA) "فهرست جامع امکانات تجاری، خروجی اکسل، کاتالوگ و امنیت" else "Complete guide to features, export, catalog and security",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                lineHeight = 16.sp
                             )
                         }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            tint = TealDark,
+                            contentDescription = "مشاهده",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -473,7 +496,10 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             SettingsIconBadge(icon = Icons.Default.Language, tint = TealPrimary)
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
@@ -490,14 +516,17 @@ fun SettingsScreen(
                             }
                         }
 
+                        Spacer(modifier = Modifier.width(8.dp))
+
                         Button(
                             onClick = { viewModel.toggleLanguage() },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = TealPrimary,
-                                contentColor = NavyDeep
+                                contentColor = Color.White
                             ),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                            shape = RoundedCornerShape(10.dp)
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.defaultMinSize(minWidth = 76.dp)
                         ) {
                             Text(
                                 text = if (lang == AppLanguage.FA) "English" else "فارسی",
@@ -691,18 +720,6 @@ fun SettingsScreen(
                     title = "بازیابی اطلاعات پیش‌فرض",
                     subtitle = "بارگذاری مجدد وندورها و نمونه‌های اولیه",
                     onClick = { showResetDialog = true }
-                )
-            }
-
-            // Notifications
-            item {
-                SettingsClickableCard(
-                    icon = Icons.Default.Notifications,
-                    title = "تنظیمات اعلان‌ها",
-                    subtitle = "یادآوری تماس‌های پیگیری و استعلام‌ها",
-                    onClick = {
-                        Toast.makeText(context, "اعلان‌های برنامه فعال است", Toast.LENGTH_SHORT).show()
-                    }
                 )
             }
 

@@ -111,29 +111,6 @@ fun MainAppScreen(viewModel: VendorViewModel) {
         Scaffold(
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             snackbarHost = { SnackbarHost(snackbarHostState) },
-            floatingActionButton = {
-                if (currentScreen == AppScreen.MAIN_TABS && currentTab == MainTab.HOME) {
-                    ExtendedFloatingActionButton(
-                        onClick = { viewModel.openAddVendor() },
-                        containerColor = TealPrimary,
-                        contentColor = NavyDeep,
-                        shape = CircleShape,
-                        modifier = Modifier.testTag("add_vendor_fab"),
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = Localization.get("new_vendor_btn", lang)
-                            )
-                        },
-                        text = {
-                            Text(
-                                text = Localization.get("new_vendor_btn", lang),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    )
-                }
-            },
             bottomBar = {
                 if (currentScreen == AppScreen.MAIN_TABS) {
                     AppBottomNavigationBar(

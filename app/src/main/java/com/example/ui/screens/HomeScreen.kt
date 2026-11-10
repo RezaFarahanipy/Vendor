@@ -47,6 +47,8 @@ import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -177,7 +179,7 @@ fun HomeScreen(
                             Text(
                                 text = if (lang == AppLanguage.FA) "جستجو" else "Search",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = NavyDeep,
+                                color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -185,62 +187,34 @@ fun HomeScreen(
                 }
             }
 
-            // Compact & Animated Categories Section
+            // Prominent "Register New Vendor" Button directly under Search Card
             item {
-                Column(
+                Button(
+                    onClick = {
+                        viewModel.editingVendor.value = null
+                        viewModel.currentScreen.value = com.example.ui.viewmodel.AppScreen.ADD_EDIT_VENDOR
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = TealPrimary,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(14.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = Localization.get("main_categories", lang),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        TextButton(
-                            onClick = { viewModel.currentTab.value = MainTab.SEARCH }
-                        ) {
-                            Text(
-                                text = Localization.get("view_all", lang),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = TealDark
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    val displayCategories = if (categories.isNotEmpty()) categories.take(6) else defaultCategories()
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        displayCategories.chunked(2).forEach { pair ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                pair.forEach { category ->
-                                    CompactCategoryTile(
-                                        category = category,
-                                        lang = lang,
-                                        modifier = Modifier.weight(1f),
-                                        onClick = {
-                                            viewModel.selectedCategoryFilter.value = category.name
-                                            viewModel.currentTab.value = MainTab.SEARCH
-                                        }
-                                    )
-                                }
-                                if (pair.size == 1) {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
-                            }
-                        }
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (lang == AppLanguage.FA) "ثبت وندور جدید" else Localization.get("new_vendor_btn", lang),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
                 }
             }
 

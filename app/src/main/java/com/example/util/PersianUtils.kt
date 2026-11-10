@@ -191,6 +191,97 @@ object PersianUtils {
     fun normalize(input: String?): String = normalizeForSearch(input)
 
     /**
+     * Iranian landline area codes mapped to provinces and major cities.
+     */
+    private val LANDLINE_AREA_CODES = mapOf(
+        "021" to Pair("تهران", "Tehran"),
+        "026" to Pair("البرز (کرج)", "Alborz / Karaj"),
+        "025" to Pair("قم", "Qom"),
+        "028" to Pair("قزوین", "Qazvin"),
+        "031" to Pair("اصفهان", "Isfahan"),
+        "035" to Pair("یزد", "Yazd"),
+        "034" to Pair("کرمان", "Kerman"),
+        "038" to Pair("چهارمحال و بختیاری", "Chaharmahal & Bakhtiari"),
+        "041" to Pair("آذربایجان شرقی (تبریز)", "East Azerbaijan (Tabriz)"),
+        "044" to Pair("آذربایجان غربی (ارومیه)", "West Azerbaijan (Urmia)"),
+        "045" to Pair("اردبیل", "Ardabil"),
+        "024" to Pair("زنجان", "Zanjan"),
+        "051" to Pair("خراسان رضوی (مشهد)", "Razavi Khorasan (Mashhad)"),
+        "058" to Pair("خراسان شمالی", "North Khorasan"),
+        "056" to Pair("خراسان جنوبی", "South Khorasan"),
+        "061" to Pair("خوزستان (اهواز)", "Khuzestan (Ahvaz)"),
+        "066" to Pair("لرستان", "Lorestan"),
+        "071" to Pair("فارس (شیراز)", "Fars (Shiraz)"),
+        "076" to Pair("هرمزگان (بندرعباس)", "Hormozgan (Bandar Abbas)"),
+        "077" to Pair("بوشهر", "Bushehr"),
+        "074" to Pair("کهگیلویه و بویراحمد", "Kohgiluyeh & Boyer-Ahmad"),
+        "081" to Pair("همدان", "Hamedan"),
+        "083" to Pair("کرمانشاه", "Kermanshah"),
+        "084" to Pair("ایلام", "Ilam"),
+        "086" to Pair("مرکزی (اراک)", "Markazi (Arak)"),
+        "087" to Pair("کردستان (سنندج)", "Kurdistan (Sanandaj)"),
+        "011" to Pair("مازندران (ساری)", "Mazandaran (Sari)"),
+        "013" to Pair("گیلان (رشت)", "Gilan (Rasht)"),
+        "017" to Pair("گلستان (گرگان)", "Golestan (Gorgan)"),
+        "023" to Pair("سمنان", "Semnan")
+    )
+
+    /**
+     * Detects city/province name from landline area code (first 3 digits like 021, 031, etc.)
+     */
+    fun detectLandlineCity(phone: String?, isEnglish: Boolean = false): String? {
+        if (phone.isNullOrBlank()) return null
+        val clean = toEnglishDigits(phone).filter { it.isDigit() }
+        if (clean.length >= 3 && clean.startsWith("0")) {
+            val code = clean.substring(0, 3)
+            val pair = LANDLINE_AREA_CODES[code]
+            if (pair != null) {
+                return if (isEnglish) pair.second else pair.first
+            }
+        }
+        return null
+    }
+
+    /**
+     * Formats landline phone with mask 021-xxxxxxxx
+     */
+    fun formatLandlinePhone(input: String?): String {
+        if (input.isNullOrBlank()) return ""
+        val digits = toEnglishDigits(input).filter { it.isDigit() }
+        return when {
+            digits.length <= 3 -> digits
+            digits.length <= 11 -> {
+                val prefix = digits.take(3)
+                val rest = digits.drop(3).take(8)
+                "$prefix-$rest"
+            }
+            else -> {
+                val prefix = digits.take(3)
+                val rest = digits.drop(3).take(8)
+                "$prefix-$rest"
+            }
+        }
+    }
+
+    /**
+     * Validates 12-digit Iranian Economic Code (کد اقتصادی)
+     */
+    fun isValidEconomicCode(code: String?): Boolean {
+        if (code.isNullOrBlank()) return true // optional
+        val digits = toEnglishDigits(code).filter { it.isDigit() }
+        return digits.length == 12
+    }
+
+    /**
+     * Validates 10-digit Iranian Postal Code (کد پستی)
+     */
+    fun isValidPostalCode(code: String?): Boolean {
+        if (code.isNullOrBlank()) return true // optional
+        val digits = toEnglishDigits(code).filter { it.isDigit() }
+        return digits.length == 10
+    }
+
+    /**
      * Generates a pre-normalized search index string for fast indexed searching
      */
     fun generateSearchIndex(

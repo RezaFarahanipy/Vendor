@@ -165,7 +165,7 @@ fun OnboardingScreen(
                         .testTag("start_empty_button"),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = TealPrimary,
-                        contentColor = NavyDeep
+                        contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {

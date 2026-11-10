@@ -60,7 +60,7 @@ fun FeaturesDialog(onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
             ) {
                 Text("بستن")
             }
@@ -103,9 +103,11 @@ fun ManageActivityTypesDialog(
                 )
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedTextField(
                         value = newActName,
@@ -117,44 +119,65 @@ fun ManageActivityTypesDialog(
                     Button(
                         onClick = {
                             if (newActName.isNotBlank()) {
-                                onAdd(newActName)
+                                onAdd(newActName.trim())
                                 newActName = ""
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
                     ) {
-                        Text("افزودن")
+                        Text("افزودن", fontWeight = FontWeight.Bold)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 allActivityTypes.forEach { act ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (editingActType?.id == act.id) {
+                    if (editingActType?.id == act.id) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                             OutlinedTextField(
                                 value = editActName,
                                 onValueChange = { editActName = it },
+                                label = { Text("ویرایش عنوان فعالیت") },
                                 singleLine = true,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            IconButton(onClick = {
-                                if (editActName.isNotBlank()) {
-                                    onUpdate(act.copy(name = editActName.trim()))
-                                    editingActType = null
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(onClick = { editingActType = null }) {
+                                    Text("انصراف")
                                 }
-                            }) {
-                                Icon(Icons.Default.CheckCircle, contentDescription = "تأیید", tint = TealPrimary)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Button(
+                                    onClick = {
+                                        if (editActName.isNotBlank()) {
+                                            onUpdate(act.copy(name = editActName.trim()))
+                                            editingActType = null
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                                ) {
+                                    Text("ذخیره", fontWeight = FontWeight.Bold)
+                                }
                             }
-                        } else {
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
                                 text = act.name,
                                 style = MaterialTheme.typography.bodyMedium,
@@ -224,9 +247,11 @@ fun ManageCategoriesDialog(
                 )
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedTextField(
                         value = newCatName,
@@ -238,44 +263,65 @@ fun ManageCategoriesDialog(
                     Button(
                         onClick = {
                             if (newCatName.isNotBlank()) {
-                                onAdd(newCatName)
+                                onAdd(newCatName.trim())
                                 newCatName = ""
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
                     ) {
-                        Text("افزودن")
+                        Text("افزودن", fontWeight = FontWeight.Bold)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 allCategories.forEach { cat ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (editingCategory?.id == cat.id) {
+                    if (editingCategory?.id == cat.id) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                             OutlinedTextField(
                                 value = editCatName,
                                 onValueChange = { editCatName = it },
+                                label = { Text("ویرایش عنوان زمینه فعالیت") },
                                 singleLine = true,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            IconButton(onClick = {
-                                if (editCatName.isNotBlank()) {
-                                    onUpdate(cat.copy(name = editCatName.trim()))
-                                    editingCategory = null
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(onClick = { editingCategory = null }) {
+                                    Text("انصراف")
                                 }
-                            }) {
-                                Icon(Icons.Default.CheckCircle, contentDescription = "تأیید", tint = TealPrimary)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Button(
+                                    onClick = {
+                                        if (editCatName.isNotBlank()) {
+                                            onUpdate(cat.copy(name = editCatName.trim()))
+                                            editingCategory = null
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                                ) {
+                                    Text("ذخیره", fontWeight = FontWeight.Bold)
+                                }
                             }
-                        } else {
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
                                 text = cat.name,
                                 style = MaterialTheme.typography.bodyMedium,
@@ -418,7 +464,7 @@ fun DatabaseInfoDialog(onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
             ) {
                 Text("متوجه شدم")
             }
@@ -438,7 +484,7 @@ fun ResetSampleDataDialog(
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
             ) {
                 Text("تأیید و بازیابی")
             }
@@ -475,7 +521,7 @@ fun AboutAppDialog(onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
             ) {
                 Text("بستن")
             }

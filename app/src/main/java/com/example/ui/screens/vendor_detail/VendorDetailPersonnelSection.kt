@@ -174,50 +174,54 @@ private fun PersonnelItem(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Direct Communication Actions
-            if (contact.mobile.isNotBlank()) {
+            // Communication Actions (Call, SMS, and compact icon-only messengers: WhatsApp, Telegram, Bale, Rubika)
+            if (contact.mobile.isNotBlank() || contact.phone.isNotBlank()) {
+                val target = contact.mobile.ifBlank { contact.phone }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedButton(
-                        onClick = { dial(context, contact.mobile) },
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(36.dp)
-                    ) {
-                        Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(14.dp), tint = TealDark)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("تماس", fontSize = 11.sp, maxLines = 1, softWrap = false)
+                    // Call & SMS
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        IconButton(
+                            onClick = { dial(context, target) },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(TealPrimary.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Call, contentDescription = "تماس", tint = TealPrimary, modifier = Modifier.size(16.dp))
+                            }
+                        }
+
+                        if (contact.mobile.isNotBlank()) {
+                            IconButton(
+                                onClick = { sms(context, contact.mobile) },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(BlueAccent.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.Message, contentDescription = "پیامک", tint = BlueAccent, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        }
                     }
 
-                    OutlinedButton(
-                        onClick = { sms(context, contact.mobile) },
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(36.dp)
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.Message, contentDescription = null, modifier = Modifier.size(14.dp), tint = BlueAccent)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("پیامک", fontSize = 11.sp, maxLines = 1, softWrap = false)
-                    }
-
-                    OutlinedButton(
-                        onClick = { MessengerUtils.openWhatsApp(context, contact.mobile) },
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(36.dp)
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(14.dp), tint = TealDark)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("واتس‌اپ", fontSize = 11.sp, maxLines = 1, softWrap = false)
-                    }
+                    // Compact Messengers Row (WhatsApp, Telegram, Bale, Rubika)
+                    com.example.ui.components.CompactMessengerRow(
+                        mobile = contact.mobile,
+                        phone = contact.phone
+                    )
                 }
             }
 

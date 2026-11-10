@@ -1,6 +1,7 @@
 package com.example.ui.screens.security
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -77,7 +78,7 @@ fun AppLockScreen(
                 onClick = onUnlockClick,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = TealPrimary,
-                    contentColor = NavyDeep
+                    contentColor = Color.White
                 ),
                 shape = CircleShape,
                 modifier = Modifier

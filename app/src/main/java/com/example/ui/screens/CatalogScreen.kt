@@ -325,7 +325,7 @@ fun CatalogScreen(
                         selectedProductForDetail = null
                         onVendorClick(prod.vendorId)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
                 ) {
                     Text("مشاهده اطلاعات وندور", fontWeight = FontWeight.Bold)
                 }

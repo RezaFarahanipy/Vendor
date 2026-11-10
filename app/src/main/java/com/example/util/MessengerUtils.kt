@@ -55,4 +55,14 @@ object MessengerUtils {
             Toast.makeText(context, "پیام‌رسان بله باز نشد", Toast.LENGTH_SHORT).show()
         }
     }
+
+    fun openRubika(context: Context, rawPhone: String) {
+        try {
+            val phone = cleanPhoneForMessenger(rawPhone)
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://rubika.ir/joing/$phone"))
+            context.startActivity(intent)
+        } catch (_: Exception) {
+            Toast.makeText(context, "پیام‌رسان روبیکا باز نشد", Toast.LENGTH_SHORT).show()
+        }
+    }
 }

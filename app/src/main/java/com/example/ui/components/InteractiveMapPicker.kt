@@ -460,42 +460,6 @@ fun InteractiveMapPicker(
                     modifier = Modifier.weight(1f)
                 )
             }
-
-            // Quick Selection Chips for Iranian Industrial Hubs
-            Text(
-                text = "شهرک‌های صنعتی مطرح و بازارها:",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold
-            )
-
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                POPULAR_ZONES.forEach { zone ->
-                    val isSelected = Math.abs(latitude - zone.lat) < 0.001 && Math.abs(longitude - zone.lng) < 0.001
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            latInput = String.format("%.5f", zone.lat)
-                            lngInput = String.format("%.5f", zone.lng)
-                            onLocationChange(zone.lat, zone.lng, zone.province, zone.city)
-                        },
-                        label = {
-                            Text(
-                                text = zone.title,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontSize = 11.sp
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = TealPrimary,
-                            selectedLabelColor = NavyDeep
-                        )
-                    )
-                }
-            }
         }
     }
 }

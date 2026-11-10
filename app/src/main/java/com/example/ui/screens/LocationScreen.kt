@@ -152,7 +152,7 @@ fun LocationScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = TealPrimary,
-                            contentColor = NavyDeep
+                            contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {

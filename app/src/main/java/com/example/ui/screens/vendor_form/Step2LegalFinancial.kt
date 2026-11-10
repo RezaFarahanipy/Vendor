@@ -65,12 +65,26 @@ fun Step2LegalFinancial(
         color = MaterialTheme.colorScheme.onBackground
     )
 
+    val cleanEconomic = PersianUtils.toEnglishDigits(economicCode).filter { it.isDigit() }
+    val isEconomicError = economicCode.isNotBlank() && cleanEconomic.length != 12
+
     OutlinedTextField(
         value = economicCode,
-        onValueChange = onEconomicCodeChange,
+        onValueChange = { input ->
+            val digits = PersianUtils.toEnglishDigits(input).filter { it.isDigit() }
+            if (digits.length <= 12) {
+                onEconomicCodeChange(digits)
+            }
+        },
         label = { Text("کد اقتصادی (۱۲ رقمی)") },
         placeholder = { Text("411354897621") },
         singleLine = true,
+        isError = isEconomicError,
+        supportingText = if (isEconomicError) {
+            { Text("کد اقتصادی باید دقیقاً ۱۲ رقم باشد (${PersianUtils.toPersianDigits(cleanEconomic.length)} از ۱۲)", color = MaterialTheme.colorScheme.error) }
+        } else {
+            { Text("کد ۱۲ رقمی ثبت شده در سامانه مالیاتی", fontSize = 11.sp) }
+        },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = Modifier.fillMaxWidth()
     )
@@ -82,7 +96,12 @@ fun Step2LegalFinancial(
         val isNatError = nationalIdError != null || (nationalId.isNotBlank() && !PersianUtils.isValidNationalIdOrCode(nationalId))
         OutlinedTextField(
             value = nationalId,
-            onValueChange = onNationalIdChange,
+            onValueChange = { input ->
+                val digits = PersianUtils.toEnglishDigits(input).filter { it.isDigit() }
+                if (digits.length <= 11) {
+                    onNationalIdChange(digits)
+                }
+            },
             label = { Text("شناسه ملی (۱۱ رقمی)") },
             placeholder = { Text("10103487920") },
             singleLine = true,
@@ -94,7 +113,10 @@ fun Step2LegalFinancial(
 
         OutlinedTextField(
             value = registrationNumber,
-            onValueChange = onRegistrationNumberChange,
+            onValueChange = { input ->
+                val digits = PersianUtils.toEnglishDigits(input).filter { it.isDigit() }
+                onRegistrationNumberChange(digits)
+            },
             label = { Text("شماره ثبت شرکت") },
             placeholder = { Text("284910") },
             singleLine = true,
@@ -199,45 +221,7 @@ fun Step2LegalFinancial(
                     }
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = account.bankName,
-                        onValueChange = {
-                            bankAccountsList[index] = account.copy(bankName = it)
-                        },
-                        label = { Text("نام بانک") },
-                        placeholder = { Text("ملت، صادرات، ملی...") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    OutlinedTextField(
-                        value = account.branch,
-                        onValueChange = {
-                            bankAccountsList[index] = account.copy(branch = it)
-                        },
-                        label = { Text("نام یا کد شعبه") },
-                        placeholder = { Text("شعبه مرکزی") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                OutlinedTextField(
-                    value = account.accountNumber,
-                    onValueChange = {
-                        bankAccountsList[index] = account.copy(accountNumber = it)
-                    },
-                    label = { Text("شماره حساب") },
-                    placeholder = { Text("123456789") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
+                // 1. IBAN (شماره شبا) on top
                 OutlinedTextField(
                     value = account.iban,
                     onValueChange = { input ->
@@ -249,11 +233,7 @@ fun Step2LegalFinancial(
                         }
                         val validation = ShebaUtils.validateSheba(formatted)
                         val autoBank = validation.detectedBankName
-                        val newBankName = if (account.bankName.isBlank() && autoBank != null) {
-                            autoBank
-                        } else {
-                            account.bankName
-                        }
+                        val newBankName = autoBank ?: account.bankName
                         bankAccountsList[index] = account.copy(
                             iban = formatted,
                             bankName = newBankName
@@ -297,6 +277,50 @@ fun Step2LegalFinancial(
                             tint = if (shebaValidation?.isValid == true) GreenVerified else MaterialTheme.colorScheme.primary
                         )
                     },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // 2. Bank Name (read-only, auto filled from IBAN) and Branch
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = account.bankName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("نام بانک (شناسایی با شبا)") },
+                        placeholder = { Text("تکمیل خودکار از روی شبا") },
+                        singleLine = true,
+                        supportingText = {
+                            Text("تکمیل خودکار بر اساس کد شبا", fontSize = 10.sp, color = TealDark)
+                        },
+                        modifier = Modifier.weight(1.2f)
+                    )
+
+                    OutlinedTextField(
+                        value = account.branch,
+                        onValueChange = {
+                            bankAccountsList[index] = account.copy(branch = it)
+                        },
+                        label = { Text("نام یا کد شعبه") },
+                        placeholder = { Text("شعبه مرکزی") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // 3. Account Number
+                OutlinedTextField(
+                    value = account.accountNumber,
+                    onValueChange = {
+                        val digits = PersianUtils.toEnglishDigits(it).filter { c -> c.isDigit() }
+                        bankAccountsList[index] = account.copy(accountNumber = digits)
+                    },
+                    label = { Text("شماره حساب") },
+                    placeholder = { Text("123456789") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
             }

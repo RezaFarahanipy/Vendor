@@ -189,7 +189,7 @@ fun CatalogViewerDialog(
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = TealPrimary,
-                            contentColor = NavyDeep
+                            contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(10.dp)
                     ) {

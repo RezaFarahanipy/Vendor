@@ -11,24 +11,23 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = TealPrimary,
-    onPrimary = NavyDeep,
-    primaryContainer = TealContainerDark,
-    onPrimaryContainer = TealLight,
-    secondary = TealLight,
+    primary = BlueVibrant,
+    onPrimary = Color.White,
+    primaryContainer = BlueContainerDark,
+    onPrimaryContainer = Color(0xFFDBEAFE),
+    secondary = CrimsonLight,
     onSecondary = NavyDeep,
-    secondaryContainer = TealContainerDark,
-    onSecondaryContainer = TealLight,
-    tertiary = NavySurface,
-    onTertiary = DarkTextPrimary,
+    secondaryContainer = Color(0xFF4C0519),
+    onSecondaryContainer = Color(0xFFFFD1D9),
+    tertiary = BlueLight,
+    onTertiary = NavyDeep,
     tertiaryContainer = NavyCard,
-    onTertiaryContainer = TealLight,
+    onTertiaryContainer = Color(0xFFBAE6FD),
     background = DarkBg,
     onBackground = DarkTextPrimary,
     surface = DarkCard,
@@ -36,30 +35,30 @@ private val DarkColorScheme = darkColorScheme(
     surfaceVariant = DarkCardBorder,
     onSurfaceVariant = DarkTextSecondary,
     outline = DarkCardBorder,
-    error = RedFavorite
+    error = CrimsonLight
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = TealDark,
-    onPrimary = LightCard,
-    primaryContainer = TealContainerLight,
-    onPrimaryContainer = TealDark,
-    secondary = TealDark,
-    onSecondary = LightCard,
-    secondaryContainer = TealContainerLight,
-    onSecondaryContainer = TealDark,
-    tertiary = NavySurface,
-    onTertiary = LightCard,
-    tertiaryContainer = Color(0xFFD6E4F0),
+    primary = BluePrimary,
+    onPrimary = Color.White,
+    primaryContainer = BlueContainerLight,
+    onPrimaryContainer = BluePrimary,
+    secondary = CrimsonPrimary,
+    onSecondary = Color.White,
+    secondaryContainer = CrimsonContainerLight,
+    onSecondaryContainer = CrimsonDark,
+    tertiary = BlueVibrant,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFDBEAFE),
     onTertiaryContainer = NavyDeep,
     background = LightBg,
     onBackground = LightTextPrimary,
     surface = LightCard,
     onSurface = LightTextPrimary,
-    surfaceVariant = LightBg,
+    surfaceVariant = Color(0xFFF1F5F9),
     onSurfaceVariant = LightTextSecondary,
     outline = LightCardBorder,
-    error = RedFavorite
+    error = CrimsonPrimary
 )
 
 @Composable

@@ -478,6 +478,95 @@ fun VendorCard(
 }
 
 @Composable
+fun CompactMessengerIcon(
+    name: String,
+    icon: ImageVector,
+    bgColor: Color,
+    onClick: () -> Unit
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(42.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(bgColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = name,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun CompactMessengerRow(
+    mobile: String,
+    phone: String = "",
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val targetPhone = mobile.ifBlank { phone }
+    if (targetPhone.isBlank()) return
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // WhatsApp (#25D366)
+        CompactMessengerIcon(
+            name = "واتس‌اپ",
+            icon = Icons.Default.Message,
+            bgColor = Color(0xFF25D366),
+            onClick = {
+                com.example.util.MessengerUtils.openWhatsApp(
+                    context,
+                    targetPhone,
+                    "سلام، از طریق اپلیکیشن وندوریاب با شما در ارتباط هستم."
+                )
+            }
+        )
+
+        // Telegram (#0088CC)
+        CompactMessengerIcon(
+            name = "تلگرام",
+            icon = Icons.AutoMirrored.Filled.Send,
+            bgColor = Color(0xFF0088CC),
+            onClick = {
+                com.example.util.MessengerUtils.openTelegram(context, targetPhone)
+            }
+        )
+
+        // Bale (#00A389)
+        CompactMessengerIcon(
+            name = "بله",
+            icon = Icons.Default.CheckCircle,
+            bgColor = Color(0xFF00A389),
+            onClick = {
+                com.example.util.MessengerUtils.openBale(context, targetPhone)
+            }
+        )
+
+        // Rubika (#792CEE)
+        CompactMessengerIcon(
+            name = "روبیکا",
+            icon = Icons.Default.Favorite,
+            bgColor = Color(0xFF792CEE),
+            onClick = {
+                com.example.util.MessengerUtils.openRubika(context, targetPhone)
+            }
+        )
+    }
+}
+
+@Composable
 fun MessengerActionBar(
     mobile: String,
     phone: String,
@@ -494,52 +583,10 @@ fun MessengerActionBar(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // WhatsApp Button (#25D366)
-            BrandedMessengerButton(
-                label = "واتس‌اپ",
-                icon = Icons.Default.Message,
-                bgColor = Color(0xFF25D366),
-                textColor = Color.White,
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    com.example.util.MessengerUtils.openWhatsApp(
-                        context,
-                        targetPhone,
-                        "سلام، از طریق اپلیکیشن وندوریاب با شما در ارتباط هستم."
-                    )
-                }
-            )
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            // Telegram Button (#0088CC)
-            BrandedMessengerButton(
-                label = "تلگرام",
-                icon = Icons.AutoMirrored.Filled.Send,
-                bgColor = Color(0xFF0088CC),
-                textColor = Color.White,
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    com.example.util.MessengerUtils.openTelegram(context, targetPhone)
-                }
-            )
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            // Bale Button (#00A389)
-            BrandedMessengerButton(
-                label = "بله",
-                icon = Icons.Default.CheckCircle,
-                bgColor = Color(0xFF00A389),
-                textColor = Color.White,
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    com.example.util.MessengerUtils.openBale(context, targetPhone)
-                }
-            )
+            CompactMessengerRow(mobile = mobile, phone = phone)
         }
 
         // Secondary Row: Direct Phone Call & SMS
@@ -555,7 +602,7 @@ fun MessengerActionBar(
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = TealPrimary,
-                    contentColor = NavyDeep
+                    contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -573,48 +620,6 @@ fun MessengerActionBar(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("ارسال پیامک", fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
-        }
-    }
-}
-
-@Composable
-fun BrandedMessengerButton(
-    label: String,
-    icon: ImageVector,
-    bgColor: Color,
-    textColor: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = textColor,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = textColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 10.sp
-            )
         }
     }
 }

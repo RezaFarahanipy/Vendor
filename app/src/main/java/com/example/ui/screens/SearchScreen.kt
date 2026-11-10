@@ -25,12 +25,22 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apartment
+import androidx.compose.material.icons.filled.Agriculture
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Hardware
+import androidx.compose.material.icons.filled.PrecisionManufacturing
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.data.model.Category
+import com.example.ui.theme.TealDark
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -150,7 +160,7 @@ fun SearchScreen(
                     onValueChange = { viewModel.searchQuery.value = it },
                     placeholder = {
                         Text(
-                            text = Localization.get("search_placeholder", lang),
+                            text = if (lang == AppLanguage.FA) "جستجوی وندور، محصول، کد اقتصادی، شماره تماس..." else Localization.get("search_placeholder", lang),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     },
@@ -166,7 +176,7 @@ fun SearchScreen(
                             IconButton(onClick = { viewModel.searchQuery.value = "" }) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear",
+                                    contentDescription = if (lang == AppLanguage.FA) "پاک کردن" else "Clear",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -227,7 +237,7 @@ fun SearchScreen(
         ) {
             DashboardMiniStatCard(
                 modifier = Modifier.weight(1f),
-                title = Localization.get("stat_total_vendors", lang),
+                title = if (lang == AppLanguage.FA) "کل وندورها" else Localization.get("stat_total_vendors", lang),
                 count = if (lang == AppLanguage.FA) PersianUtils.toPersianDigits(allVendors.size) else allVendors.size.toString(),
                 icon = Icons.Default.Apartment,
                 iconTint = TealPrimary,
@@ -239,7 +249,7 @@ fun SearchScreen(
 
             DashboardMiniStatCard(
                 modifier = Modifier.weight(1f),
-                title = Localization.get("stat_favorites", lang),
+                title = if (lang == AppLanguage.FA) "علاقه‌مندی‌ها" else Localization.get("stat_favorites", lang),
                 count = if (lang == AppLanguage.FA) PersianUtils.toPersianDigits(favoriteVendors.size) else favoriteVendors.size.toString(),
                 icon = Icons.Default.Favorite,
                 iconTint = RedFavorite,
@@ -250,12 +260,127 @@ fun SearchScreen(
 
             DashboardMiniStatCard(
                 modifier = Modifier.weight(1f),
-                title = Localization.get("stat_recent_calls", lang),
+                title = if (lang == AppLanguage.FA) "تماس‌های اخیر" else Localization.get("stat_recent_calls", lang),
                 count = if (lang == AppLanguage.FA) PersianUtils.toPersianDigits(recentVendors.size) else recentVendors.size.toString(),
                 icon = Icons.Default.Call,
                 iconTint = Color(0xFF00A389),
                 onClick = {}
             )
+        }
+
+        // Main Categories Grid transferred from Home Screen
+        if (query.isBlank()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (lang == AppLanguage.FA) "دسته‌بندی‌های اصلی" else Localization.get("main_categories", lang),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    if (selectedCategory != "همه") {
+                        TextButton(onClick = { viewModel.selectedCategoryFilter.value = "همه" }) {
+                            Text(
+                                text = if (lang == AppLanguage.FA) "نمایش همه" else Localization.get("all", lang),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TealDark
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                val displayCats = if (categories.isNotEmpty()) categories.take(6) else listOf(
+                    Category(name = "صنعتی", vendorCount = 0),
+                    Category(name = "ساختمان و عمرانی", vendorCount = 0),
+                    Category(name = "آهن‌آلات", vendorCount = 0),
+                    Category(name = "ماشین‌آلات", vendorCount = 0),
+                    Category(name = "مواد شیمیایی", vendorCount = 0),
+                    Category(name = "برق و الکترونیک", vendorCount = 0)
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    displayCats.chunked(2).forEach { pair ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            pair.forEach { catItem ->
+                                val isCatSelected = selectedCategory == catItem.name
+                                Card(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            viewModel.selectedCategoryFilter.value = if (isCatSelected) "همه" else catItem.name
+                                        },
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isCatSelected) TealPrimary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface
+                                    ),
+                                    border = if (isCatSelected) BorderStroke(1.5.dp, TealPrimary) else null,
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val catIcon = when (catItem.name) {
+                                            "صنعتی" -> Icons.Default.PrecisionManufacturing
+                                            "ساختمان و عمرانی" -> Icons.Default.Apartment
+                                            "آهن‌آلات", "فلزات و آهن‌آلات" -> Icons.Default.Hardware
+                                            "ماشین‌آلات" -> Icons.Default.Agriculture
+                                            "مواد غذایی" -> Icons.Default.Restaurant
+                                            "مواد شیمیایی" -> Icons.Default.Science
+                                            "برق و الکترونیک" -> Icons.Default.Bolt
+                                            else -> Icons.Default.Business
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .size(28.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(if (isCatSelected) TealPrimary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = catIcon,
+                                                contentDescription = null,
+                                                tint = if (isCatSelected) NavyDeep else MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = Localization.translateCategory(catItem.name, lang),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = if (isCatSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            fontSize = 11.sp,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                }
+                            }
+                            if (pair.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // View Mode + Sort bar
@@ -323,7 +448,7 @@ fun SearchScreen(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = sortOption.title,
+                            text = sortOption.getLocalizedTitle(lang),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -335,7 +460,7 @@ fun SearchScreen(
                     ) {
                         SortOption.values().forEach { option ->
                             DropdownMenuItem(
-                                text = { Text(option.title, style = MaterialTheme.typography.bodyMedium) },
+                                text = { Text(option.getLocalizedTitle(lang), style = MaterialTheme.typography.bodyMedium) },
                                 onClick = {
                                     viewModel.sortOption.value = option
                                     showSortMenu = false

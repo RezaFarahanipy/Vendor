@@ -248,6 +248,19 @@ fun VendorDetailScreen(
                     ) {
                         Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = MaterialTheme.colorScheme.primary)
                     }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    IconButton(
+                        onClick = { showDeleteConfirm = true },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .testTag("delete_vendor_button")
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "حذف وندور", tint = RedFavorite)
+                    }
                 }
             }
         }
@@ -257,50 +270,7 @@ fun VendorDetailScreen(
             VendorDetailHeaderCard(vendor = vendor)
         }
 
-        // Direct Actions & Instant Messengers
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp)
-                ) {
-                    DirectContactActionsRow(
-                        phone = vendor.phone,
-                        mobile = vendor.mobile,
-                        email = vendor.email,
-                        website = vendor.website,
-                        address = vendor.address
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "ارتباط سریع با وندور در پیام‌رسان‌ها:",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    val activePhone = vendor.mobile.ifBlank { vendor.phone }
-                    com.example.ui.components.MessengerActionBar(
-                        mobile = vendor.mobile,
-                        phone = vendor.phone,
-                        companyName = vendor.name
-                    )
-                }
-            }
-        }
-
-        // Multiple Contact Numbers (Multiple Landlines & Mobiles)
+        // Consolidated Contact & Messengers Section
         item {
             Card(
                 modifier = Modifier
@@ -317,12 +287,63 @@ fun VendorDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "خطوط ارتباطی شرکت (ثابت و همراه)",
+                        text = "ارتباط مستقیم با وندور",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
+                    // Compact Messengers Row (WhatsApp, Telegram, Bale, Rubika)
+                    val activePhone = vendor.mobile.ifBlank { vendor.phone }
+                    if (activePhone.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            com.example.ui.components.CompactMessengerRow(
+                                mobile = vendor.mobile,
+                                phone = vendor.phone
+                            )
+                        }
+                    }
+
+                    // Direct Call & SMS Buttons
+                    val primaryNum = vendor.phone.ifBlank { vendor.mobile }
+                    if (primaryNum.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { dialPhone(context, primaryNum) },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = TealPrimary,
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("تماس تلفنی", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+
+                            if (vendor.mobile.isNotBlank()) {
+                                OutlinedButton(
+                                    onClick = { sendSms(context, vendor.mobile) },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(Icons.Default.Message, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("ارسال پیامک", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                    }
+
+                    // Landline phones with detected city
                     val allPhones = vendor.getAllPhones()
                     if (allPhones.isNotEmpty()) {
                         Text(
@@ -331,6 +352,7 @@ fun VendorDetailScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         allPhones.forEachIndexed { i, p ->
+                            val detectedCity = PersianUtils.detectLandlineCity(p)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -343,11 +365,21 @@ fun VendorDetailScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.Phone, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "${if (i == 0) "خط اصلی: " else "خط مستقیم ${PersianUtils.toPersianDigits(i + 1)}: "} ${PersianUtils.toPersianDigits(p)}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium
-                                    )
+                                    Column {
+                                        Text(
+                                            text = "${if (i == 0) "خط اصلی: " else "خط ${PersianUtils.toPersianDigits(i + 1)}: "} ${PersianUtils.toPersianDigits(p)}",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        if (detectedCity != null) {
+                                            Text(
+                                                text = "پیش‌شماره $detectedCity",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = TealDark,
+                                                fontSize = 10.sp
+                                            )
+                                        }
+                                    }
                                 }
                                 IconButton(onClick = { dialPhone(context, p) }, modifier = Modifier.size(28.dp)) {
                                     Icon(Icons.Default.Call, contentDescription = "تماس", tint = TealPrimary, modifier = Modifier.size(18.dp))
@@ -356,6 +388,7 @@ fun VendorDetailScreen(
                         }
                     }
 
+                    // Mobile numbers
                     val allMobiles = vendor.getAllMobiles()
                     if (allMobiles.isNotEmpty()) {
                         Text(
@@ -390,6 +423,74 @@ fun VendorDetailScreen(
                                         Icon(Icons.Default.Message, contentDescription = "پیامک", tint = BlueAccent, modifier = Modifier.size(18.dp))
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    // Email & Website
+                    if (vendor.email.isNotBlank() || vendor.website.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (vendor.email.isNotBlank()) {
+                                OutlinedButton(
+                                    onClick = { sendEmail(context, vendor.email) },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("ایمیل", fontSize = 11.sp)
+                                }
+                            }
+                            if (vendor.website.isNotBlank()) {
+                                OutlinedButton(
+                                    onClick = { openWebsite(context, vendor.website) },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Icon(Icons.Default.Language, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("وبسایت", fontSize = 11.sp)
+                                }
+                            }
+                        }
+                    }
+
+                    // Address & Map
+                    if (vendor.address.isNotBlank() || (vendor.latitude != 0.0 && vendor.longitude != 0.0)) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "${vendor.province}، ${vendor.city}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                if (vendor.address.isNotBlank()) {
+                                    Text(
+                                        text = vendor.address,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = { onOpenMap(vendor.id) },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.LocationOn, contentDescription = "نقشه", tint = TealPrimary)
                             }
                         }
                     }
@@ -477,7 +578,7 @@ fun VendorDetailScreen(
                     ) {
                         Button(
                             onClick = { showCatalogViewer = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep),
+                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White),
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.weight(1f)
                         ) {
@@ -665,24 +766,6 @@ fun VendorDetailScreen(
             }
         }
 
-        // Delete Vendor
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                TextButton(
-                    onClick = { showDeleteConfirm = true },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("حذف این وندور از سامانه")
-                }
-            }
-        }
     }
 
     // Catalog Viewer Dialog
@@ -781,7 +864,7 @@ fun VendorDetailScreen(
                         viewModel.saveContact(toSave)
                         showContactDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
                 ) {
                     Text("ذخیره")
                 }
@@ -882,7 +965,7 @@ fun VendorDetailScreen(
                         viewModel.saveProduct(toSave)
                         showProductDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
                 ) {
                     Text("ذخیره محصول")
                 }
@@ -940,7 +1023,7 @@ fun VendorDetailScreen(
                         viewModel.updateVendorNotes(vendor.id, notesText)
                         showNotesDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
                 ) {
                     Text("ذخیره یادداشت")
                 }
@@ -968,7 +1051,7 @@ fun VendorDetailScreen(
                         val activePhone = vendor.mobile.ifBlank { vendor.phone }
                         MessengerUtils.openWhatsApp(context, activePhone, "با سلام، احتراماً درخواست استعلام قیمت و کاتالوگ محصولات شرکت ${vendor.name} را دارم.")
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
                 ) {
                     Text("ارسال در واتس‌اپ")
                 }

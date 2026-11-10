@@ -59,8 +59,6 @@ fun Step1BaseInfo(
     name: String,
     onNameChange: (String) -> Unit,
     nameError: String? = null,
-    ceoName: String,
-    onCeoNameChange: (String) -> Unit,
     logoUri: String,
     onLogoUriChange: (String) -> Unit,
     onPickLogo: () -> Unit,
@@ -182,15 +180,6 @@ fun Step1BaseInfo(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("vendor_name_input")
-    )
-
-    OutlinedTextField(
-        value = ceoName,
-        onValueChange = onCeoNameChange,
-        label = { Text("نام مدیرعامل یا مسئول ارتباط") },
-        placeholder = { Text("مثال: مجید محمودی") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth()
     )
 
     // Dynamic Activity Types from Room Database

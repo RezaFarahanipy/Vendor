@@ -122,12 +122,17 @@ import com.example.ui.viewmodel.VendorViewModel
 import androidx.activity.compose.BackHandler
 import com.example.ui.theme.GreenVerified
 import com.example.util.ShebaUtils
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.PaddingValues
 import com.example.util.PersianUtils
 import com.example.ui.screens.vendor_form.Step1BaseInfo
 import com.example.ui.screens.vendor_form.Step2LegalFinancial
-import com.example.ui.screens.vendor_form.Step3ContactsPersonnel
+import com.example.ui.screens.vendor_form.Step3Contacts
 import com.example.ui.screens.vendor_form.Step4LocationMap
-import com.example.ui.screens.vendor_form.Step5ProductsCatalog
+import com.example.ui.screens.vendor_form.Step5Personnel
+import com.example.ui.screens.vendor_form.Step6Products
+import com.example.ui.screens.vendor_form.Step7RatingCatalog
 import java.io.File
 import java.io.FileOutputStream
 
@@ -233,11 +238,35 @@ fun AddEditVendorScreen(
     }
 
     // Step 4: Location & Map
-    var province by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.province ?: "تهران") }
-    var city by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.city ?: "تهران") }
-    var address by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.address ?: "") }
-    var latitude by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.latitude ?: 35.73576) }
-    var longitude by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.longitude ?: 51.44678) }
+    val currentVendor = editingVendor
+    var province by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.province ?: "تهران") }
+    var city by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.city ?: "تهران") }
+    var addressType by rememberSaveable(currentVendor) {
+        val addr = currentVendor?.address
+        mutableStateOf(
+            if (addr != null && addr.startsWith("[") && addr.contains("]")) {
+                addr.substringAfter("[").substringBefore("]")
+            } else "کارخانه / کارگاه"
+        )
+    }
+    var postalCode by rememberSaveable(currentVendor) {
+        val addr = currentVendor?.address
+        mutableStateOf(
+            if (addr != null && addr.contains("کد پستی:")) {
+                addr.substringAfter("کد پستی:").filter { it.isDigit() }.take(10)
+            } else ""
+        )
+    }
+    var address by rememberSaveable(currentVendor) {
+        val addr = currentVendor?.address
+        mutableStateOf(
+            if (addr != null && addr.startsWith("[") && addr.contains("]")) {
+                addr.substringAfter("]").substringBefore("(کد پستی:").trim()
+            } else addr ?: ""
+        )
+    }
+    var latitude by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.latitude ?: 35.73576) }
+    var longitude by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.longitude ?: 51.44678) }
 
     // Step 5: Products & Catalog
     val vendorProductsList = remember(editingVendor) { mutableStateListOf<Product>() }
@@ -362,17 +391,151 @@ fun AddEditVendorScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        val performSave = {
+            if (name.isBlank()) {
+                Toast.makeText(context, "لطفاً نام شرکت را وارد نمایید", Toast.LENGTH_SHORT).show()
+                currentStep = 1
+            } else if (primaryMobile.isNotBlank() && !PersianUtils.isValidIranianMobile(primaryMobile)) {
+                Toast.makeText(context, "شماره موبایل نامعتبر است (مثال: ۰۹۱۲۳۴۵۶۷۸۹)", Toast.LENGTH_SHORT).show()
+                currentStep = 3
+            } else if (nationalId.isNotBlank() && !PersianUtils.isValidNationalIdOrCode(nationalId)) {
+                Toast.makeText(context, "کد ملی یا شناسه ملی نامعتبر است", Toast.LENGTH_SHORT).show()
+                currentStep = 2
+            } else {
+                val serializedAccounts = BankAccountUtils.serialize(bankAccountsList)
+                val currentEditing = editingVendor
+
+                val fullAddress = when {
+                    postalCode.isNotBlank() && !address.contains("کد پستی") -> "[$addressType] ${address.trim()} (کد پستی: $postalCode)"
+                    addressType.isNotBlank() && !address.startsWith("[") -> "[$addressType] ${address.trim()}"
+                    else -> address.trim()
+                }
+
+                val vendorToSave = if (currentEditing != null) {
+                    currentEditing.copy(
+                        name = name.trim(),
+                        ceoName = ceoName.trim(),
+                        description = description.trim(),
+                        activityType = activityType,
+                        categories = selectedCategories.joinToString(", "),
+                        tags = tagsText.trim(),
+                        phone = primaryPhone.trim(),
+                        secondaryPhones = additionalPhones.filter { it.isNotBlank() }.joinToString(", "),
+                        mobile = primaryMobile.trim(),
+                        additionalMobiles = additionalMobiles.filter { it.isNotBlank() }.joinToString(", "),
+                        email = email.trim(),
+                        website = website.trim(),
+                        province = province.trim(),
+                        city = city.trim(),
+                        address = fullAddress,
+                        latitude = latitude,
+                        longitude = longitude,
+                        logoUri = logoUri,
+                        catalogTitle = catalogTitle.trim(),
+                        catalogLocalPath = catalogLocalPath,
+                        catalogFileName = catalogFileName,
+                        notes = notes.trim(),
+                        economicCode = economicCode.trim(),
+                        nationalId = nationalId.trim(),
+                        registrationNumber = registrationNumber.trim(),
+                        bankAccounts = serializedAccounts,
+                        isVerified = isVerified,
+                        rating = rating
+                    )
+                } else {
+                    Vendor(
+                        name = name.trim(),
+                        ceoName = ceoName.trim(),
+                        description = description.trim(),
+                        activityType = activityType,
+                        categories = selectedCategories.joinToString(", "),
+                        tags = tagsText.trim(),
+                        phone = primaryPhone.trim(),
+                        secondaryPhones = additionalPhones.filter { it.isNotBlank() }.joinToString(", "),
+                        mobile = primaryMobile.trim(),
+                        additionalMobiles = additionalMobiles.filter { it.isNotBlank() }.joinToString(", "),
+                        email = email.trim(),
+                        website = website.trim(),
+                        province = province.trim(),
+                        city = city.trim(),
+                        address = fullAddress,
+                        latitude = latitude,
+                        longitude = longitude,
+                        logoUri = logoUri,
+                        catalogTitle = catalogTitle.trim(),
+                        catalogLocalPath = catalogLocalPath,
+                        catalogFileName = catalogFileName,
+                        notes = notes.trim(),
+                        economicCode = economicCode.trim(),
+                        nationalId = nationalId.trim(),
+                        registrationNumber = registrationNumber.trim(),
+                        bankAccounts = serializedAccounts,
+                        isVerified = isVerified,
+                        rating = rating,
+                        isFavorite = false,
+                        createdAt = System.currentTimeMillis()
+                    )
+                }
+
+                // Check duplicate before saving
+                val checkId = currentEditing?.id ?: 0L
+                coroutineScope.launch {
+                    val duplicate = viewModel.checkDuplicateVendor(
+                        name = name.trim(),
+                        nationalId = nationalId.trim(),
+                        mobile = primaryMobile.trim(),
+                        currentId = checkId
+                    )
+                    if (duplicate != null) {
+                        pendingVendorToSave = vendorToSave
+                        duplicateFoundVendor = duplicate
+                        showDuplicateDialog = true
+                    } else {
+                        viewModel.saveVendorWithRelations(
+                            vendor = vendorToSave,
+                            contacts = personnelList.toList(),
+                            products = vendorProductsList.toList(),
+                            onComplete = {
+                                onBack()
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
         AppHeader(
             title = if (isEdit) "ویرایش اطلاعات وندور" else "افزودن وندور جدید",
             subtitle = if (isEdit) name else "ثبت اطلاعات در پایگاه داده آفلاین",
-            onBack = onBack
+            onBack = onBack,
+            actions = {
+                Button(
+                    onClick = { performSave() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = TealPrimary,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "ذخیره",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+            }
         )
 
-        // Wizard Stepper Indicator
+        // Wizard Stepper Indicator with Clickable Badges
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 6.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -380,19 +543,24 @@ fun AddEditVendorScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 8.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                StepBadge(step = 1, currentStep = currentStep, label = "پایه و لوگو")
+                StepBadge(step = 1, currentStep = currentStep, label = "پایه و لوگو", onStepClick = { currentStep = it })
                 StepDivider(isPassed = currentStep > 1)
-                StepBadge(step = 2, currentStep = currentStep, label = "ثبتی و بانک")
+                StepBadge(step = 2, currentStep = currentStep, label = "ثبتی و بانک", onStepClick = { currentStep = it })
                 StepDivider(isPassed = currentStep > 2)
-                StepBadge(step = 3, currentStep = currentStep, label = "تماس و پرسنل")
+                StepBadge(step = 3, currentStep = currentStep, label = "اطلاعات تماس", onStepClick = { currentStep = it })
                 StepDivider(isPassed = currentStep > 3)
-                StepBadge(step = 4, currentStep = currentStep, label = "نقشه و آدرس")
+                StepBadge(step = 4, currentStep = currentStep, label = "نقشه و آدرس", onStepClick = { currentStep = it })
                 StepDivider(isPassed = currentStep > 4)
-                StepBadge(step = 5, currentStep = currentStep, label = "محصول و کاتالوگ")
+                StepBadge(step = 5, currentStep = currentStep, label = "پرسنل", onStepClick = { currentStep = it })
+                StepDivider(isPassed = currentStep > 5)
+                StepBadge(step = 6, currentStep = currentStep, label = "محصولات", onStepClick = { currentStep = it })
+                StepDivider(isPassed = currentStep > 6)
+                StepBadge(step = 7, currentStep = currentStep, label = "کاتالوگ و امتیاز", onStepClick = { currentStep = it })
             }
         }
 
@@ -432,8 +600,6 @@ fun AddEditVendorScreen(
                                 if (it.isNotBlank()) nameError = null
                             },
                             nameError = nameError,
-                            ceoName = ceoName,
-                            onCeoNameChange = { ceoName = it },
                             logoUri = logoUri,
                             onLogoUriChange = { logoUri = it },
                             onPickLogo = {
@@ -463,7 +629,7 @@ fun AddEditVendorScreen(
                             onRegistrationNumberChange = { registrationNumber = it },
                             bankAccountsList = bankAccountsList
                         )
-                        3 -> Step3ContactsPersonnel(
+                        3 -> Step3Contacts(
                             primaryPhone = primaryPhone,
                             onPrimaryPhoneChange = { primaryPhone = it },
                             additionalPhones = additionalPhones,
@@ -477,12 +643,35 @@ fun AddEditVendorScreen(
                             email = email,
                             onEmailChange = { email = it },
                             website = website,
-                            onWebsiteChange = { website = it },
+                            onWebsiteChange = { website = it }
+                        )
+                        4 -> Step4LocationMap(
+                            name = name,
+                            latitude = latitude,
+                            longitude = longitude,
+                            onLocationChange = { lat, lng, prov, cty ->
+                                latitude = lat
+                                longitude = lng
+                                if (prov != null) province = prov
+                                if (cty != null) city = cty
+                            },
+                            province = province,
+                            onProvinceChange = { province = it },
+                            city = city,
+                            onCityChange = { city = it },
+                            addressType = addressType,
+                            onAddressTypeChange = { addressType = it },
+                            postalCode = postalCode,
+                            onPostalCodeChange = { postalCode = it },
+                            address = address,
+                            onAddressChange = { address = it }
+                        )
+                        5 -> Step5Personnel(
                             personnelList = personnelList,
                             onAddPersonnelClick = {
                                 editingPersonIndex = -1
                                 personNameInput = ""
-                                personRoleInput = "مدیرعامل"
+                                personRoleInput = "مدیر فروش"
                                 personMobileInput = ""
                                 personPhoneInput = primaryPhone
                                 personExtInput = "101"
@@ -500,24 +689,7 @@ fun AddEditVendorScreen(
                                 showPersonDialog = true
                             }
                         )
-                        4 -> Step4LocationMap(
-                            name = name,
-                            latitude = latitude,
-                            longitude = longitude,
-                            onLocationChange = { lat, lng, prov, cty ->
-                                latitude = lat
-                                longitude = lng
-                                if (prov != null) province = prov
-                                if (cty != null) city = cty
-                            },
-                            province = province,
-                            onProvinceChange = { province = it },
-                            city = city,
-                            onCityChange = { city = it },
-                            address = address,
-                            onAddressChange = { address = it }
-                        )
-                        5 -> Step5ProductsCatalog(
+                        6 -> Step6Products(
                             vendorProductsList = vendorProductsList,
                             onAddProductClick = {
                                 editingProductIndex = -1
@@ -527,7 +699,7 @@ fun AddEditVendorScreen(
                                 prodCodeInput = ""
                                 prodSpecsInput = ""
                                 prodDescInput = ""
-                                prodCategoryInput = "پمپ‌های سانتریفیوژ"
+                                prodCategoryInput = selectedCategories.firstOrNull() ?: "تجهیزات صنعتی"
                                 prodImageUriInput = ""
                                 showProductDialog = true
                             },
@@ -542,7 +714,9 @@ fun AddEditVendorScreen(
                                 prodCategoryInput = prod.category
                                 prodImageUriInput = prod.imageDrawable
                                 showProductDialog = true
-                            },
+                            }
+                        )
+                        7 -> Step7RatingCatalog(
                             catalogTitle = catalogTitle,
                             onCatalogTitleChange = { catalogTitle = it },
                             catalogLocalPath = catalogLocalPath,
@@ -582,7 +756,7 @@ fun AddEditVendorScreen(
                         onClick = { currentStep-- },
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("مرحله قبل")
                     }
@@ -590,7 +764,7 @@ fun AddEditVendorScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                 }
 
-                if (currentStep < 5) {
+                if (currentStep < 7) {
                     Button(
                         onClick = {
                             if (currentStep == 1) {
@@ -618,136 +792,27 @@ fun AddEditVendorScreen(
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = TealPrimary,
-                            contentColor = NavyDeep
+                            contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.testTag("next_step_button")
                     ) {
                         Text("مرحله بعد", fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
                     }
                 } else {
                     Button(
-                        onClick = {
-                            if (name.isBlank()) {
-                                Toast.makeText(context, "لطفاً نام شرکت را وارد نمایید", Toast.LENGTH_SHORT).show()
-                                return@Button
-                            }
-
-                            // Validation for Iranian mobile (09...)
-                            if (primaryMobile.isNotBlank() && !PersianUtils.isValidIranianMobile(primaryMobile)) {
-                                Toast.makeText(context, "شماره موبایل نامعتبر است (مثال: ۰۹۱۲۳۴۵۶۷۸۹)", Toast.LENGTH_SHORT).show()
-                                return@Button
-                            }
-
-                            // Validation for National Code / Company National ID
-                            if (nationalId.isNotBlank() && !PersianUtils.isValidNationalIdOrCode(nationalId)) {
-                                Toast.makeText(context, "کد ملی یا شناسه ملی نامعتبر است", Toast.LENGTH_SHORT).show()
-                                return@Button
-                            }
-
-                            val serializedAccounts = BankAccountUtils.serialize(bankAccountsList)
-                            val currentEditing = editingVendor
-
-                            val vendorToSave = if (currentEditing != null) {
-                                currentEditing.copy(
-                                    name = name.trim(),
-                                    ceoName = ceoName.trim(),
-                                    description = description.trim(),
-                                    activityType = activityType,
-                                    categories = selectedCategories.joinToString(", "),
-                                    tags = tagsText.trim(),
-                                    phone = primaryPhone.trim(),
-                                    secondaryPhones = additionalPhones.filter { it.isNotBlank() }.joinToString(", "),
-                                    mobile = primaryMobile.trim(),
-                                    additionalMobiles = additionalMobiles.filter { it.isNotBlank() }.joinToString(", "),
-                                    email = email.trim(),
-                                    website = website.trim(),
-                                    province = province.trim(),
-                                    city = city.trim(),
-                                    address = address.trim(),
-                                    latitude = latitude,
-                                    longitude = longitude,
-                                    logoUri = logoUri,
-                                    catalogTitle = catalogTitle.trim(),
-                                    catalogLocalPath = catalogLocalPath,
-                                    catalogFileName = catalogFileName,
-                                    notes = notes.trim(),
-                                    economicCode = economicCode.trim(),
-                                    nationalId = nationalId.trim(),
-                                    registrationNumber = registrationNumber.trim(),
-                                    bankAccounts = serializedAccounts,
-                                    isVerified = isVerified,
-                                    rating = rating
-                                )
-                            } else {
-                                Vendor(
-                                    name = name.trim(),
-                                    ceoName = ceoName.trim(),
-                                    description = description.trim(),
-                                    activityType = activityType,
-                                    categories = selectedCategories.joinToString(", "),
-                                    tags = tagsText.trim(),
-                                    phone = primaryPhone.trim(),
-                                    secondaryPhones = additionalPhones.filter { it.isNotBlank() }.joinToString(", "),
-                                    mobile = primaryMobile.trim(),
-                                    additionalMobiles = additionalMobiles.filter { it.isNotBlank() }.joinToString(", "),
-                                    email = email.trim(),
-                                    website = website.trim(),
-                                    province = province.trim(),
-                                    city = city.trim(),
-                                    address = address.trim(),
-                                    latitude = latitude,
-                                    longitude = longitude,
-                                    logoUri = logoUri,
-                                    catalogTitle = catalogTitle.trim(),
-                                    catalogLocalPath = catalogLocalPath,
-                                    catalogFileName = catalogFileName,
-                                    notes = notes.trim(),
-                                    economicCode = economicCode.trim(),
-                                    nationalId = nationalId.trim(),
-                                    registrationNumber = registrationNumber.trim(),
-                                    bankAccounts = serializedAccounts,
-                                    isVerified = isVerified,
-                                    rating = rating,
-                                    isFavorite = false,
-                                    createdAt = System.currentTimeMillis()
-                                )
-                            }
-
-                            // Check duplicate before saving
-                            val checkId = currentEditing?.id ?: 0L
-                            coroutineScope.launch {
-                                val duplicate = viewModel.checkDuplicateVendor(
-                                    name = name.trim(),
-                                    nationalId = nationalId.trim(),
-                                    mobile = primaryMobile.trim(),
-                                    currentId = checkId
-                                )
-                                if (duplicate != null) {
-                                    pendingVendorToSave = vendorToSave
-                                    duplicateFoundVendor = duplicate
-                                    showDuplicateDialog = true
-                                } else {
-                                    viewModel.saveVendorWithRelations(
-                                        vendor = vendorToSave,
-                                        contacts = personnelList.toList(),
-                                        products = vendorProductsList.toList(),
-                                        onComplete = {
-                                            onBack()
-                                        }
-                                    )
-                                }
-                            }
-                        },
+                        onClick = { performSave() },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = TealPrimary,
-                            contentColor = NavyDeep
+                            contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.testTag("save_vendor_button")
                     ) {
+                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = if (isEdit) "ذخیره تغییرات وندور" else "ثبت نهایی وندور",
                             fontWeight = FontWeight.Bold
@@ -770,7 +835,9 @@ fun AddEditVendorScreen(
             },
             text = {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     OutlinedTextField(
@@ -795,22 +862,45 @@ fun AddEditVendorScreen(
                         value = personMobileInput,
                         onValueChange = { personMobileInput = it },
                         label = { Text("شماره همراه") },
-                        placeholder = { Text("0912-3456789") },
+                        placeholder = { Text("09123456789") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    val personCity = PersianUtils.detectLandlineCity(personPhoneInput)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedTextField(
                             value = personPhoneInput,
-                            onValueChange = { personPhoneInput = it },
+                            onValueChange = { input ->
+                                personPhoneInput = PersianUtils.formatLandlinePhone(input)
+                            },
                             label = { Text("تلفن مستقیم") },
                             placeholder = { Text("021-77654321") },
                             singleLine = true,
+                            trailingIcon = {
+                                if (personCity != null) {
+                                    Surface(
+                                        color = TealPrimary.copy(alpha = 0.15f),
+                                        shape = RoundedCornerShape(4.dp),
+                                        modifier = Modifier.padding(end = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = personCity,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TealDark,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                            },
+                            supportingText = if (personCity != null) {
+                                { Text("شهر شناسایی‌شده: $personCity", fontSize = 10.sp, color = TealDark) }
+                            } else null,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                             modifier = Modifier.weight(1.5f)
                         )
@@ -859,7 +949,7 @@ fun AddEditVendorScreen(
                         }
                         showPersonDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
                 ) {
                     Text("تأیید")
                 }
@@ -977,7 +1067,7 @@ fun AddEditVendorScreen(
                                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                 )
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep),
+                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White),
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -1023,7 +1113,7 @@ fun AddEditVendorScreen(
                         }
                         showProductDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = NavyDeep)
+                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
                 ) {
                     Text("تأیید محصول")
                 }
@@ -1077,7 +1167,7 @@ fun AddEditVendorScreen(
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = TealPrimary,
-                        contentColor = NavyDeep
+                        contentColor = Color.White
                     )
                 ) {
                     Text("ثبت با این حال", fontWeight = FontWeight.Bold)
@@ -1093,11 +1183,22 @@ fun AddEditVendorScreen(
 }
 
 @Composable
-private fun StepBadge(step: Int, currentStep: Int, label: String) {
+private fun StepBadge(
+    step: Int,
+    currentStep: Int,
+    label: String,
+    onStepClick: (Int) -> Unit
+) {
     val isDone = currentStep > step
     val isCurrent = currentStep == step
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onStepClick(step) }
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+    ) {
         Box(
             modifier = Modifier
                 .size(30.dp)
@@ -1127,7 +1228,10 @@ private fun StepBadge(step: Int, currentStep: Int, label: String) {
             text = label,
             style = MaterialTheme.typography.labelSmall,
             color = if (isCurrent) TealPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 9.sp
+            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+            fontSize = 9.sp,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }
@@ -1136,7 +1240,7 @@ private fun StepBadge(step: Int, currentStep: Int, label: String) {
 private fun StepDivider(isPassed: Boolean) {
     Box(
         modifier = Modifier
-            .width(16.dp)
+            .width(12.dp)
             .height(2.dp)
             .background(if (isPassed) TealDark else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
     )

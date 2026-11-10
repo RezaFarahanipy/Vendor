@@ -44,7 +44,20 @@ enum class SortOption(val title: String) {
     RELEVANCE("مرتبط‌ترین"),
     RATING("بالاترین امتیاز"),
     NEWEST("جدیدترین"),
-    NAME("نام شرکت")
+    NAME("نام شرکت");
+
+    fun getLocalizedTitle(lang: com.example.util.AppLanguage): String {
+        return if (lang == com.example.util.AppLanguage.EN) {
+            when (this) {
+                RELEVANCE -> "Most Relevant"
+                RATING -> "Top Rated"
+                NEWEST -> "Newest"
+                NAME -> "Company Name"
+            }
+        } else {
+            title
+        }
+    }
 }
 
 data class VendorStats(
