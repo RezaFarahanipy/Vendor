@@ -132,7 +132,8 @@ import com.example.ui.screens.vendor_form.Step3Contacts
 import com.example.ui.screens.vendor_form.Step4LocationMap
 import com.example.ui.screens.vendor_form.Step5Personnel
 import com.example.ui.screens.vendor_form.Step6Products
-import com.example.ui.screens.vendor_form.Step7RatingCatalog
+import com.example.ui.screens.vendor_form.Step7Catalog
+import com.example.ui.screens.vendor_form.Step8Rating
 import java.io.File
 import java.io.FileOutputStream
 
@@ -560,7 +561,9 @@ fun AddEditVendorScreen(
                 StepDivider(isPassed = currentStep > 5)
                 StepBadge(step = 6, currentStep = currentStep, label = "محصولات", onStepClick = { currentStep = it })
                 StepDivider(isPassed = currentStep > 6)
-                StepBadge(step = 7, currentStep = currentStep, label = "کاتالوگ و امتیاز", onStepClick = { currentStep = it })
+                StepBadge(step = 7, currentStep = currentStep, label = "کاتالوگ", onStepClick = { currentStep = it })
+                StepDivider(isPassed = currentStep > 7)
+                StepBadge(step = 8, currentStep = currentStep, label = "امتیاز و یادداشت", onStepClick = { currentStep = it })
             }
         }
 
@@ -716,7 +719,7 @@ fun AddEditVendorScreen(
                                 showProductDialog = true
                             }
                         )
-                        7 -> Step7RatingCatalog(
+                        7 -> Step7Catalog(
                             catalogTitle = catalogTitle,
                             onCatalogTitleChange = { catalogTitle = it },
                             catalogLocalPath = catalogLocalPath,
@@ -725,13 +728,15 @@ fun AddEditVendorScreen(
                             },
                             onTestCatalogClick = {
                                 showTestCatalogDialog = true
-                            },
-                            notes = notes,
-                            onNotesChange = { notes = it },
+                            }
+                        )
+                        8 -> Step8Rating(
+                            rating = rating,
+                            onRatingChange = { rating = it },
                             isVerified = isVerified,
                             onVerifiedChange = { isVerified = it },
-                            rating = rating,
-                            onRatingChange = { rating = it }
+                            notes = notes,
+                            onNotesChange = { notes = it }
                         )
                     }
                 }
@@ -764,60 +769,21 @@ fun AddEditVendorScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                 }
 
-                if (currentStep < 7) {
-                    Button(
-                        onClick = {
-                            if (currentStep == 1) {
-                                if (name.isBlank()) {
-                                    nameError = "لطفاً نام شرکت را وارد نمایید"
-                                    return@Button
-                                }
-                                nameError = null
-                            } else if (currentStep == 2) {
-                                val nat = nationalId.trim()
-                                if (nat.isNotBlank() && !PersianUtils.isValidNationalIdOrCode(nat)) {
-                                    nationalIdError = "شناسه ملی یا کد ملی نامعتبر است"
-                                    return@Button
-                                }
-                                nationalIdError = null
-                            } else if (currentStep == 3) {
-                                val mob = primaryMobile.trim()
-                                if (mob.isNotBlank() && !PersianUtils.isValidIranianMobile(mob)) {
-                                    mobileError = "شماره همراه باید ۱۱ رقم و با ۰۹ آغاز شود"
-                                    return@Button
-                                }
-                                mobileError = null
-                            }
-                            currentStep++
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = TealPrimary,
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.testTag("next_step_button")
-                    ) {
-                        Text("مرحله بعد", fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
-                    }
-                } else {
-                    Button(
-                        onClick = { performSave() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = TealPrimary,
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.testTag("save_vendor_button")
-                    ) {
-                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (isEdit) "ذخیره تغییرات وندور" else "ثبت نهایی وندور",
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                Button(
+                    onClick = { performSave() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = TealPrimary,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.testTag("save_vendor_button")
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isEdit) "ذخیره تغییرات وندور" else "ثبت نهایی وندور",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

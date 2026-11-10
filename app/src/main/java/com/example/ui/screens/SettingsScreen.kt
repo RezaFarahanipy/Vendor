@@ -387,11 +387,7 @@ fun SettingsScreen(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = when (themeMode) {
-                                        ThemeMode.SYSTEM -> "پیرو تنظیمات سیستم عامل"
-                                        ThemeMode.LIGHT -> "حالت روشن تجاری"
-                                        ThemeMode.DARK -> "حالت تاریک بهینه"
-                                    },
+                                    text = if (themeMode == ThemeMode.DARK) "حالت تاریک فعال است" else "حالت روشن فعال است",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -400,30 +396,16 @@ fun SettingsScreen(
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            FilterChip(
-                                selected = themeMode == ThemeMode.SYSTEM,
-                                onClick = { viewModel.setThemeMode(ThemeMode.SYSTEM) },
-                                label = {
-                                    Text(
-                                        text = "پیرو سیستم",
-                                        fontSize = 11.sp,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        maxLines = 1,
-                                        softWrap = false
-                                    )
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
                             FilterChip(
                                 selected = themeMode == ThemeMode.LIGHT,
                                 onClick = { viewModel.setThemeMode(ThemeMode.LIGHT) },
                                 label = {
                                     Text(
-                                        text = "روشن",
-                                        fontSize = 11.sp,
+                                        text = "پوسته روشن",
+                                        fontSize = 12.sp,
+                                        fontWeight = if (themeMode == ThemeMode.LIGHT) FontWeight.Bold else FontWeight.Normal,
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier.fillMaxWidth(),
                                         maxLines = 1,
@@ -437,8 +419,9 @@ fun SettingsScreen(
                                 onClick = { viewModel.setThemeMode(ThemeMode.DARK) },
                                 label = {
                                     Text(
-                                        text = "تاریک",
-                                        fontSize = 11.sp,
+                                        text = "پوسته تاریک",
+                                        fontSize = 12.sp,
+                                        fontWeight = if (themeMode == ThemeMode.DARK) FontWeight.Bold else FontWeight.Normal,
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier.fillMaxWidth(),
                                         maxLines = 1,

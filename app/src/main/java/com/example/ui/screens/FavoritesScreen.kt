@@ -99,7 +99,7 @@ fun FavoritesScreen(
                             text = "وندورها",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = if (selectedTab == FavTab.VENDORS) NavyDeep else MaterialTheme.colorScheme.onSurface
+                            color = if (selectedTab == FavTab.VENDORS) Color.White else MaterialTheme.colorScheme.onSurface
                         )
                     }
 
@@ -116,7 +116,7 @@ fun FavoritesScreen(
                             text = "محصولات",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = if (selectedTab == FavTab.PRODUCTS) NavyDeep else MaterialTheme.colorScheme.onSurface
+                            color = if (selectedTab == FavTab.PRODUCTS) Color.White else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }

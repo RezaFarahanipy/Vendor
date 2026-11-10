@@ -218,8 +218,8 @@ fun SearchScreen(
                                 )
                             },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = TealPrimary,
-                                selectedLabelColor = NavyDeep
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = Color.White
                             ),
                             shape = RoundedCornerShape(20.dp)
                         )
@@ -325,10 +325,14 @@ fun SearchScreen(
                                         },
                                     shape = RoundedCornerShape(12.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = if (isCatSelected) TealPrimary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface
+                                        containerColor = if (isCatSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                                     ),
-                                    border = if (isCatSelected) BorderStroke(1.5.dp, TealPrimary) else null,
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                                    border = if (isCatSelected) {
+                                        BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+                                    } else {
+                                        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                                    },
+                                    elevation = CardDefaults.cardElevation(defaultElevation = if (isCatSelected) 2.dp else 1.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier
@@ -350,13 +354,13 @@ fun SearchScreen(
                                             modifier = Modifier
                                                 .size(28.dp)
                                                 .clip(RoundedCornerShape(8.dp))
-                                                .background(if (isCatSelected) TealPrimary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                                                .background(if (isCatSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
                                                 imageVector = catIcon,
                                                 contentDescription = null,
-                                                tint = if (isCatSelected) NavyDeep else MaterialTheme.colorScheme.primary,
+                                                tint = if (isCatSelected) Color.White else MaterialTheme.colorScheme.primary,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
@@ -365,7 +369,7 @@ fun SearchScreen(
                                             text = Localization.translateCategory(catItem.name, lang),
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = if (isCatSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.onSurface,
+                                            color = if (isCatSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                             fontSize = 11.sp,
@@ -411,7 +415,7 @@ fun SearchScreen(
                         text = if (lang == AppLanguage.FA) "فهرست" else "List",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (!isCardView) FontWeight.Bold else FontWeight.Normal,
-                        color = if (!isCardView) NavyDeep else MaterialTheme.colorScheme.onSurface
+                        color = if (!isCardView) Color.White else MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Box(
@@ -425,7 +429,7 @@ fun SearchScreen(
                         text = if (lang == AppLanguage.FA) "کارت‌ها" else "Cards",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (isCardView) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isCardView) NavyDeep else MaterialTheme.colorScheme.onSurface
+                        color = if (isCardView) Color.White else MaterialTheme.colorScheme.onSurface
                     )
                 }
             }

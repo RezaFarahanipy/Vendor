@@ -253,7 +253,7 @@ fun VendorCard(
                         .clip(RoundedCornerShape(14.dp))
                         .background(
                             if (vendor.logoUri.isNotBlank() && File(vendor.logoUri).exists()) {
-                                MaterialTheme.colorScheme.surfaceVariant
+                                Color.White
                             } else {
                                 avatarColor
                             }

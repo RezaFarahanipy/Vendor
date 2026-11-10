@@ -297,10 +297,8 @@ private fun HomeHeaderBar(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(13.dp))
-                    .background(
-                        Brush.linearGradient(listOf(NavyDeep, TealDark))
-                    )
-                    .border(1.5.dp, TealPrimary, RoundedCornerShape(13.dp)),
+                    .background(Color.White)
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f), RoundedCornerShape(13.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
