@@ -147,22 +147,22 @@ jobs:
           RELEASE_TITLE="Debug APK Build #${{ github.run_number }}"
           TARGET_COMMIT="${{ github.sha }}"
 
-          NOTES_BODY="### Debug APK Build #${{ github.run_number }}
-
-- **Notice**: This is an automatically generated debug APK built by GitHub Actions.
-- **Workflow Run Number**: \`${{ github.run_number }}\`
-- **Workflow Attempt**: \`${{ github.run_attempt }}\`
-- **Source Commit SHA**: \`${{ github.sha }}\`
-- **Intended Audience**: Testing and QA only.
-- **Production Warning**: This APK is NOT a Google Play Store production release.
-- **Signing**: Signed only with a temporary debug keystore."
+          echo "### Debug APK Build #${{ github.run_number }}" > release_notes.md
+          echo "" >> release_notes.md
+          echo "- **Notice**: This is an automatically generated debug APK built by GitHub Actions." >> release_notes.md
+          echo "- **Workflow Run Number**: \`${{ github.run_number }}\`" >> release_notes.md
+          echo "- **Workflow Attempt**: \`${{ github.run_attempt }}\`" >> release_notes.md
+          echo "- **Source Commit SHA**: \`${{ github.sha }}\`" >> release_notes.md
+          echo "- **Intended Audience**: Testing and QA only." >> release_notes.md
+          echo "- **Production Warning**: This APK is NOT a Google Play Store production release." >> release_notes.md
+          echo "- **Signing**: Signed only with a temporary debug keystore." >> release_notes.md
 
           echo "Creating release $RELEASE_TAG..."
           gh release create "$RELEASE_TAG" "$ASSET_FILE" \
             --title "$RELEASE_TITLE" \
             --target "$TARGET_COMMIT" \
             --latest \
-            --notes "$NOTES_BODY"
+            --notes-file release_notes.md
           echo "Release created successfully."
 
       - name: Report APK download result
