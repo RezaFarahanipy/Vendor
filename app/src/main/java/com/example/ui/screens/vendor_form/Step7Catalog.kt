@@ -28,8 +28,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandPrimary
 
 /**
  * Step 7: Catalog PDF Attachment
@@ -62,7 +62,7 @@ fun Step7Catalog(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(24.dp))
+                Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "ضمیمه کاتالوگ یا بروشور فنی (PDF)",
@@ -90,7 +90,7 @@ fun Step7Catalog(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
-                    colors = CardDefaults.cardColors(containerColor = TealPrimary.copy(alpha = 0.12f))
+                    colors = CardDefaults.cardColors(containerColor = BrandPrimary.copy(alpha = 0.12f))
                 ) {
                     Row(
                         modifier = Modifier
@@ -100,20 +100,20 @@ fun Step7Catalog(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = TealDark)
+                            Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = BrandDark)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "فایل کاتالوگ با موفقیت متصل شده است",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold,
-                                color = TealDark
+                                color = BrandDark
                             )
                         }
 
                         Button(
                             onClick = onTestCatalogClick,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = TealDark,
+                                containerColor = BrandDark,
                                 contentColor = Color.White
                             ),
                             shape = RoundedCornerShape(8.dp)
@@ -129,7 +129,7 @@ fun Step7Catalog(
             Button(
                 onClick = onUploadPdfClick,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TealPrimary,
+                    containerColor = BrandPrimary,
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(10.dp),

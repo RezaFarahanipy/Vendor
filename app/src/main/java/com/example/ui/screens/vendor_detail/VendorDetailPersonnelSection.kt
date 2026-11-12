@@ -47,12 +47,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.ContactPerson
 import com.example.ui.theme.BlueAccent
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandPrimary
 import com.example.util.MessengerUtils
 import com.example.util.PersianUtils
+import com.example.ui.theme.BrandViolet
 
 /**
  * Modular Personnel Section for Vendor Detail Screen
@@ -83,7 +84,7 @@ fun VendorDetailPersonnelSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.People, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(22.dp))
+                    Icon(Icons.Default.People, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "پرسنل و مدیران ارتباطی (${PersianUtils.toPersianDigits(contacts.size)} نفر)",
@@ -145,7 +146,7 @@ private fun PersonnelItem(
                         .size(40.dp)
                         .clip(CircleShape)
                         .background(
-                            Brush.linearGradient(listOf(NavyDeep, TealDark))
+                            Brush.linearGradient(listOf(BrandPrimary, BrandViolet))
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -164,7 +165,7 @@ private fun PersonnelItem(
                 }
 
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = BrandPrimary, modifier = Modifier.size(18.dp))
                 }
 
                 IconButton(onClick = onDelete) {
@@ -192,10 +193,10 @@ private fun PersonnelItem(
                                 modifier = Modifier
                                     .size(32.dp)
                                     .clip(CircleShape)
-                                    .background(TealPrimary.copy(alpha = 0.15f)),
+                                    .background(BrandPrimary.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Call, contentDescription = "تماس", tint = TealPrimary, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Call, contentDescription = "تماس", tint = BrandPrimary, modifier = Modifier.size(16.dp))
                             }
                         }
 
@@ -235,7 +236,7 @@ private fun PersonnelItem(
                         .fillMaxWidth()
                         .height(36.dp)
                 ) {
-                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(14.dp), tint = TealDark)
+                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(14.dp), tint = BrandDark)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("ایمیل", fontSize = 11.sp, maxLines = 1, softWrap = false)
                 }

@@ -47,11 +47,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealLight
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandLight
+import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 import java.io.File
 import java.io.FileOutputStream
@@ -188,7 +188,7 @@ fun CatalogViewerDialog(
                         onClick = { CatalogFileUtils.openPdfFile(context, targetFile) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = TealPrimary,
+                            containerColor = BrandPrimary,
                             contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(10.dp)

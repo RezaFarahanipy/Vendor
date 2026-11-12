@@ -40,7 +40,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.data.model.Category
-import com.example.ui.theme.TealDark
+import com.example.ui.theme.BrandDark
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -81,9 +81,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.VendorCard
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandPrimary
 import com.example.ui.viewmodel.MainTab
 import com.example.ui.viewmodel.SortOption
 import com.example.ui.viewmodel.VendorViewModel
@@ -92,6 +92,9 @@ import com.example.util.Localization
 import com.example.util.PersianUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.example.ui.theme.staggerIn
+import com.example.ui.theme.StatusBarStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,6 +102,7 @@ fun SearchScreen(
     viewModel: VendorViewModel,
     onVendorClick: (Long) -> Unit
 ) {
+    StatusBarStyle(onGradient = false)
     val query by viewModel.searchQuery.collectAsState()
     val filteredVendors by viewModel.filteredVendors.collectAsState()
     val allVendors by viewModel.allVendors.collectAsState()
@@ -240,7 +244,7 @@ fun SearchScreen(
                 title = if (lang == AppLanguage.FA) "کل وندورها" else Localization.get("stat_total_vendors", lang),
                 count = if (lang == AppLanguage.FA) PersianUtils.toPersianDigits(allVendors.size) else allVendors.size.toString(),
                 icon = Icons.Default.Apartment,
-                iconTint = TealPrimary,
+                iconTint = BrandPrimary,
                 onClick = {
                     viewModel.searchQuery.value = ""
                     viewModel.selectedCategoryFilter.value = "همه"
@@ -291,7 +295,7 @@ fun SearchScreen(
                             Text(
                                 text = if (lang == AppLanguage.FA) "نمایش همه" else Localization.get("all", lang),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TealDark
+                                color = BrandDark
                             )
                         }
                     }
@@ -407,7 +411,7 @@ fun SearchScreen(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .background(if (!isCardView) TealPrimary else Color.Transparent)
+                        .background(if (!isCardView) BrandPrimary else Color.Transparent)
                         .clickable { viewModel.isCardViewMode.value = false }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
@@ -421,7 +425,7 @@ fun SearchScreen(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .background(if (isCardView) TealPrimary else Color.Transparent)
+                        .background(if (isCardView) BrandPrimary else Color.Transparent)
                         .clickable { viewModel.isCardViewMode.value = true }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
@@ -481,7 +485,7 @@ fun SearchScreen(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(if (onlyVerified || onlyCatalog || selectedCity != "همه") TealPrimary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface)
+                        .background(if (onlyVerified || onlyCatalog || selectedCity != "همه") BrandPrimary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface)
                 ) {
                     Icon(
                         imageVector = Icons.Default.FilterList,
@@ -628,8 +632,9 @@ fun SearchScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(filteredVendors, key = { it.id }) { vendor ->
+                itemsIndexed(filteredVendors, key = { _, v -> v.id }) { index, vendor ->
                     VendorCard(
+                        modifier = Modifier.animateItem().staggerIn(index),
                         vendor = vendor,
                         onClick = { onVendorClick(vendor.id) },
                         onFavoriteClick = { viewModel.toggleVendorFavorite(vendor) }
@@ -691,7 +696,7 @@ fun SearchScreen(
                     Checkbox(
                         checked = onlyVerified,
                         onCheckedChange = { viewModel.onlyVerifiedFilter.value = it },
-                        colors = CheckboxDefaults.colors(checkedColor = TealPrimary)
+                        colors = CheckboxDefaults.colors(checkedColor = BrandPrimary)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -712,7 +717,7 @@ fun SearchScreen(
                     Checkbox(
                         checked = onlyCatalog,
                         onCheckedChange = { viewModel.onlyCatalogFilter.value = it },
-                        colors = CheckboxDefaults.colors(checkedColor = TealPrimary)
+                        colors = CheckboxDefaults.colors(checkedColor = BrandPrimary)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(

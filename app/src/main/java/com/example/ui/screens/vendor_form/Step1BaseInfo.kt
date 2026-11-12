@@ -44,11 +44,12 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.data.model.ActivityType
 import com.example.data.model.Category
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandPrimary
 import java.io.File
+import com.example.ui.theme.BrandViolet
 
 /**
  * Step 1: Basic Information, Activity Type & Logo
@@ -99,11 +100,11 @@ fun Step1BaseInfo(
                     .clip(RoundedCornerShape(16.dp))
                     .then(
                         if (hasLogo) Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-                        else Modifier.background(Brush.linearGradient(listOf(NavyDeep, TealDark)))
+                        else Modifier.background(Brush.linearGradient(listOf(BrandPrimary, BrandViolet)))
                     )
                     .border(
                         1.5.dp,
-                        if (hasLogo) MaterialTheme.colorScheme.outline.copy(alpha = 0.5f) else TealPrimary,
+                        if (hasLogo) MaterialTheme.colorScheme.outline.copy(alpha = 0.5f) else BrandPrimary,
                         RoundedCornerShape(16.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -146,8 +147,8 @@ fun Step1BaseInfo(
                     Button(
                         onClick = onPickLogo,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = TealPrimary,
-                            contentColor = NavyDeep
+                            containerColor = BrandPrimary,
+                            contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
@@ -207,8 +208,8 @@ fun Step1BaseInfo(
                 onClick = { onActivityTypeChange(opt) },
                 label = { Text(opt, style = MaterialTheme.typography.labelSmall) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = TealPrimary,
-                    selectedLabelColor = NavyDeep
+                    selectedContainerColor = BrandPrimary,
+                    selectedLabelColor = Color.White
                 )
             )
         }
@@ -243,11 +244,11 @@ fun Step1BaseInfo(
                 },
                 label = { Text(cat, style = MaterialTheme.typography.labelSmall) },
                 leadingIcon = if (isSelected) {
-                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp), tint = NavyDeep) }
+                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.White) }
                 } else null,
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = TealPrimary,
-                    selectedLabelColor = NavyDeep
+                    selectedContainerColor = BrandPrimary,
+                    selectedLabelColor = Color.White
                 )
             )
         }

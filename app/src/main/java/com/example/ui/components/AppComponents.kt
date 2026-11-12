@@ -76,12 +76,19 @@ import com.example.ui.theme.BlueAccent
 import com.example.ui.theme.GreenVerified
 import com.example.ui.theme.NavyBorder
 import com.example.ui.theme.NavyCard
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealLight
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandLight
+import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.example.ui.theme.BrandGradient
+import com.example.ui.theme.AnimatedHeart
+import com.example.ui.theme.pressScale
+import com.example.ui.theme.StatusBarStyle
 
 @Composable
 fun AppHeader(
@@ -90,61 +97,67 @@ fun AppHeader(
     onBack: (() -> Unit)? = null,
     actions: @Composable (() -> Unit)? = null
 ) {
+    StatusBarStyle(onGradient = true)
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
+        color = Color.Transparent,
+        shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+        shadowElevation = 6.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
-                if (onBack != null) {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .testTag("back_button")
-                            .size(40.dp)
+        Box(modifier = Modifier.fillMaxWidth().background(BrandGradient)) {
+            CompositionLocalProvider(LocalContentColor provides Color.White) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "بازگشت",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
+                        if (onBack != null) {
+                            IconButton(
+                                onClick = onBack,
+                                modifier = Modifier
+                                    .testTag("back_button")
+                                    .size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "بازگشت",
+                                    tint = Color.White
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Column {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (!subtitle.isNullOrBlank()) {
+                                Text(
+                                    text = subtitle,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                Column {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (!subtitle.isNullOrBlank()) {
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                    if (actions != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            actions()
+                        }
                     }
-                }
-            }
-            if (actions != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    actions()
                 }
             }
         }
@@ -157,7 +170,7 @@ fun StatCard(
     title: String,
     value: String,
     icon: ImageVector,
-    iconTint: Color = TealPrimary,
+    iconTint: Color = BrandPrimary,
     onClick: (() -> Unit)? = null
 ) {
     Card(
@@ -207,9 +220,9 @@ fun StatCard(
 }
 
 private val AVATAR_PALETTE = listOf(
-    Color(0xFF00897B), Color(0xFF1E88E5), Color(0xFF5E35B1),
-    Color(0xFF3949AB), Color(0xFF00ACC1), Color(0xFFD81B60),
-    Color(0xFFFB8C00), Color(0xFF43A047), Color(0xFF8E24AA)
+    Color(0xFF5850EC), Color(0xFF7C3AED), Color(0xFFDB2777),
+    Color(0xFFEA580C), Color(0xFF0D9488), Color(0xFF0284C7),
+    Color(0xFF16A34A), Color(0xFFE11D48), Color(0xFFD97706)
 )
 
 fun getAvatarColor(name: String): Color {
@@ -219,6 +232,7 @@ fun getAvatarColor(name: String): Color {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 fun VendorCard(
     vendor: Vendor,
     onClick: () -> Unit,
@@ -228,14 +242,17 @@ fun VendorCard(
     val context = LocalContext.current
     val avatarColor = remember(vendor.name) { getAvatarColor(vendor.name) }
 
+    val cardInteraction = remember { MutableInteractionSource() }
     Card(
+        onClick = onClick,
+        interactionSource = cardInteraction,
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() }
+            .pressScale(cardInteraction)
             .testTag("vendor_card_${vendor.id}"),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Column(
             modifier = Modifier
@@ -345,11 +362,7 @@ fun VendorCard(
                     onClick = onFavoriteClick,
                     modifier = Modifier.size(48.dp)
                 ) {
-                    Icon(
-                        imageVector = if (vendor.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "علاقه‌مندی",
-                        tint = if (vendor.isFavorite) RedFavorite else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    AnimatedHeart(isFavorite = vendor.isFavorite)
                 }
             }
 
@@ -403,13 +416,13 @@ fun VendorCard(
                                 modifier = Modifier
                                     .size(34.dp)
                                     .clip(CircleShape)
-                                    .background(TealPrimary.copy(alpha = 0.14f)),
+                                    .background(BrandPrimary.copy(alpha = 0.14f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Call,
                                     contentDescription = "تماس تلفنی با ${vendor.name}",
-                                    tint = TealPrimary,
+                                    tint = BrandPrimary,
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -601,7 +614,7 @@ fun MessengerActionBar(
                 },
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TealPrimary,
+                    containerColor = BrandPrimary,
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(12.dp)
@@ -821,11 +834,7 @@ fun ProductItemRow(
             }
 
             IconButton(onClick = onFavoriteClick) {
-                Icon(
-                    imageVector = if (product.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = "علاقه‌مندی",
-                    tint = if (product.isFavorite) RedFavorite else MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                AnimatedHeart(isFavorite = product.isFavorite)
             }
         }
     }

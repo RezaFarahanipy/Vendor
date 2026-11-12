@@ -22,9 +22,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.InteractiveMapPicker
-import com.example.ui.theme.NavyDeep
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.InkDeep
+import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
+import androidx.compose.ui.graphics.Color
 
 /**
  * Step 4: Interactive Map, Coordinates, Address Type & Postal Code
@@ -83,8 +84,8 @@ fun Step4LocationMap(
                     onClick = { onAddressTypeChange(typeOption) },
                     label = { Text(typeOption, style = MaterialTheme.typography.labelSmall) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = TealPrimary,
-                        selectedLabelColor = NavyDeep
+                        selectedContainerColor = BrandPrimary,
+                        selectedLabelColor = Color.White
                     ),
                     shape = RoundedCornerShape(10.dp)
                 )

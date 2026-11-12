@@ -52,10 +52,10 @@ import com.example.ui.components.AppHeader
 import com.example.ui.components.InteractiveMapPicker
 import com.example.ui.components.openMap
 import com.example.ui.theme.BlueAccent
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandPrimary
 import com.example.ui.viewmodel.VendorViewModel
 import com.example.util.PersianUtils
 
@@ -151,7 +151,7 @@ fun LocationScreen(
                         onClick = { openMap(context, vendor.latitude, vendor.longitude, vendor.name) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = TealPrimary,
+                            containerColor = BrandPrimary,
                             contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(12.dp)
@@ -202,7 +202,7 @@ fun LocationScreen(
                             val targetPhone = vendor.phone.ifBlank { vendor.mobile }
                             com.example.ui.components.dialPhone(context, targetPhone)
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = TealDark, contentColor = Color.White),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandDark, contentColor = Color.White),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("تماس")

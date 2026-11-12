@@ -17,7 +17,7 @@ import org.robolectric.annotation.Config
 class DatabaseMigrationTest {
 
     @Test
-    fun testAppDatabaseSchemaVersion4AndAllTables() {
+    fun testAppDatabaseSchemaVersion5AndAllTables() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val db = Room.inMemoryDatabaseBuilder(
             context,
@@ -25,7 +25,7 @@ class DatabaseMigrationTest {
         ).build()
 
         val sqliteDb = db.openHelper.readableDatabase
-        assertEquals(4, sqliteDb.version)
+        assertEquals(5, sqliteDb.version)
 
         val cursor = sqliteDb.query("SELECT name FROM sqlite_master WHERE type='table'")
         val tableNames = mutableListOf<String>()

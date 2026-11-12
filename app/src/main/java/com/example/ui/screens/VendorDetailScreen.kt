@@ -116,15 +116,16 @@ import com.example.ui.components.shareVendor
 import com.example.ui.theme.AmberRating
 import com.example.ui.theme.BlueAccent
 import com.example.ui.theme.GreenVerified
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealLight
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandLight
+import com.example.ui.theme.BrandPrimary
 import com.example.ui.viewmodel.VendorViewModel
 import com.example.util.MessengerUtils
 import com.example.util.PersianUtils
 import java.io.File
+import com.example.ui.theme.StatusBarStyle
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -135,6 +136,7 @@ fun VendorDetailScreen(
     onEditVendor: (Vendor) -> Unit,
     onOpenMap: (Long) -> Unit
 ) {
+    StatusBarStyle(onGradient = false)
     val context = LocalContext.current
     val allVendors by viewModel.allVendors.collectAsState()
     val allProducts by viewModel.allProducts.collectAsState()
@@ -319,7 +321,7 @@ fun VendorDetailScreen(
                                 onClick = { dialPhone(context, primaryNum) },
                                 modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = TealPrimary,
+                                    containerColor = BrandPrimary,
                                     contentColor = Color.White
                                 ),
                                 shape = RoundedCornerShape(12.dp)
@@ -363,7 +365,7 @@ fun VendorDetailScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Phone, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Phone, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Column {
                                         Text(
@@ -375,14 +377,14 @@ fun VendorDetailScreen(
                                             Text(
                                                 text = "پیش‌شماره $detectedCity",
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = TealDark,
+                                                color = BrandDark,
                                                 fontSize = 10.sp
                                             )
                                         }
                                     }
                                 }
                                 IconButton(onClick = { dialPhone(context, p) }, modifier = Modifier.size(28.dp)) {
-                                    Icon(Icons.Default.Call, contentDescription = "تماس", tint = TealPrimary, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Call, contentDescription = "تماس", tint = BrandPrimary, modifier = Modifier.size(18.dp))
                                 }
                             }
                         }
@@ -407,7 +409,7 @@ fun VendorDetailScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.PhoneAndroid, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.PhoneAndroid, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = "${if (i == 0) "همراه اصلی: " else "همراه ${PersianUtils.toPersianDigits(i + 1)}: "} ${PersianUtils.toPersianDigits(m)}",
@@ -417,7 +419,7 @@ fun VendorDetailScreen(
                                 }
                                 Row {
                                     IconButton(onClick = { dialPhone(context, m) }, modifier = Modifier.size(28.dp)) {
-                                        Icon(Icons.Default.Call, contentDescription = "تماس", tint = TealPrimary, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.Call, contentDescription = "تماس", tint = BrandPrimary, modifier = Modifier.size(18.dp))
                                     }
                                     IconButton(onClick = { sendSms(context, m) }, modifier = Modifier.size(28.dp)) {
                                         Icon(Icons.Default.Message, contentDescription = "پیامک", tint = BlueAccent, modifier = Modifier.size(18.dp))
@@ -469,7 +471,7 @@ fun VendorDetailScreen(
                                 .padding(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
@@ -490,7 +492,7 @@ fun VendorDetailScreen(
                                 onClick = { onOpenMap(vendor.id) },
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Default.LocationOn, contentDescription = "نقشه", tint = TealPrimary)
+                                Icon(Icons.Default.LocationOn, contentDescription = "نقشه", tint = BrandPrimary)
                             }
                         }
                     }
@@ -578,7 +580,7 @@ fun VendorDetailScreen(
                     ) {
                         Button(
                             onClick = { showCatalogViewer = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White),
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White),
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.weight(1f)
                         ) {
@@ -604,7 +606,7 @@ fun VendorDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Inventory, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(22.dp))
+                        Icon(Icons.Default.Inventory, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "محصولات و تجهیزات تخصصی (${PersianUtils.toPersianDigits(vendorProducts.size)})",
@@ -693,7 +695,7 @@ fun VendorDetailScreen(
                                             showProductDialog = true
                                         }
                                     ) {
-                                        Icon(Icons.Default.Edit, contentDescription = "ویرایش محصول", tint = TealPrimary, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.Edit, contentDescription = "ویرایش محصول", tint = BrandPrimary, modifier = Modifier.size(18.dp))
                                     }
 
                                     IconButton(
@@ -864,7 +866,7 @@ fun VendorDetailScreen(
                         viewModel.saveContact(toSave)
                         showContactDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
                     Text("ذخیره")
                 }
@@ -965,7 +967,7 @@ fun VendorDetailScreen(
                         viewModel.saveProduct(toSave)
                         showProductDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
                     Text("ذخیره محصول")
                 }
@@ -1023,7 +1025,7 @@ fun VendorDetailScreen(
                         viewModel.updateVendorNotes(vendor.id, notesText)
                         showNotesDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
                     Text("ذخیره یادداشت")
                 }
@@ -1051,7 +1053,7 @@ fun VendorDetailScreen(
                         val activePhone = vendor.mobile.ifBlank { vendor.phone }
                         MessengerUtils.openWhatsApp(context, activePhone, "با سلام، احتراماً درخواست استعلام قیمت و کاتالوگ محصولات شرکت ${vendor.name} را دارم.")
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
                     Text("ارسال در واتس‌اپ")
                 }
@@ -1121,7 +1123,7 @@ private fun ContactDetailRow(
             .padding(vertical = 8.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp))
+        Icon(imageVector = icon, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

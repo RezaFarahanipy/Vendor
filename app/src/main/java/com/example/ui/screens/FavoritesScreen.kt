@@ -40,10 +40,12 @@ import androidx.compose.ui.unit.dp
 import com.example.ui.components.AppHeader
 import com.example.ui.components.ProductItemRow
 import com.example.ui.components.VendorCard
-import com.example.ui.theme.NavyDeep
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.InkDeep
+import com.example.ui.theme.BrandPrimary
 import com.example.ui.viewmodel.VendorViewModel
 import com.example.util.PersianUtils
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.example.ui.theme.staggerIn
 
 enum class FavTab {
     VENDORS,
@@ -90,7 +92,7 @@ fun FavoritesScreen(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (selectedTab == FavTab.VENDORS) TealPrimary else Color.Transparent)
+                            .background(if (selectedTab == FavTab.VENDORS) BrandPrimary else Color.Transparent)
                             .clickable { selectedTab = FavTab.VENDORS }
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
@@ -107,7 +109,7 @@ fun FavoritesScreen(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (selectedTab == FavTab.PRODUCTS) TealPrimary else Color.Transparent)
+                            .background(if (selectedTab == FavTab.PRODUCTS) BrandPrimary else Color.Transparent)
                             .clickable { selectedTab = FavTab.PRODUCTS }
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
@@ -133,8 +135,9 @@ fun FavoritesScreen(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 80.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(favoriteVendors, key = { it.id }) { vendor ->
+                    itemsIndexed(favoriteVendors, key = { _, v -> v.id }) { index, vendor ->
                         VendorCard(
+                            modifier = Modifier.animateItem().staggerIn(index),
                             vendor = vendor,
                             onClick = { onVendorClick(vendor.id) },
                             onFavoriteClick = { viewModel.toggleVendorFavorite(vendor) }

@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build and Release Debug APK
@@ -46,14 +50,19 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Create temporary debug keystore
+      - name: Prepare signing keystore
+        env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
         run: |
           KEYSTORE_PATH="./debug.keystore"
-          if [ -f "$KEYSTORE_PATH" ]; then
-            echo "Debug keystore already exists at $KEYSTORE_PATH."
+          if [ -n "$DEBUG_KEYSTORE_BASE64" ]; then
+            echo "$DEBUG_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_PATH"
+            echo "Using the persistent keystore from the DEBUG_KEYSTORE_BASE64 secret."
+          elif [ -f "$KEYSTORE_PATH" ]; then
+            echo "Using the keystore committed in the repository."
           else
-            echo "Generating temporary debug keystore..."
-            keytool -genkey -v \
+            echo "::warning::No persistent keystore found - generating a TEMPORARY one. Every build then has a different signature, so Android cannot update the installed app in place (uninstalling wipes its data). Add the DEBUG_KEYSTORE_BASE64 repository secret to fix this."
+            keytool -genkeypair \
               -keystore "$KEYSTORE_PATH" \
               -alias androiddebugkey \
               -storepass android \
@@ -63,12 +72,11 @@ jobs:
               -validity 10000 \
               -dname "CN=Android Debug,O=Android,C=US"
           fi
+          [ -s "$KEYSTORE_PATH" ] || { echo "Error: keystore is missing or empty."; exit 1; }
 
-          if [ ! -f "$KEYSTORE_PATH" ]; then
-            echo "Error: Failed to create debug keystore at $KEYSTORE_PATH."
-            exit 1
-          fi
-          echo "Debug keystore verified successfully at $KEYSTORE_PATH."
+      - name: Run unit tests
+        continue-on-error: true
+        run: gradle :app:testDebugUnitTest --no-daemon
 
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace --no-daemon
@@ -143,7 +151,7 @@ jobs:
             *) echo "Error: Release asset filename must be exactly app-debug.apk"; exit 1 ;;
           esac
 
-          RELEASE_TAG="debug-apk-build-${{ github.run_number }}-${{ github.run_attempt }}"
+          RELEASE_TAG="latest-debug"
           RELEASE_TITLE="Debug APK Build #${{ github.run_number }}"
           TARGET_COMMIT="${{ github.sha }}"
 
@@ -155,9 +163,10 @@ jobs:
           echo "- **Source Commit SHA**: \`${{ github.sha }}\`" >> release_notes.md
           echo "- **Intended Audience**: Testing and QA only." >> release_notes.md
           echo "- **Production Warning**: This APK is NOT a Google Play Store production release." >> release_notes.md
-          echo "- **Signing**: Signed only with a temporary debug keystore." >> release_notes.md
+          echo "- **Signing**: Signed with the project debug keystore (see DEBUG_KEYSTORE_BASE64 secret)." >> release_notes.md
 
-          echo "Creating release $RELEASE_TAG..."
+          echo "Replacing the rolling release $RELEASE_TAG..."
+          gh release delete "$RELEASE_TAG" --cleanup-tag --yes || true
           gh release create "$RELEASE_TAG" "$ASSET_FILE" \
             --title "$RELEASE_TITLE" \
             --target "$TARGET_COMMIT" \
@@ -177,7 +186,7 @@ jobs:
             echo "Release created successfully."
             gh release view --json tagName,name,url,assets
             echo ""
-            echo "Release Tag: debug-apk-build-${{ github.run_number }}-${{ github.run_attempt }}"
+            echo "Release Tag: latest-debug"
             echo "Release Title: Debug APK Build #${{ github.run_number }}"
             echo "APK Asset: app-debug.apk"
             echo "Direct APK URL: $DIRECT_URL"

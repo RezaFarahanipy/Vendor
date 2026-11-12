@@ -37,10 +37,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.ContactPerson
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 
 /**
@@ -68,7 +68,7 @@ fun Step5Personnel(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f, fill = false)
         ) {
-            Icon(Icons.Default.People, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.People, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "پرسنل (${PersianUtils.toPersianDigits(personnelList.size)} نفر)",
@@ -82,7 +82,7 @@ fun Step5Personnel(
         Button(
             onClick = onAddPersonnelClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = TealPrimary,
+                containerColor = BrandPrimary,
                 contentColor = Color.White
             ),
             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
@@ -131,10 +131,10 @@ fun Step5Personnel(
                         modifier = Modifier
                             .size(42.dp)
                             .clip(CircleShape)
-                            .background(TealDark.copy(alpha = 0.2f)),
+                            .background(BrandDark.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Person, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(24.dp))
+                        Icon(Icons.Default.Person, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(24.dp))
                     }
 
                     Spacer(modifier = Modifier.width(10.dp))
@@ -170,7 +170,7 @@ fun Step5Personnel(
                     IconButton(
                         onClick = { onEditPersonnelClick(index, person) }
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = BrandPrimary, modifier = Modifier.size(18.dp))
                     }
 
                     IconButton(

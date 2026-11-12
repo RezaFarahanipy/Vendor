@@ -39,8 +39,8 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.BankAccount
 import com.example.ui.theme.GreenVerified
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 import com.example.util.ShebaUtils
 
@@ -134,7 +134,7 @@ fun Step2LegalFinancial(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.AccountBalance, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.AccountBalance, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "حساب‌های بانکی و شماره شبا (${PersianUtils.toPersianDigits(bankAccountsList.size)} حساب)",
@@ -154,9 +154,9 @@ fun Step2LegalFinancial(
             },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = TealPrimary.copy(alpha = 0.12f)
+            containerColor = BrandPrimary.copy(alpha = 0.12f)
         ),
-        border = BorderStroke(1.5.dp, TealPrimary.copy(alpha = 0.45f))
+        border = BorderStroke(1.5.dp, BrandPrimary.copy(alpha = 0.45f))
     ) {
         Row(
             modifier = Modifier
@@ -168,7 +168,7 @@ fun Step2LegalFinancial(
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = null,
-                tint = TealDark,
+                tint = BrandDark,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -176,7 +176,7 @@ fun Step2LegalFinancial(
                 text = "افزودن حساب بانکی و شماره شبا جدید",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = TealDark
+                color = BrandDark
             )
         }
     }
@@ -293,7 +293,7 @@ fun Step2LegalFinancial(
                         placeholder = { Text("تکمیل خودکار از روی شبا") },
                         singleLine = true,
                         supportingText = {
-                            Text("تکمیل خودکار بر اساس کد شبا", fontSize = 10.sp, color = TealDark)
+                            Text("تکمیل خودکار بر اساس کد شبا", fontSize = 10.sp, color = BrandDark)
                         },
                         modifier = Modifier.weight(1.2f)
                     )

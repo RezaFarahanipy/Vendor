@@ -42,24 +42,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.ui.theme.NavyDeep
-import com.example.ui.theme.TealLight
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.InkDeep
+import com.example.ui.theme.BrandLight
+import com.example.ui.theme.BrandPrimary
+import com.example.ui.theme.StatusBarStyle
 
 @Composable
 fun OnboardingScreen(
     onStartEmpty: () -> Unit,
     onLoadSampleData: () -> Unit
 ) {
+    StatusBarStyle(onGradient = true)
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        NavyDeep,
+                        InkDeep,
                         Color(0xFF0F2644),
-                        NavyDeep
+                        InkDeep
                     )
                 )
             )
@@ -164,7 +166,7 @@ fun OnboardingScreen(
                         .height(54.dp)
                         .testTag("start_empty_button"),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TealPrimary,
+                        containerColor = BrandPrimary,
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(16.dp)
@@ -197,7 +199,7 @@ fun OnboardingScreen(
                         .testTag("load_sample_button"),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF132B45),
-                        contentColor = TealLight
+                        contentColor = BrandLight
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -209,7 +211,7 @@ fun OnboardingScreen(
                             imageVector = Icons.Default.Inventory2,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp),
-                            tint = TealLight
+                            tint = BrandLight
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -242,7 +244,7 @@ private fun OnboardingFeatureItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = TealLight,
+                tint = BrandLight,
                 modifier = Modifier.size(24.dp)
             )
         }
