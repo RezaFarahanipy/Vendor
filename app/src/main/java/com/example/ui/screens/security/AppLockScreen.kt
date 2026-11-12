@@ -17,8 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.theme.NavyDeep
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.InkDeep
+import com.example.ui.theme.BrandPrimary
 
 @Composable
 fun AppLockScreen(
@@ -41,13 +41,13 @@ fun AppLockScreen(
                 modifier = Modifier
                     .size(96.dp)
                     .clip(CircleShape)
-                    .background(TealPrimary.copy(alpha = 0.15f)),
+                    .background(BrandPrimary.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,
                     contentDescription = "قفل برنامه",
-                    tint = TealPrimary,
+                    tint = BrandPrimary,
                     modifier = Modifier.size(48.dp)
                 )
             }
@@ -77,7 +77,7 @@ fun AppLockScreen(
             Button(
                 onClick = onUnlockClick,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TealPrimary,
+                    containerColor = BrandPrimary,
                     contentColor = Color.White
                 ),
                 shape = CircleShape,

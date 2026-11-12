@@ -33,8 +33,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 
 /**
@@ -67,7 +67,7 @@ fun Step3Contacts(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Phone, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.Phone, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "شماره‌های تلفن ثابت شرکت (با کد شهر)",
@@ -89,7 +89,7 @@ fun Step3Contacts(
             trailingIcon = {
                 if (primaryCity != null) {
                     Surface(
-                        color = TealPrimary.copy(alpha = 0.15f),
+                        color = BrandPrimary.copy(alpha = 0.15f),
                         shape = RoundedCornerShape(6.dp),
                         modifier = Modifier.padding(end = 6.dp)
                     ) {
@@ -97,7 +97,7 @@ fun Step3Contacts(
                             text = primaryCity,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TealDark,
+                            color = BrandDark,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
@@ -105,7 +105,7 @@ fun Step3Contacts(
             },
             supportingText = {
                 if (primaryCity != null) {
-                    Text("شهر شناسایی‌شده: $primaryCity", color = TealDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("شهر شناسایی‌شده: $primaryCity", color = BrandDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 } else {
                     Text("الگوی معتبر: کد شهر ۳ رقم + ۸ رقم تلفن (مثال: 021-88776655)", fontSize = 10.sp)
                 }
@@ -131,7 +131,7 @@ fun Step3Contacts(
                     trailingIcon = {
                         if (city != null) {
                             Surface(
-                                color = TealPrimary.copy(alpha = 0.15f),
+                                color = BrandPrimary.copy(alpha = 0.15f),
                                 shape = RoundedCornerShape(6.dp),
                                 modifier = Modifier.padding(end = 6.dp)
                             ) {
@@ -139,7 +139,7 @@ fun Step3Contacts(
                                     text = city,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TealDark,
+                                    color = BrandDark,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
@@ -172,7 +172,7 @@ fun Step3Contacts(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.PhoneAndroid, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.PhoneAndroid, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "شماره‌های همراه شرکت (ارتباط پیام‌رسان‌ها)",
@@ -240,7 +240,7 @@ fun Step3Contacts(
             onValueChange = onEmailChange,
             label = { Text("پست الکترونیک (ایمیل رسمی)") },
             placeholder = { Text("info@company.com") },
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = TealPrimary) },
+            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = BrandPrimary) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth()
@@ -251,7 +251,7 @@ fun Step3Contacts(
             onValueChange = onWebsiteChange,
             label = { Text("وبسایت رسمی شرکت") },
             placeholder = { Text("www.company.com") },
-            leadingIcon = { Icon(Icons.Default.Language, contentDescription = null, tint = TealPrimary) },
+            leadingIcon = { Icon(Icons.Default.Language, contentDescription = null, tint = BrandPrimary) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             modifier = Modifier.fillMaxWidth()

@@ -286,15 +286,47 @@ class VendorRepository(private val database: AppDatabase) {
         categoryDao.insertCategory(category)
     }
 
+    private fun splitList(raw: String): List<String> =
+        raw.split(',', '،', '\n').map { it.trim() }.filter { it.isNotEmpty() }
+
+    private fun rebuildSearchIndex(v: Vendor): String = PersianUtils.generateSearchIndex(
+        name = v.name,
+        ceoName = v.ceoName,
+        city = v.city,
+        categories = v.categories,
+        tags = v.tags,
+        phone = v.phone,
+        mobile = v.mobile,
+        secondaryPhones = v.secondaryPhones,
+        additionalMobiles = v.additionalMobiles,
+        economicCode = v.economicCode,
+        nationalId = v.nationalId
+    )
+
+    /** Renames a category and keeps every vendor that uses it in sync (names are stored on the vendor row). */
     suspend fun updateCategory(category: Category) = withContext(Dispatchers.IO) {
-        categoryDao.updateCategory(category)
+        database.withTransaction {
+            val oldName = categoryDao.getAllCategories().first().firstOrNull { it.id == category.id }?.name?.trim().orEmpty()
+            val newName = category.name.trim()
+            categoryDao.updateCategory(category)
+            if (oldName.isNotEmpty() && newName.isNotEmpty() && oldName != newName) {
+                vendorDao.getAllVendors().first().forEach { v ->
+                    val tokens = splitList(v.categories)
+                    if (oldName in tokens) {
+                        val renamed = tokens.map { if (it == oldName) newName else it }.distinct().joinToString(", ")
+                        val updated = v.copy(categories = renamed)
+                        vendorDao.updateVendor(updated.copy(searchIndex = rebuildSearchIndex(updated)))
+                    }
+                }
+            }
+        }
     }
 
     suspend fun canDeleteCategory(categoryId: Long): Boolean = withContext(Dispatchers.IO) {
         val countInCrossRef = relationDao.getVendorCountForCategoryId(categoryId)
         if (countInCrossRef > 0) return@withContext false
         val cat = allCategories.first().firstOrNull { it.id == categoryId } ?: return@withContext true
-        val countInVendors = allVendors.first().count { it.categories.contains(cat.name) }
+        val countInVendors = allVendors.first().count { cat.name.trim() in splitList(it.categories) }
         countInVendors == 0
     }
 

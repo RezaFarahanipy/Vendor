@@ -38,12 +38,13 @@ import coil.compose.AsyncImage
 import com.example.data.model.Vendor
 import com.example.ui.theme.AmberRating
 import com.example.ui.theme.GreenVerified
-import com.example.ui.theme.NavyDeep
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.InkDeep
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 import java.io.File
 import java.util.Locale
+import com.example.ui.theme.BrandViolet
 
 /**
  * Modular Header Card for Vendor Details
@@ -76,11 +77,11 @@ fun VendorDetailHeaderCard(vendor: Vendor) {
                         .clip(RoundedCornerShape(18.dp))
                         .then(
                             if (hasLogo) Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-                            else Modifier.background(Brush.linearGradient(listOf(NavyDeep, TealDark)))
+                            else Modifier.background(Brush.linearGradient(listOf(BrandPrimary, BrandViolet)))
                         )
                         .border(
                             1.5.dp,
-                            if (hasLogo) MaterialTheme.colorScheme.outline.copy(alpha = 0.5f) else TealPrimary.copy(alpha = 0.6f),
+                            if (hasLogo) MaterialTheme.colorScheme.outline.copy(alpha = 0.5f) else BrandPrimary.copy(alpha = 0.6f),
                             RoundedCornerShape(18.dp)
                         ),
                     contentAlignment = Alignment.Center
@@ -199,13 +200,13 @@ fun VendorDetailHeaderCard(vendor: Vendor) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(TealPrimary.copy(alpha = 0.12f))
+                                .background(BrandPrimary.copy(alpha = 0.12f))
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
                                 text = tag,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TealDark,
+                                color = BrandDark,
                                 fontWeight = FontWeight.Medium
                             )
                         }

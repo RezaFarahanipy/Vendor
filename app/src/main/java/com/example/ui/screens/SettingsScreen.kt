@@ -88,11 +88,11 @@ import com.example.ui.components.AppHeader
 import com.example.ui.components.sendEmail
 import com.example.ui.screens.settings.*
 import com.example.ui.theme.GreenVerified
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealLight
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandLight
+import com.example.ui.theme.BrandPrimary
 import com.example.ui.viewmodel.VendorViewModel
 import androidx.compose.material.icons.filled.Language
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -101,6 +101,7 @@ import com.example.data.preferences.ThemeMode
 import com.example.util.AppLanguage
 import com.example.util.Localization
 import com.example.util.PersianUtils
+import com.example.ui.theme.BrandViolet
 
 @Composable
 fun SettingsScreen(
@@ -225,7 +226,7 @@ fun SettingsScreen(
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        SettingsIconBadge(icon = Icons.Default.FeaturedPlayList, tint = TealPrimary)
+                        SettingsIconBadge(icon = Icons.Default.FeaturedPlayList, tint = BrandPrimary)
 
                         Spacer(modifier = Modifier.width(14.dp))
 
@@ -241,14 +242,14 @@ fun SettingsScreen(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(6.dp))
-                                        .background(TealPrimary.copy(alpha = 0.15f))
+                                        .background(BrandPrimary.copy(alpha = 0.15f))
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
                                         text = if (lang == AppLanguage.FA) "۱۲ قابلیت" else "12 Features",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = TealDark,
+                                        color = BrandDark,
                                         fontSize = 10.sp
                                     )
                                 }
@@ -303,15 +304,15 @@ fun SettingsScreen(
                                     .size(54.dp)
                                     .clip(CircleShape)
                                     .background(
-                                        Brush.linearGradient(listOf(NavyDeep, TealDark))
+                                        Brush.linearGradient(listOf(BrandPrimary, BrandViolet))
                                     )
-                                    .border(2.dp, TealPrimary, CircleShape),
+                                    .border(2.dp, BrandPrimary, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Code,
                                     contentDescription = null,
-                                    tint = TealPrimary,
+                                    tint = BrandPrimary,
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
@@ -378,7 +379,7 @@ fun SettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            SettingsIconBadge(icon = Icons.Default.DarkMode, tint = TealPrimary)
+                            SettingsIconBadge(icon = Icons.Default.DarkMode, tint = BrandPrimary)
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
@@ -483,7 +484,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.weight(1f)
                         ) {
-                            SettingsIconBadge(icon = Icons.Default.Language, tint = TealPrimary)
+                            SettingsIconBadge(icon = Icons.Default.Language, tint = BrandPrimary)
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
@@ -504,7 +505,7 @@ fun SettingsScreen(
                         Button(
                             onClick = { viewModel.toggleLanguage() },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = TealPrimary,
+                                containerColor = BrandPrimary,
                                 contentColor = Color.White
                             ),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
@@ -540,7 +541,7 @@ fun SettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            SettingsIconBadge(icon = Icons.Default.Lock, tint = TealPrimary)
+                            SettingsIconBadge(icon = Icons.Default.Lock, tint = BrandPrimary)
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
@@ -581,8 +582,8 @@ fun SettingsScreen(
                                 checked = isAppLockEnabled,
                                 onCheckedChange = { viewModel.setAppLockEnabled(it) },
                                 colors = SwitchDefaults.colors(
-                                    checkedThumbColor = TealPrimary,
-                                    checkedTrackColor = TealPrimary.copy(alpha = 0.4f)
+                                    checkedThumbColor = BrandPrimary,
+                                    checkedTrackColor = BrandPrimary.copy(alpha = 0.4f)
                                 )
                             )
                         }
@@ -609,8 +610,8 @@ fun SettingsScreen(
                                 checked = isScreenshotBlockEnabled,
                                 onCheckedChange = { viewModel.setScreenshotBlockEnabled(it) },
                                 colors = SwitchDefaults.colors(
-                                    checkedThumbColor = TealPrimary,
-                                    checkedTrackColor = TealPrimary.copy(alpha = 0.4f)
+                                    checkedThumbColor = BrandPrimary,
+                                    checkedTrackColor = BrandPrimary.copy(alpha = 0.4f)
                                 )
                             )
                         }
@@ -819,7 +820,7 @@ private fun SettingsClickableCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SettingsIconBadge(icon = icon, tint = TealPrimary)
+            SettingsIconBadge(icon = icon, tint = BrandPrimary)
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(

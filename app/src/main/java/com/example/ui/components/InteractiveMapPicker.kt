@@ -63,11 +63,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.BlueAccent
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealLight
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandLight
+import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 
 data class IndustrialZone(
@@ -162,13 +162,13 @@ fun InteractiveMapPicker(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(TealPrimary.copy(alpha = 0.15f)),
+                            .background(BrandPrimary.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = null,
-                            tint = TealPrimary,
+                            tint = BrandPrimary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -321,19 +321,19 @@ fun InteractiveMapPicker(
 
                     // Ripple pulse under pin
                     drawCircle(
-                        color = TealPrimary.copy(alpha = 0.25f),
+                        color = BrandPrimary.copy(alpha = 0.25f),
                         radius = 28f,
                         center = Offset(pinCenterX, pinCenterY)
                     )
                     drawCircle(
-                        color = TealPrimary.copy(alpha = 0.45f),
+                        color = BrandPrimary.copy(alpha = 0.45f),
                         radius = 16f,
                         center = Offset(pinCenterX, pinCenterY)
                     )
 
                     // Pin base point
                     drawCircle(
-                        color = NavyDeep,
+                        color = InkDeep,
                         radius = 5f,
                         center = Offset(pinCenterX, pinCenterY)
                     )
@@ -350,7 +350,7 @@ fun InteractiveMapPicker(
                     ) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = NavyDeep,
+                            color = InkDeep,
                             shadowElevation = 4.dp
                         ) {
                             Text(
@@ -419,7 +419,7 @@ fun InteractiveMapPicker(
                 isError = mapLinkError != null,
                 supportingText = if (mapLinkError != null) { { Text(mapLinkError!!, color = MaterialTheme.colorScheme.error) } } else null,
                 leadingIcon = {
-                    Icon(Icons.Default.Map, contentDescription = null, tint = TealPrimary)
+                    Icon(Icons.Default.Map, contentDescription = null, tint = BrandPrimary)
                 },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()

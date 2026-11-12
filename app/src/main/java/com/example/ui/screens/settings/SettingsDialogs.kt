@@ -19,9 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.ActivityType
 import com.example.data.model.Category
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandPrimary
 import com.example.util.AppLanguage
 import com.example.util.PersianUtils
 
@@ -31,7 +31,7 @@ fun FeaturesDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.FeaturedPlayList, contentDescription = null, tint = TealPrimary)
+                Icon(Icons.Default.FeaturedPlayList, contentDescription = null, tint = BrandPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("قابلیت‌ها و امکانات کامل وندوریاب", fontWeight = FontWeight.Bold)
             }
@@ -60,7 +60,7 @@ fun FeaturesDialog(onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
             ) {
                 Text("بستن")
             }
@@ -84,7 +84,7 @@ fun ManageActivityTypesDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.BusinessCenter, contentDescription = null, tint = TealPrimary)
+                Icon(Icons.Default.BusinessCenter, contentDescription = null, tint = BrandPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("مدیریت انواع فعالیت شرکت‌ها", fontWeight = FontWeight.Bold)
             }
@@ -123,7 +123,7 @@ fun ManageActivityTypesDialog(
                                 newActName = ""
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                     ) {
                         Text("افزودن", fontWeight = FontWeight.Bold)
                     }
@@ -162,7 +162,7 @@ fun ManageActivityTypesDialog(
                                             editingActType = null
                                         }
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                                 ) {
                                     Text("ذخیره", fontWeight = FontWeight.Bold)
                                 }
@@ -191,7 +191,7 @@ fun ManageActivityTypesDialog(
                                 },
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = BrandPrimary, modifier = Modifier.size(16.dp))
                             }
                             IconButton(
                                 onClick = { onRequestDelete(act) },
@@ -228,7 +228,7 @@ fun ManageCategoriesDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Category, contentDescription = null, tint = TealPrimary)
+                Icon(Icons.Default.Category, contentDescription = null, tint = BrandPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("مدیریت زمینه‌های فعالیت و دسته‌ها", fontWeight = FontWeight.Bold)
             }
@@ -267,7 +267,7 @@ fun ManageCategoriesDialog(
                                 newCatName = ""
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                     ) {
                         Text("افزودن", fontWeight = FontWeight.Bold)
                     }
@@ -306,7 +306,7 @@ fun ManageCategoriesDialog(
                                             editingCategory = null
                                         }
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                                 ) {
                                     Text("ذخیره", fontWeight = FontWeight.Bold)
                                 }
@@ -335,7 +335,7 @@ fun ManageCategoriesDialog(
                                 },
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = BrandPrimary, modifier = Modifier.size(16.dp))
                             }
                             IconButton(
                                 onClick = { onRequestDelete(cat) },
@@ -442,7 +442,7 @@ fun DatabaseInfoDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = Icons.Default.Storage, contentDescription = null, tint = TealPrimary)
+                Icon(imageVector = Icons.Default.Storage, contentDescription = null, tint = BrandPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("محل و نحوه ذخیره‌سازی داده‌ها", fontWeight = FontWeight.Bold)
             }
@@ -464,7 +464,7 @@ fun DatabaseInfoDialog(onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
             ) {
                 Text("متوجه شدم")
             }
@@ -484,7 +484,7 @@ fun ResetSampleDataDialog(
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
             ) {
                 Text("تأیید و بازیابی")
             }
@@ -521,7 +521,7 @@ fun AboutAppDialog(onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
             ) {
                 Text("بستن")
             }
@@ -546,14 +546,14 @@ private fun FeatureItem(number: String, title: String, desc: String) {
                 modifier = Modifier
                     .size(24.dp)
                     .clip(CircleShape)
-                    .background(TealPrimary),
+                    .background(BrandPrimary),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = PersianUtils.toPersianDigits(number),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = NavyDeep
+                    color = Color.White
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))

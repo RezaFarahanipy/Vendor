@@ -18,6 +18,11 @@ import com.example.ui.screens.MainAppScreen
 import com.example.ui.screens.security.AppLockScreen
 import com.example.ui.theme.VendorListTheme
 import com.example.ui.viewmodel.VendorViewModel
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Modifier
 
 class MainActivity : FragmentActivity() {
 
@@ -41,6 +46,7 @@ class MainActivity : FragmentActivity() {
 
             val isAppLocked by viewModel.isAppLocked.collectAsState()
             val isAppLockEnabled by viewModel.isAppLockEnabled.collectAsState()
+            val isSettingsLoaded by viewModel.isSettingsLoaded.collectAsState()
             val isScreenshotBlockEnabled by viewModel.isScreenshotBlockEnabled.collectAsState()
             val isDynamicColorEnabled by viewModel.isDynamicColorEnabled.collectAsState()
 
@@ -66,7 +72,10 @@ class MainActivity : FragmentActivity() {
             }
 
             VendorListTheme(darkTheme = useDark, dynamicColor = isDynamicColorEnabled) {
-                if (isAppLocked && isAppLockEnabled) {
+                if (!isSettingsLoaded) {
+                    // Wait for persisted settings so locked content never flashes on screen
+                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                } else if (isAppLocked && isAppLockEnabled) {
                     AppLockScreen(
                         onUnlockClick = {
                             showBiometricPrompt {
@@ -110,7 +119,8 @@ class MainActivity : FragmentActivity() {
                     // If device credentials/biometrics are unavailable or not configured, allow entry
                     if (errorCode == BiometricPrompt.ERROR_NO_BIOMETRICS ||
                         errorCode == BiometricPrompt.ERROR_HW_NOT_PRESENT ||
-                        errorCode == BiometricPrompt.ERROR_HW_UNAVAILABLE
+                        errorCode == BiometricPrompt.ERROR_HW_UNAVAILABLE ||
+                        errorCode == BiometricPrompt.ERROR_NO_DEVICE_CREDENTIAL
                     ) {
                         onSuccess()
                     }
@@ -122,16 +132,21 @@ class MainActivity : FragmentActivity() {
             .setTitle("احراز هویت وندوریاب")
             .setSubtitle("ورود امن به برنامه با اثر انگشت یا پین/رمز دستگاه")
             .setAllowedAuthenticators(
-                BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                        BiometricManager.Authenticators.DEVICE_CREDENTIAL
+                if (android.os.Build.VERSION.SDK_INT >= 30) {
+                    BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+                } else {
+                    BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+                }
             )
             .build()
 
         try {
             biometricPrompt.authenticate(promptInfo)
-        } catch (_: Exception) {
-            // Graceful fallback if device has no lock screen credentials set up
-            onSuccess()
+        } catch (e: Exception) {
+            // Never bypass the lock on unexpected errors; the user can retry from the lock screen
+            android.util.Log.e("AppLock", "Biometric prompt failed", e)
         }
     }
 }

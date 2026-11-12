@@ -113,11 +113,11 @@ import com.example.ui.components.CatalogViewerDialog
 import com.example.ui.components.InteractiveMapPicker
 import com.example.ui.theme.AmberRating
 import com.example.ui.theme.BlueAccent
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealLight
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandLight
+import com.example.ui.theme.BrandPrimary
 import com.example.ui.viewmodel.VendorViewModel
 import androidx.activity.compose.BackHandler
 import com.example.ui.theme.GreenVerified
@@ -513,7 +513,7 @@ fun AddEditVendorScreen(
                 Button(
                     onClick = { performSave() },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TealPrimary,
+                        containerColor = BrandPrimary,
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(10.dp),
@@ -772,7 +772,7 @@ fun AddEditVendorScreen(
                 Button(
                     onClick = { performSave() },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TealPrimary,
+                        containerColor = BrandPrimary,
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(12.dp),
@@ -850,7 +850,7 @@ fun AddEditVendorScreen(
                             trailingIcon = {
                                 if (personCity != null) {
                                     Surface(
-                                        color = TealPrimary.copy(alpha = 0.15f),
+                                        color = BrandPrimary.copy(alpha = 0.15f),
                                         shape = RoundedCornerShape(4.dp),
                                         modifier = Modifier.padding(end = 4.dp)
                                     ) {
@@ -858,14 +858,14 @@ fun AddEditVendorScreen(
                                             text = personCity,
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = TealDark,
+                                            color = BrandDark,
                                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                                         )
                                     }
                                 }
                             },
                             supportingText = if (personCity != null) {
-                                { Text("شهر شناسایی‌شده: $personCity", fontSize = 10.sp, color = TealDark) }
+                                { Text("شهر شناسایی‌شده: $personCity", fontSize = 10.sp, color = BrandDark) }
                             } else null,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                             modifier = Modifier.weight(1.5f)
@@ -915,7 +915,7 @@ fun AddEditVendorScreen(
                         }
                         showPersonDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
                     Text("تأیید")
                 }
@@ -1033,7 +1033,7 @@ fun AddEditVendorScreen(
                                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                 )
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White),
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White),
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -1079,7 +1079,7 @@ fun AddEditVendorScreen(
                         }
                         showProductDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
                     Text("تأیید محصول")
                 }
@@ -1132,7 +1132,7 @@ fun AddEditVendorScreen(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TealPrimary,
+                        containerColor = BrandPrimary,
                         contentColor = Color.White
                     )
                 ) {
@@ -1171,8 +1171,8 @@ private fun StepBadge(
                 .clip(CircleShape)
                 .background(
                     when {
-                        isCurrent -> TealPrimary
-                        isDone -> TealDark
+                        isCurrent -> BrandPrimary
+                        isDone -> BrandDark
                         else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
                     }
                 ),
@@ -1183,7 +1183,7 @@ private fun StepBadge(
             } else {
                 Text(
                     text = PersianUtils.toPersianDigits(step),
-                    color = if (isCurrent) NavyDeep else MaterialTheme.colorScheme.onSurface,
+                    color = if (isCurrent) Color.White else MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp
                 )
@@ -1193,7 +1193,7 @@ private fun StepBadge(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = if (isCurrent) TealPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (isCurrent) BrandPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
             fontSize = 9.sp,
             maxLines = 1,
@@ -1208,6 +1208,6 @@ private fun StepDivider(isPassed: Boolean) {
         modifier = Modifier
             .width(12.dp)
             .height(2.dp)
-            .background(if (isPassed) TealDark else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+            .background(if (isPassed) BrandDark else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
     )
 }

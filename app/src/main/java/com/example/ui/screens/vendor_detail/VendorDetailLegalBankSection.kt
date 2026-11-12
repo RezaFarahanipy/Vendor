@@ -31,7 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Vendor
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 
 /**
@@ -60,7 +60,7 @@ fun VendorDetailLegalBankSection(vendor: Vendor) {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.AccountBalance, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.AccountBalance, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "اطلاعات حقوقی، ثبتی و بانکی",
@@ -160,7 +160,7 @@ fun VendorDetailLegalBankSection(vendor: Vendor) {
                                         },
                                         modifier = Modifier.size(24.dp)
                                     ) {
-                                        Icon(Icons.Default.ContentCopy, contentDescription = "کپی شبا", tint = TealPrimary, modifier = Modifier.size(16.dp))
+                                        Icon(Icons.Default.ContentCopy, contentDescription = "کپی شبا", tint = BrandPrimary, modifier = Modifier.size(16.dp))
                                     }
                                 }
                             }

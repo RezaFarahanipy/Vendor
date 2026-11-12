@@ -32,9 +32,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Product
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 
 /**
@@ -62,7 +62,7 @@ fun Step6Products(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f, fill = false)
         ) {
-            Icon(Icons.Default.Inventory, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.Inventory, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "محصولات (${PersianUtils.toPersianDigits(vendorProductsList.size)} کالا)",
@@ -76,7 +76,7 @@ fun Step6Products(
         Button(
             onClick = onAddProductClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = TealPrimary,
+                containerColor = BrandPrimary,
                 contentColor = Color.White
             ),
             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
@@ -145,7 +145,7 @@ fun Step6Products(
                     IconButton(
                         onClick = { onEditProductClick(index, prod) }
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = TealPrimary, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = BrandPrimary, modifier = Modifier.size(18.dp))
                     }
 
                     IconButton(

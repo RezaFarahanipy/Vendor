@@ -87,6 +87,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     val isScreenshotBlockEnabled = MutableStateFlow(false)
     val isDynamicColorEnabled = MutableStateFlow(false)
     val isAppLocked = MutableStateFlow(false)
+    val isSettingsLoaded = MutableStateFlow(false)
 
     fun setDynamicColorEnabled(enabled: Boolean) {
         isDynamicColorEnabled.value = enabled
@@ -348,7 +349,10 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         }
         viewModelScope.launch {
             settingsDataStore.isAppLockEnabledFlow.collect { enabled ->
+                // Cold start: lock right away when the app-lock feature is enabled
+                if (!isSettingsLoaded.value && enabled) isAppLocked.value = true
                 isAppLockEnabled.value = enabled
+                isSettingsLoaded.value = true
             }
         }
         viewModelScope.launch {

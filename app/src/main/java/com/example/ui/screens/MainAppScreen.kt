@@ -50,14 +50,18 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.example.ui.theme.NavyDeep
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.InkDeep
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandPrimary
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.MainTab
 import com.example.ui.viewmodel.VendorViewModel
 import com.example.util.AppLanguage
 import com.example.util.Localization
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.core.tween
 
 @Composable
 fun MainAppScreen(viewModel: VendorViewModel) {
@@ -128,7 +132,12 @@ fun MainAppScreen(viewModel: VendorViewModel) {
             ) {
                 AnimatedContent(
                     targetState = currentScreen,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    transitionSpec = {
+                        val forward = targetState != AppScreen.MAIN_TABS
+                        val dir = if (forward) -1 else 1
+                        (slideInHorizontally(tween(320)) { dir * it / 6 } + fadeIn(tween(320))) togetherWith
+                            (slideOutHorizontally(tween(220)) { -dir * it / 8 } + fadeOut(tween(200)))
+                    },
                     label = "screen_transition"
                 ) { screen ->
                     when (screen) {
@@ -146,7 +155,14 @@ fun MainAppScreen(viewModel: VendorViewModel) {
                         }
 
                         AppScreen.MAIN_TABS -> {
-                            when (currentTab) {
+                            AnimatedContent(
+                                targetState = currentTab,
+                                transitionSpec = {
+                                    (fadeIn(tween(280)) + slideInVertically(tween(320)) { it / 24 }) togetherWith fadeOut(tween(140))
+                                },
+                                label = "tab_transition"
+                            ) { tab ->
+                            when (tab) {
                                 MainTab.HOME -> {
                                     HomeScreen(
                                         viewModel = viewModel,
@@ -184,6 +200,7 @@ fun MainAppScreen(viewModel: VendorViewModel) {
                                 MainTab.SETTINGS -> {
                                     SettingsScreen(viewModel = viewModel)
                                 }
+                            }
                             }
                         }
 
@@ -246,9 +263,9 @@ fun AppBottomNavigationBar(
             },
             label = { Text(Localization.get("tab_home", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = NavyDeep,
-                selectedTextColor = TealDark,
-                indicatorColor = TealPrimary,
+                selectedIconColor = BrandPrimary,
+                selectedTextColor = BrandDark,
+                indicatorColor = BrandPrimary.copy(alpha = 0.14f),
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
@@ -266,9 +283,9 @@ fun AppBottomNavigationBar(
             },
             label = { Text(Localization.get("tab_search", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = NavyDeep,
-                selectedTextColor = TealDark,
-                indicatorColor = TealPrimary,
+                selectedIconColor = BrandPrimary,
+                selectedTextColor = BrandDark,
+                indicatorColor = BrandPrimary.copy(alpha = 0.14f),
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
@@ -286,9 +303,9 @@ fun AppBottomNavigationBar(
             },
             label = { Text(Localization.get("tab_favorites", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = NavyDeep,
-                selectedTextColor = TealDark,
-                indicatorColor = TealPrimary,
+                selectedIconColor = BrandPrimary,
+                selectedTextColor = BrandDark,
+                indicatorColor = BrandPrimary.copy(alpha = 0.14f),
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
@@ -306,9 +323,9 @@ fun AppBottomNavigationBar(
             },
             label = { Text(Localization.get("tab_settings", lang), style = MaterialTheme.typography.labelSmall) },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = NavyDeep,
-                selectedTextColor = TealDark,
-                indicatorColor = TealPrimary,
+                selectedIconColor = BrandPrimary,
+                selectedTextColor = BrandDark,
+                indicatorColor = BrandPrimary.copy(alpha = 0.14f),
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),

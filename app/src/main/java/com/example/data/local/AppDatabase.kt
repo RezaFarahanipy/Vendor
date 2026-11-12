@@ -33,7 +33,7 @@ import com.example.util.PersianUtils
         VendorPhone::class,
         BankAccount::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -234,6 +234,51 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        /**
+         * v5 (no schema change): back-fills the normalized relation tables (categories, tags, extra phones)
+         * from the legacy string columns so both representations agree. Idempotent.
+         */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                Log.i(TAG, "Starting MIGRATION_4_5 (relation back-fill)...")
+                fun split(raw: String?): List<String> =
+                    (raw ?: "").split(',', '،', '\n').map { it.trim() }.filter { it.isNotEmpty() }
+
+                val categoryIds = HashMap<String, Long>()
+                db.query("SELECT id, name FROM categories").use { c ->
+                    while (c.moveToNext()) categoryIds[c.getString(1).trim()] = c.getLong(0)
+                }
+                class Row(val id: Long, val cats: String?, val tags: String?, val phones: String?, val mobiles: String?)
+                val rows = ArrayList<Row>()
+                db.query("SELECT id, categories, tags, secondaryPhones, additionalMobiles FROM vendors").use { c ->
+                    while (c.moveToNext()) {
+                        rows.add(Row(c.getLong(0), c.getString(1), c.getString(2), c.getString(3), c.getString(4)))
+                    }
+                }
+                for (r in rows) {
+                    for (name in split(r.cats)) {
+                        val catId = categoryIds[name] ?: continue
+                        db.execSQL("INSERT OR IGNORE INTO vendor_categories (vendorId, categoryId) VALUES (?, ?)", arrayOf<Any?>(r.id, catId))
+                    }
+                    for (tag in split(r.tags)) {
+                        db.execSQL("INSERT OR IGNORE INTO tags (name) VALUES (?)", arrayOf<Any?>(tag))
+                        var tagId: Long? = null
+                        db.query("SELECT id FROM tags WHERE name = ?", arrayOf<Any?>(tag)).use { c -> if (c.moveToFirst()) tagId = c.getLong(0) }
+                        val id = tagId ?: continue
+                        db.execSQL("INSERT OR IGNORE INTO vendor_tags (vendorId, tagId) VALUES (?, ?)", arrayOf<Any?>(r.id, id))
+                    }
+                    db.execSQL("DELETE FROM vendor_phones WHERE vendorId = ? AND label IN ('تلفن فرعی', 'موبایل فرعی')", arrayOf<Any?>(r.id))
+                    for (n in split(r.phones)) {
+                        db.execSQL("INSERT INTO vendor_phones (vendorId, type, number, label) VALUES (?, 'LANDLINE', ?, 'تلفن فرعی')", arrayOf<Any?>(r.id, n))
+                    }
+                    for (n in split(r.mobiles)) {
+                        db.execSQL("INSERT INTO vendor_phones (vendorId, type, number, label) VALUES (?, 'MOBILE', ?, 'موبایل فرعی')", arrayOf<Any?>(r.id, n))
+                    }
+                }
+                Log.i(TAG, "MIGRATION_4_5 finished for ${rows.size} vendors")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 try {
@@ -242,7 +287,7 @@ abstract class AppDatabase : RoomDatabase() {
                         AppDatabase::class.java,
                         "vendorlist_database"
                     )
-                        .addMigrations(MIGRATION_3_4)
+                        .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
                         .addCallback(object : RoomDatabase.Callback() {
                             override fun onOpen(db: SupportSQLiteDatabase) {
                                 super.onOpen(db)

@@ -66,12 +66,12 @@ import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.model.Product
 import com.example.ui.components.AppHeader
-import com.example.ui.theme.NavyDeep
+import com.example.ui.theme.InkDeep
 import com.example.ui.components.CatalogViewerDialog
 import com.example.ui.theme.RedFavorite
-import com.example.ui.theme.TealDark
-import com.example.ui.theme.TealLight
-import com.example.ui.theme.TealPrimary
+import com.example.ui.theme.BrandDark
+import com.example.ui.theme.BrandLight
+import com.example.ui.theme.BrandPrimary
 import com.example.ui.viewmodel.VendorViewModel
 import com.example.util.PersianUtils
 
@@ -132,8 +132,8 @@ fun CatalogScreen(
                                 )
                             },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = TealPrimary,
-                                selectedLabelColor = NavyDeep
+                                selectedContainerColor = BrandPrimary,
+                                selectedLabelColor = Color.White
                             ),
                             shape = RoundedCornerShape(20.dp)
                         )
@@ -180,7 +180,7 @@ fun CatalogScreen(
                         },
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = TealDark.copy(alpha = 0.85f)
+                        containerColor = BrandDark.copy(alpha = 0.85f)
                     )
                 ) {
                     Row(
@@ -216,7 +216,7 @@ fun CatalogScreen(
                             Text(
                                 text = "۲۴ صفحه استاندارد و جدول مشخصات هیدرولیکی (۵.۸ MB)",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TealLight
+                                color = BrandLight
                             )
                         }
                     }
@@ -247,7 +247,7 @@ fun CatalogScreen(
                                 modifier = Modifier
                                     .size(width = 160.dp, height = 110.dp)
                                     .clip(RoundedCornerShape(14.dp))
-                                    .background(NavyDeep)
+                                    .background(InkDeep)
                             ) {
                                 Image(
                                     painter = painterResource(id = drawableId),
@@ -282,7 +282,7 @@ fun CatalogScreen(
                             .fillMaxWidth()
                             .height(140.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(NavyDeep)
+                            .background(InkDeep)
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.industrial_pump_system),
@@ -325,7 +325,7 @@ fun CatalogScreen(
                         selectedProductForDetail = null
                         onVendorClick(prod.vendorId)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
                     Text("مشاهده اطلاعات وندور", fontWeight = FontWeight.Bold)
                 }
@@ -372,7 +372,7 @@ private fun CatalogProductGridCard(
                     .fillMaxWidth()
                     .height(110.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(NavyDeep)
+                    .background(InkDeep)
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.industrial_pump_system),
@@ -388,7 +388,7 @@ private fun CatalogProductGridCard(
                         .size(32.dp)
                         .padding(4.dp)
                         .clip(CircleShape)
-                        .background(NavyDeep.copy(alpha = 0.5f))
+                        .background(InkDeep.copy(alpha = 0.5f))
                 ) {
                     Icon(
                         imageVector = if (product.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
