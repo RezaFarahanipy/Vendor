@@ -230,9 +230,8 @@ fun getAvatarColor(name: String): Color {
     return AVATAR_PALETTE[hash % AVATAR_PALETTE.size]
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 fun VendorCard(
     vendor: Vendor,
     onClick: () -> Unit,
