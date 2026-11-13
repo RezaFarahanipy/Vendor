@@ -79,7 +79,17 @@ jobs:
         run: gradle :app:testDebugUnitTest --no-daemon
 
       - name: Build debug APK
-        run: gradle :app:assembleDebug --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          gradle :app:assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
+
+      - name: Surface build errors
+        if: failure()
+        run: |
+          grep -E "^e: " build.log | sed 's#file:///home/runner/work/[^/]*/[^/]*/##' | sort -u | head -9 | while IFS= read -r line; do echo "::error::${line}"; done
+          MSG=$(grep -A8 "What went wrong" build.log | head -10 | tr '\n' ' ')
+          [ -n "$MSG" ] && echo "::error::${MSG}"
+          exit 0
 
       - name: Verify APK
         id: verify_apk
