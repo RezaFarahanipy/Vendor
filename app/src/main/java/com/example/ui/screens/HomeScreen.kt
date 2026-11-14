@@ -367,6 +367,7 @@ private fun HomeHero(
 
             Spacer(modifier = Modifier.height(4.dp))
 
+            val searchInteraction = remember { MutableInteractionSource() }
             Surface(
                 onClick = onOpenSearch,
                 interactionSource = searchInteraction,
