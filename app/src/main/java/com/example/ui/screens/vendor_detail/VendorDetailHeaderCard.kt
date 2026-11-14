@@ -45,6 +45,8 @@ import com.example.util.PersianUtils
 import java.io.File
 import java.util.Locale
 import com.example.ui.theme.BrandViolet
+import com.example.util.tf
+import com.example.util.t
 
 /**
  * Modular Header Card for Vendor Details
@@ -89,7 +91,7 @@ fun VendorDetailHeaderCard(vendor: Vendor) {
                     if (hasLogo) {
                         AsyncImage(
                             model = File(vendor.logoUri),
-                            contentDescription = "لوگوی شرکت",
+                            contentDescription = t("لوگوی شرکت"),
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(6.dp),
@@ -120,7 +122,7 @@ fun VendorDetailHeaderCard(vendor: Vendor) {
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "تأیید شده",
+                                contentDescription = t("تأیید شده"),
                                 tint = GreenVerified,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -130,7 +132,7 @@ fun VendorDetailHeaderCard(vendor: Vendor) {
                     Spacer(modifier = Modifier.height(3.dp))
 
                     Text(
-                        text = "${vendor.activityType} • ${vendor.province}، ${vendor.city}",
+                        text = tf("{0} • {1}، {2}", vendor.activityType, vendor.province, vendor.city),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
@@ -159,7 +161,7 @@ fun VendorDetailHeaderCard(vendor: Vendor) {
                             if (vendor.reviewCount > 0) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "(${PersianUtils.toPersianDigits(vendor.reviewCount)} نظر)",
+                                    text = tf("({0} نظر)", PersianUtils.toPersianDigits(vendor.reviewCount)),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 11.sp
@@ -168,7 +170,7 @@ fun VendorDetailHeaderCard(vendor: Vendor) {
                         }
                     } else {
                         Text(
-                            text = "بدون ارزیابی امتیاز",
+                            text = t("بدون ارزیابی امتیاز"),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 11.sp

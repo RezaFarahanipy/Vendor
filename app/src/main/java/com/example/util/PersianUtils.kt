@@ -16,6 +16,7 @@ object PersianUtils {
      * Converts English numbers ('0'..'9') to Persian numbers ('۰'..'۹')
      */
     fun toPersianDigits(text: String): String {
+        if (!Lang.isFa) return text // English UI keeps Latin digits
         val sb = java.lang.StringBuilder()
         for (char in text) {
             if (char in '0'..'9') {

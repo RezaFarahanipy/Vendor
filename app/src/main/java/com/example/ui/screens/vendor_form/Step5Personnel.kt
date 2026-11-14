@@ -42,6 +42,8 @@ import com.example.ui.theme.RedFavorite
 import com.example.ui.theme.BrandDark
 import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
+import com.example.util.tf
+import com.example.util.t
 
 /**
  * Step 5: Personnel (پرسنل) - Dedicated step with single-line button and personnel cards
@@ -53,7 +55,7 @@ fun Step5Personnel(
     onEditPersonnelClick: (index: Int, person: ContactPerson) -> Unit
 ) {
     Text(
-        text = "پرسنل",
+        text = t("پرسنل"),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onBackground
@@ -71,7 +73,7 @@ fun Step5Personnel(
             Icon(Icons.Default.People, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "پرسنل (${PersianUtils.toPersianDigits(personnelList.size)} نفر)",
+                text = tf("پرسنل ({0} نفر)", PersianUtils.toPersianDigits(personnelList.size)),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -91,7 +93,7 @@ fun Step5Personnel(
             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "افزودن پرسنل",
+                text = t("افزودن پرسنل"),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -107,7 +109,7 @@ fun Step5Personnel(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
         ) {
             Text(
-                text = "هنوز فردی در بخش پرسنل ثبت نشده است. با زدن دکمه «افزودن پرسنل» می‌توانید اطلاعات مدیرعامل، مسئول فروش، تدارکات و کارشناسان فنی را با تلفن مستقیم و داخلی اضافه نمایید.",
+                text = t("هنوز فردی در بخش پرسنل ثبت نشده است. با زدن دکمه «افزودن پرسنل» می‌توانید اطلاعات مدیرعامل، مسئول فروش، تدارکات و کارشناسان فنی را با تلفن مستقیم و داخلی اضافه نمایید."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(14.dp)
@@ -160,7 +162,7 @@ fun Step5Personnel(
                         }
                         if (person.mobile.isNotBlank()) {
                             Text(
-                                text = "موبایل: ${PersianUtils.toPersianDigits(person.mobile)}",
+                                text = tf("موبایل: {0}", PersianUtils.toPersianDigits(person.mobile)),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -170,13 +172,13 @@ fun Step5Personnel(
                     IconButton(
                         onClick = { onEditPersonnelClick(index, person) }
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Edit, contentDescription = t("ویرایش"), tint = BrandPrimary, modifier = Modifier.size(18.dp))
                     }
 
                     IconButton(
                         onClick = { personnelList.removeAt(index) }
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Delete, contentDescription = t("حذف"), tint = RedFavorite, modifier = Modifier.size(18.dp))
                     }
                 }
             }

@@ -89,6 +89,8 @@ import com.example.ui.theme.BrandGradient
 import com.example.ui.theme.AnimatedHeart
 import com.example.ui.theme.pressScale
 import com.example.ui.theme.StatusBarStyle
+import com.example.util.tf
+import com.example.util.t
 
 @Composable
 fun AppHeader(
@@ -127,7 +129,7 @@ fun AppHeader(
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "بازگشت",
+                                    contentDescription = t("بازگشت"),
                                     tint = Color.White
                                 )
                             }
@@ -279,7 +281,7 @@ fun VendorCard(
                     if (vendor.logoUri.isNotBlank() && File(vendor.logoUri).exists()) {
                         AsyncImage(
                             model = File(vendor.logoUri),
-                            contentDescription = "لوگوی ${vendor.name}",
+                            contentDescription = tf("لوگوی {0}", vendor.name),
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(4.dp),
@@ -311,7 +313,7 @@ fun VendorCard(
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "تأیید شده",
+                                contentDescription = t("تأیید شده"),
                                 tint = GreenVerified,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -420,7 +422,7 @@ fun VendorCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Call,
-                                    contentDescription = "تماس تلفنی با ${vendor.name}",
+                                    contentDescription = tf("تماس تلفنی با {0}", vendor.name),
                                     tint = BrandPrimary,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -448,7 +450,7 @@ fun VendorCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Message,
-                                    contentDescription = "پیام واتس‌اپ به ${vendor.name}",
+                                    contentDescription = tf("پیام واتس‌اپ به {0}", vendor.name),
                                     tint = Color(0xFF25D366),
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -476,7 +478,7 @@ fun VendorCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.LocationOn,
-                                    contentDescription = "مسیریابی به ${vendor.name}",
+                                    contentDescription = tf("مسیریابی به {0}", vendor.name),
                                     tint = BlueAccent,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -534,7 +536,7 @@ fun CompactMessengerRow(
     ) {
         // WhatsApp (#25D366)
         CompactMessengerIcon(
-            name = "واتس‌اپ",
+            name = t("واتس‌اپ"),
             icon = Icons.Default.Message,
             bgColor = Color(0xFF25D366),
             onClick = {
@@ -548,7 +550,7 @@ fun CompactMessengerRow(
 
         // Telegram (#0088CC)
         CompactMessengerIcon(
-            name = "تلگرام",
+            name = t("تلگرام"),
             icon = Icons.AutoMirrored.Filled.Send,
             bgColor = Color(0xFF0088CC),
             onClick = {
@@ -558,7 +560,7 @@ fun CompactMessengerRow(
 
         // Bale (#00A389)
         CompactMessengerIcon(
-            name = "بله",
+            name = t("بله"),
             icon = Icons.Default.CheckCircle,
             bgColor = Color(0xFF00A389),
             onClick = {
@@ -568,7 +570,7 @@ fun CompactMessengerRow(
 
         // Rubika (#792CEE)
         CompactMessengerIcon(
-            name = "روبیکا",
+            name = t("روبیکا"),
             icon = Icons.Default.Favorite,
             bgColor = Color(0xFF792CEE),
             onClick = {
@@ -620,7 +622,7 @@ fun MessengerActionBar(
             ) {
                 Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("تماس مستقیم", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(t("تماس مستقیم"), fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
 
             OutlinedButton(
@@ -630,7 +632,7 @@ fun MessengerActionBar(
             ) {
                 Icon(Icons.Default.Message, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("ارسال پیامک", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(t("ارسال پیامک"), fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
         }
     }
@@ -748,19 +750,19 @@ fun openMap(context: Context, lat: Double, lng: Double, label: String = "") {
 fun shareVendor(context: Context, vendor: Vendor) {
     try {
         val text = buildString {
-            append("شرکت ${vendor.name}\n")
-            append("نوع فعالیت: ${vendor.activityType}\n")
-            if (vendor.phone.isNotBlank()) append("تلفن: ${vendor.phone}\n")
-            if (vendor.mobile.isNotBlank()) append("همراه: ${vendor.mobile}\n")
-            if (vendor.website.isNotBlank()) append("وبسایت: ${vendor.website}\n")
-            if (vendor.address.isNotBlank()) append("آدرس: ${vendor.address}\n")
-            append("\nاشتراک‌گذاری از طریق اپلیکیشن وندورلیست")
+            append(tf("شرکت {0}\n", vendor.name))
+            append(tf("نوع فعالیت: {0}\n", vendor.activityType))
+            if (vendor.phone.isNotBlank()) append(tf("تلفن: {0}\n", vendor.phone))
+            if (vendor.mobile.isNotBlank()) append(tf("همراه: {0}\n", vendor.mobile))
+            if (vendor.website.isNotBlank()) append(tf("وبسایت: {0}\n", vendor.website))
+            if (vendor.address.isNotBlank()) append(tf("آدرس: {0}\n", vendor.address))
+            append(t("\nاشتراک‌گذاری از طریق اپلیکیشن وندورلیست"))
         }
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
         }
-        context.startActivity(Intent.createChooser(intent, "اشتراک‌گذاری مشخصات وندور"))
+        context.startActivity(Intent.createChooser(intent, t("اشتراک‌گذاری مشخصات وندور")))
     } catch (_: Exception) {}
 }
 
@@ -819,7 +821,7 @@ fun ProductItemRow(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "مدل: ${product.model} | ${product.brand}",
+                    text = tf("مدل: {0} | {1}", product.model, product.brand),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )

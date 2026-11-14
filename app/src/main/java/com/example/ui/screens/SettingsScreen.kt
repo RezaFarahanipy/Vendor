@@ -102,6 +102,8 @@ import com.example.util.AppLanguage
 import com.example.util.Localization
 import com.example.util.PersianUtils
 import com.example.ui.theme.BrandViolet
+import com.example.util.tf
+import com.example.util.t
 
 @Composable
 fun SettingsScreen(
@@ -127,9 +129,9 @@ fun SettingsScreen(
                     context.contentResolver.openOutputStream(uri)?.use { out ->
                         out.write(csvContent.toByteArray(Charsets.UTF_8))
                     }
-                    Toast.makeText(context, "فایل اکسل با موفقیت ذخیره شد", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, t("فایل اکسل با موفقیت ذخیره شد"), Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
-                    Toast.makeText(context, "خطا در ذخیره‌سازی فایل: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, tf("خطا در ذخیره‌سازی فایل: {0}", e.message), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -147,10 +149,10 @@ fun SettingsScreen(
                 if (!content.isNullOrBlank()) {
                     viewModel.importFromCsv(content)
                 } else {
-                    Toast.makeText(context, "فایل انتخاب‌شده خالی است", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, t("فایل انتخاب‌شده خالی است"), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "خطا در خواندن فایل CSV: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, tf("خطا در خواندن فایل CSV: {0}", e.message), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -163,11 +165,11 @@ fun SettingsScreen(
             try {
                 context.contentResolver.openOutputStream(uri)?.use { out ->
                     viewModel.exportFullBackupZip(context, out) {
-                        Toast.makeText(context, "فایل پشتیبان جامع (ZIP) با موفقیت ذخیره شد", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, t("فایل پشتیبان جامع (ZIP) با موفقیت ذخیره شد"), Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "خطا در ذخیره‌سازی پشتیبان: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, tf("خطا در ذخیره‌سازی پشتیبان: {0}", e.message), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -182,7 +184,7 @@ fun SettingsScreen(
                     viewModel.restoreFullBackupStream(context, stream)
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "خطا در خواندن فایل پشتیبان: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, tf("خطا در خواندن فایل پشتیبان: {0}", e.message), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -202,7 +204,7 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        AppHeader(title = "تنظیمات و اطلاعات سامانه")
+        AppHeader(title = t("تنظیمات و اطلاعات سامانه"))
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -233,7 +235,7 @@ fun SettingsScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = if (lang == AppLanguage.FA) "راهنما و قابلیت‌های برنامه" else Localization.get("features_guide", lang),
+                                    text = t("راهنما و قابلیت‌های برنامه"),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -246,7 +248,7 @@ fun SettingsScreen(
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
-                                        text = if (lang == AppLanguage.FA) "۱۲ قابلیت" else "12 Features",
+                                        text = if (lang == AppLanguage.FA) t("۱۲ قابلیت") else "12 Features",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = BrandDark,
@@ -258,7 +260,7 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.height(3.dp))
 
                             Text(
-                                text = if (lang == AppLanguage.FA) "فهرست جامع امکانات تجاری، خروجی اکسل، کاتالوگ و امنیت" else "Complete guide to features, export, catalog and security",
+                                text = if (lang == AppLanguage.FA) t("فهرست جامع امکانات تجاری، خروجی اکسل، کاتالوگ و امنیت") else "Complete guide to features, export, catalog and security",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 lineHeight = 16.sp
@@ -269,7 +271,7 @@ fun SettingsScreen(
 
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "مشاهده",
+                            contentDescription = t("مشاهده"),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                             modifier = Modifier.size(18.dp)
                         )
@@ -312,7 +314,7 @@ fun SettingsScreen(
                                 Icon(
                                     imageVector = Icons.Default.Code,
                                     contentDescription = null,
-                                    tint = BrandPrimary,
+                                    tint = Color.White,
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
@@ -322,7 +324,7 @@ fun SettingsScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = "رضا فراهانی",
+                                        text = t("رضا فراهانی"),
                                         style = MaterialTheme.typography.titleLarge,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -330,13 +332,13 @@ fun SettingsScreen(
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Icon(
                                         imageVector = Icons.Default.Verified,
-                                        contentDescription = "برنامه‌نویس و توسعه‌دهنده",
+                                        contentDescription = t("برنامه‌نویس و توسعه‌دهنده"),
                                         tint = GreenVerified,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
                                 Text(
-                                    text = "طراح، برنامه‌نویس و توسعه‌دهنده ارشد",
+                                    text = t("طراح، برنامه‌نویس و توسعه‌دهنده ارشد"),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Medium
@@ -383,12 +385,12 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
-                                    text = "پوسته و حالت تاریک",
+                                    text = t("پوسته و حالت تاریک"),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = if (themeMode == ThemeMode.DARK) "حالت تاریک فعال است" else "حالت روشن فعال است",
+                                    text = if (themeMode == ThemeMode.DARK) t("حالت تاریک فعال است") else t("حالت روشن فعال است"),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -404,7 +406,7 @@ fun SettingsScreen(
                                 onClick = { viewModel.setThemeMode(ThemeMode.LIGHT) },
                                 label = {
                                     Text(
-                                        text = "پوسته روشن",
+                                        text = t("پوسته روشن"),
                                         fontSize = 12.sp,
                                         fontWeight = if (themeMode == ThemeMode.LIGHT) FontWeight.Bold else FontWeight.Normal,
                                         textAlign = TextAlign.Center,
@@ -420,7 +422,7 @@ fun SettingsScreen(
                                 onClick = { viewModel.setThemeMode(ThemeMode.DARK) },
                                 label = {
                                     Text(
-                                        text = "پوسته تاریک",
+                                        text = t("پوسته تاریک"),
                                         fontSize = 12.sp,
                                         fontWeight = if (themeMode == ThemeMode.DARK) FontWeight.Bold else FontWeight.Normal,
                                         textAlign = TextAlign.Center,
@@ -433,32 +435,7 @@ fun SettingsScreen(
                             )
                         }
 
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "رنگ‌بندی پویا (Material You)",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = "هماهنگی رنگ‌های برنامه با پس‌زمینه دستگاه",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Switch(
-                                    checked = isDynamicColorEnabled,
-                                    onCheckedChange = { viewModel.setDynamicColorEnabled(it) }
-                                )
-                            }
-                        }
+                        
                     }
                 }
             }
@@ -488,12 +465,12 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
-                                    text = if (lang == AppLanguage.FA) "زبان برنامه" else "App Language",
+                                    text = if (lang == AppLanguage.FA) t("زبان برنامه") else "App Language",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = if (lang == AppLanguage.FA) "فارسی (Persian) / انگلیسی (English)" else "English / Persian",
+                                    text = if (lang == AppLanguage.FA) t("فارسی (Persian) / انگلیسی (English)") else "English / Persian",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -513,7 +490,7 @@ fun SettingsScreen(
                             modifier = Modifier.defaultMinSize(minWidth = 76.dp)
                         ) {
                             Text(
-                                text = if (lang == AppLanguage.FA) "English" else "فارسی",
+                                text = if (lang == AppLanguage.FA) "English" else t("فارسی"),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
                                 maxLines = 1,
@@ -545,13 +522,13 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
-                                    text = "امنیت و حریم خصوصی داده‌ها",
+                                    text = t("امنیت و حریم خصوصی داده‌ها"),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "محافظت از اطلاعات حساس بانکی، حقوقی و اسکرین‌شات",
+                                    text = t("محافظت از اطلاعات حساس بانکی، حقوقی و اسکرین‌شات"),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -568,12 +545,12 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "قفل بیومتریک و پین برنامه",
+                                    text = t("قفل بیومتریک و پین برنامه"),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    text = "قفل خودکار برنامه پس از ۳۰ ثانیه خروج به پس‌زمینه",
+                                    text = t("قفل خودکار برنامه پس از ۳۰ ثانیه خروج به پس‌زمینه"),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -596,12 +573,12 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "جلوگیری از اسکرین‌شات (FLAG_SECURE)",
+                                    text = t("جلوگیری از اسکرین‌شات (FLAG_SECURE)"),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    text = "ممنوعیت عکس و فیلمبرداری از صفحه و مخفی‌سازی در برنامه‌های اخیر",
+                                    text = t("ممنوعیت عکس و فیلمبرداری از صفحه و مخفی‌سازی در برنامه‌های اخیر"),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -623,8 +600,8 @@ fun SettingsScreen(
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.BusinessCenter,
-                    title = "مدیریت انواع فعالیت شرکت‌ها",
-                    subtitle = "${PersianUtils.toPersianDigits(allActivityTypes.size)} نوع تعریف‌شده (افزودن، ویرایش و حذف)",
+                    title = t("مدیریت انواع فعالیت شرکت‌ها"),
+                    subtitle = tf("{0} نوع تعریف‌شده (افزودن، ویرایش و حذف)", PersianUtils.toPersianDigits(allActivityTypes.size)),
                     onClick = { showActivityTypeManageDialog = true }
                 )
             }
@@ -633,8 +610,8 @@ fun SettingsScreen(
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.Category,
-                    title = "مدیریت زمینه‌های فعالیت و دسته‌بندی‌ها",
-                    subtitle = "${PersianUtils.toPersianDigits(allCategories.size)} دسته تعریف‌شده (افزودن، ویرایش و حذف)",
+                    title = t("مدیریت زمینه‌های فعالیت و دسته‌بندی‌ها"),
+                    subtitle = tf("{0} دسته تعریف‌شده (افزودن، ویرایش و حذف)", PersianUtils.toPersianDigits(allCategories.size)),
                     onClick = { showCategoryManageDialog = true }
                 )
             }
@@ -643,8 +620,8 @@ fun SettingsScreen(
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.Storage,
-                    title = "محل ذخیره‌سازی داده‌ها (دیتابیس آفلاین)",
-                    subtitle = "پایگاه داده رابطه‌ای Room Database (SQLite) + فایل CSV",
+                    title = t("محل ذخیره‌سازی داده‌ها (دیتابیس آفلاین)"),
+                    subtitle = t("پایگاه داده رابطه‌ای Room Database (SQLite) + فایل CSV"),
                     onClick = { showDatabaseInfoDialog = true }
                 )
             }
@@ -653,8 +630,8 @@ fun SettingsScreen(
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.FileUpload,
-                    title = "خروجی اکسل / CSV",
-                    subtitle = "ذخیره فایل جدول اکسل استاندارد UTF-8 با BOM",
+                    title = t("خروجی اکسل / CSV"),
+                    subtitle = t("ذخیره فایل جدول اکسل استاندارد UTF-8 با BOM"),
                     onClick = {
                         exportCsvLauncher.launch("vendoryab_vendors.csv")
                     }
@@ -665,8 +642,8 @@ fun SettingsScreen(
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.FileDownload,
-                    title = "ورود اطلاعات از فایل اکسل / CSV",
-                    subtitle = "انتخاب فایل و بارگذاری وندورها با رد کردن تکراری‌ها",
+                    title = t("ورود اطلاعات از فایل اکسل / CSV"),
+                    subtitle = t("انتخاب فایل و بارگذاری وندورها با رد کردن تکراری‌ها"),
                     onClick = {
                         importCsvLauncher.launch(arrayOf("text/comma-separated-values", "text/csv", "application/vnd.ms-excel", "*/*"))
                     }
@@ -677,8 +654,8 @@ fun SettingsScreen(
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.Code,
-                    title = "پشتیبان‌گیری کامل جامع (فایل ZIP)",
-                    subtitle = "بسته‌بندی پایگاه داده به همراه تمام فایل‌های کاتالوگ PDF و لوگوها در یک فایل ZIP",
+                    title = t("پشتیبان‌گیری کامل جامع (فایل ZIP)"),
+                    subtitle = t("بسته‌بندی پایگاه داده به همراه تمام فایل‌های کاتالوگ PDF و لوگوها در یک فایل ZIP"),
                     onClick = {
                         exportZipLauncher.launch("vendoryab_full_backup.zip")
                     }
@@ -689,8 +666,8 @@ fun SettingsScreen(
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.Restore,
-                    title = "بازیابی از فایل پشتیبان (ZIP یا JSON)",
-                    subtitle = "بازگردانی کامل اطلاعات، کاتالوگ‌ها و لوگوها (پشتیبانی از ZIP و فایل‌های قدیمی JSON)",
+                    title = t("بازیابی از فایل پشتیبان (ZIP یا JSON)"),
+                    subtitle = t("بازگردانی کامل اطلاعات، کاتالوگ‌ها و لوگوها (پشتیبانی از ZIP و فایل‌های قدیمی JSON)"),
                     onClick = {
                         importBackupLauncher.launch(arrayOf("application/zip", "application/json", "application/octet-stream", "*/*"))
                     }
@@ -701,8 +678,8 @@ fun SettingsScreen(
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.Restore,
-                    title = "بازیابی اطلاعات پیش‌فرض",
-                    subtitle = "بارگذاری مجدد وندورها و نمونه‌های اولیه",
+                    title = t("بازیابی اطلاعات پیش‌فرض"),
+                    subtitle = t("بارگذاری مجدد وندورها و نمونه‌های اولیه"),
                     onClick = { showResetDialog = true }
                 )
             }
@@ -711,8 +688,8 @@ fun SettingsScreen(
             item {
                 SettingsClickableCard(
                     icon = Icons.Default.Info,
-                    title = "درباره وندوریاب",
-                    subtitle = "نسخه ۱.۱.۰ | توسعه‌دهنده: رضا فراهانی",
+                    title = t("درباره وندوریاب"),
+                    subtitle = t("نسخه ۱.۱.۰ | توسعه‌دهنده: رضا فراهانی"),
                     onClick = { showAboutDialog = true }
                 )
             }
@@ -869,6 +846,6 @@ private fun shareCsvText(context: Context, csv: String) {
         putExtra(Intent.EXTRA_TEXT, csv)
         type = "text/csv"
     }
-    val shareIntent = Intent.createChooser(sendIntent, "ارسال و اشتراک‌گذاری داده‌های وندورها (CSV)")
+    val shareIntent = Intent.createChooser(sendIntent, t("ارسال و اشتراک‌گذاری داده‌های وندورها (CSV)"))
     context.startActivity(shareIntent)
 }

@@ -62,6 +62,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.core.tween
+import com.example.util.t
+import com.example.util.Lang
 
 @Composable
 fun MainAppScreen(viewModel: VendorViewModel) {
@@ -84,6 +86,7 @@ fun MainAppScreen(viewModel: VendorViewModel) {
 
     // Dynamic RTL for Persian, LTR for English
     val layoutDirection = if (lang == AppLanguage.FA) LayoutDirection.Rtl else LayoutDirection.Ltr
+    remember(lang) { Lang.isFa = (lang == AppLanguage.FA); lang }
 
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
         // Smart Back Navigation to prevent accidental exit
@@ -102,7 +105,7 @@ fun MainAppScreen(viewModel: VendorViewModel) {
                     } else {
                         lastBackPressTime = currentTime
                         val exitMsg = if (lang == AppLanguage.FA) {
-                            "برای خروج از برنامه، دوباره دکمه بازگشت را بزنید"
+                            t("برای خروج از برنامه، دوباره دکمه بازگشت را بزنید")
                         } else {
                             "Press back again to exit"
                         }

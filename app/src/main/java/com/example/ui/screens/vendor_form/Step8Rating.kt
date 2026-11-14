@@ -35,6 +35,7 @@ import com.example.ui.theme.AmberRating
 import com.example.ui.theme.GreenVerified
 import com.example.util.PersianUtils
 import java.util.Locale
+import com.example.util.t
 
 /**
  * Step 8: Quality Assessment, Verified Status & Internal Notes
@@ -49,7 +50,7 @@ fun Step8Rating(
     onNotesChange: (String) -> Unit
 ) {
     Text(
-        text = "ارزیابی کیفی، رتبه و یادداشت‌ها",
+        text = t("ارزیابی کیفی، رتبه و یادداشت‌ها"),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onBackground
@@ -77,7 +78,7 @@ fun Step8Rating(
                     Icon(Icons.Default.Star, contentDescription = null, tint = AmberRating, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "امتیاز و ارزیابی عملکرد وندور",
+                        text = t("امتیاز و ارزیابی عملکرد وندور"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -122,12 +123,12 @@ fun Step8Rating(
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "وندور معتمد و مورد تأیید تدارکات",
+                            text = t("وندور معتمد و مورد تأیید تدارکات"),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "نشان سبز وندور معتمد در کارت‌ها و جستجو درج می‌شود",
+                            text = t("نشان سبز وندور معتمد در کارت‌ها و جستجو درج می‌شود"),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -160,20 +161,20 @@ fun Step8Rating(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "یادداشت‌های محرمانه و ارزیابی ممیزی",
+                text = t("یادداشت‌های محرمانه و ارزیابی ممیزی"),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "این یادداشت‌ها صرفاً برای استفاده داخلی تیم خرید و تدارکات است و برای طرف مقابل نمایش داده نمی‌شود.",
+                text = t("این یادداشت‌ها صرفاً برای استفاده داخلی تیم خرید و تدارکات است و برای طرف مقابل نمایش داده نمی‌شود."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             OutlinedTextField(
                 value = notes,
                 onValueChange = onNotesChange,
-                label = { Text("یادداشت‌های داخلی و شرایط همکاری") },
-                placeholder = { Text("مثال: بازرسی خط تولید تأیید شد. شرایط تسویه ۴۵ روزه چک صیادی. کیفیت ساخت استاندارد.") },
+                label = { Text(t("یادداشت‌های داخلی و شرایط همکاری")) },
+                placeholder = { Text(t("مثال: بازرسی خط تولید تأیید شد. شرایط تسویه ۴۵ روزه چک صیادی. کیفیت ساخت استاندارد.")) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 4
             )

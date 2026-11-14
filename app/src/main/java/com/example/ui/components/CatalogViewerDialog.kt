@@ -55,6 +55,8 @@ import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 import java.io.File
 import java.io.FileOutputStream
+import com.example.util.tf
+import com.example.util.t
 
 object CatalogFileUtils {
 
@@ -70,9 +72,9 @@ object CatalogFileUtils {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            context.startActivity(Intent.createChooser(intent, "مشاهده کاتالوگ با PDFخوان"))
+            context.startActivity(Intent.createChooser(intent, t("مشاهده کاتالوگ با PDFخوان")))
         } catch (e: Exception) {
-            Toast.makeText(context, "برنامه پی‌دی‌اف‌خوان روی دستگاه یافت نشد.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, t("برنامه پی‌دی‌اف‌خوان روی دستگاه یافت نشد."), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -87,12 +89,12 @@ object CatalogFileUtils {
                 type = "application/pdf"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 putExtra(Intent.EXTRA_SUBJECT, title)
-                putExtra(Intent.EXTRA_TEXT, "کاتالوگ فنی و استانداردهای صنعتی: $title")
+                putExtra(Intent.EXTRA_TEXT, tf("کاتالوگ فنی و استانداردهای صنعتی: {0}", title))
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            context.startActivity(Intent.createChooser(intent, "اشتراک‌گذاری کاتالوگ"))
+            context.startActivity(Intent.createChooser(intent, t("اشتراک‌گذاری کاتالوگ")))
         } catch (e: Exception) {
-            Toast.makeText(context, "خطا در اشتراک‌گذاری کاتالوگ", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, t("خطا در اشتراک‌گذاری کاتالوگ"), Toast.LENGTH_SHORT).show()
         }
     }
 }
@@ -130,7 +132,7 @@ fun CatalogViewerDialog(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = if (hasValidCatalog) "کاتالوگ دیجیتال و مشخصات فنی" else "وضعیت کاتالوگ",
+                        text = if (hasValidCatalog) t("کاتالوگ دیجیتال و مشخصات فنی") else t("وضعیت کاتالوگ"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -161,7 +163,7 @@ fun CatalogViewerDialog(
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = catalogTitle.ifBlank { "کاتالوگ فنی محصولات" },
+                                text = catalogTitle.ifBlank { t("کاتالوگ فنی محصولات") },
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -171,12 +173,12 @@ fun CatalogViewerDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "حجم فایل: ${PersianUtils.toPersianDigits(fileSizeKb)} کیلوبایت",
+                                    text = tf("حجم فایل: {0} کیلوبایت", PersianUtils.toPersianDigits(fileSizeKb)),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = "فرمت: PDF",
+                                    text = t("فرمت: PDF"),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.outline
                                 )
@@ -195,7 +197,7 @@ fun CatalogViewerDialog(
                     ) {
                         Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("باز کردن با برنامه PDFخوان", fontWeight = FontWeight.Bold)
+                        Text(t("باز کردن با برنامه PDFخوان"), fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(
@@ -205,7 +207,7 @@ fun CatalogViewerDialog(
                     ) {
                         Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("اشتراک‌گذاری فایل کاتالوگ")
+                        Text(t("اشتراک‌گذاری فایل کاتالوگ"))
                     }
                 }
             } else {
@@ -217,13 +219,13 @@ fun CatalogViewerDialog(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "کاتالوگ ثبت نشده است",
+                        text = t("کاتالوگ ثبت نشده است"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "برای این وندور هنوز فایل کاتالوگ یا بروشور فنی بارگذاری نشده است. می‌توانید در بخش ویرایش وندور، فایل PDF کاتالوگ را اضافه نمایید.",
+                        text = t("برای این وندور هنوز فایل کاتالوگ یا بروشور فنی بارگذاری نشده است. می‌توانید در بخش ویرایش وندور، فایل PDF کاتالوگ را اضافه نمایید."),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -233,7 +235,7 @@ fun CatalogViewerDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("بستن")
+                Text(t("بستن"))
             }
         }
     )

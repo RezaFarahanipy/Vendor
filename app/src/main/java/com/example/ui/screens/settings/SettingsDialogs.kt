@@ -24,6 +24,8 @@ import com.example.ui.theme.RedFavorite
 import com.example.ui.theme.BrandPrimary
 import com.example.util.AppLanguage
 import com.example.util.PersianUtils
+import com.example.util.t
+import com.example.util.tf
 
 @Composable
 fun FeaturesDialog(onDismiss: () -> Unit) {
@@ -33,7 +35,7 @@ fun FeaturesDialog(onDismiss: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.FeaturedPlayList, contentDescription = null, tint = BrandPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("قابلیت‌ها و امکانات کامل وندوریاب", fontWeight = FontWeight.Bold)
+                Text(t("قابلیت‌ها و امکانات کامل وندوریاب"), fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -43,18 +45,18 @@ fun FeaturesDialog(onDismiss: () -> Unit) {
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                FeatureItem("۱", "مدیریت جامع وندورها و تأمین‌کنندگان", "ثبت، ویرایش، حذف، برچسب‌گذاری، وضعیت تأییدیه رسمی و ثبت یادداشت‌های محرمانه داخلی برای هر شرکت.")
-                FeatureItem("۲", "سیستم چندشماره‌ای تماس و ارتباطات", "پشتیبانی از چندین خط ثابت و چندین شماره همراه برای هر وندور به همراه دکمه‌های مستقیم تماس و پیامک.")
-                FeatureItem("۳", "ارتباط سریع با پیام‌رسان‌های مطرح", "امکان ارسال مستقیم پیام در واتس‌اپ، تلگرام، بله و روبیکا به شماره‌های شرکت و تک‌تک پرسنل.")
-                FeatureItem("۴", "مدیریت پرسنل و مدیران ارتباطی در فرم وندور", "ثبت و ویرایش مدیرعامل، مسئول فروش، کارشناسان فنی با نام، سمت، داخلی و شماره همراه در حین افزودن و ویرایش وندور.")
-                FeatureItem("۵", "انتخاب و ویرایش لوگوی شرکت", "انتخاب لوگوی واقعی از گالری گوشی (Photo Picker استاندارد) و ذخیره‌سازی محلی به همراه نشان‌های اختصاری شکیل.")
-                FeatureItem("۶", "آپلود و نمایش کاتالوگ دیجیتال (PDF)", "بارگذاری فایل‌های PDF کاتالوگ و بروشورها، پیش‌نمایش و باز کردن مستقیم با برنامه‌های PDFخوان و امکان اشتراک‌گذاری.")
-                FeatureItem("۷", "مدیریت کامل محصولات و تجهیزات وندور", "امکان افزودن، ویرایش و حذف تک‌تک محصولات صنعتی، مدل‌ها، کدهای فنی و مشخصات هیدرولیکی/مکانیکی.")
-                FeatureItem("۸", "موقعیت‌یابی تعاملی روی نقشه (GPS)", "نقشه لمسی تعاملی با قابلیت جابجایی پین، ورودی دستی طول و عرض جغرافیایی، انتخاب شهرک‌های صنعتی ایران و اتصال به نشان و بلد.")
-                FeatureItem("۹", "اطلاعات مالی، بانکی و ثبتی", "امکان ثبت چندین حساب بانکی با نام بانک، شعبه، شماره حساب و شماره شبا با دکمه کپی، به همراه کد اقتصادی، شناسه ملی و شماره ثبت.")
-                FeatureItem("۱۰", "مدیریت پویای انواع فعالیت و دسته‌بندی‌ها", "امکان تعریف، ویرایش و حذف انواع فعالیت (تولیدی، بازرگانی و...) و زمینه‌های صنعتی مستقیماً از بخش تنظیمات.")
-                FeatureItem("۱۱", "موتور جستجوی بلادرنگ و فیلترهای پیشرفته", "جستجوی هوشمند با اصلاح ی/ک عربی و نیم‌فاصله، فیلتر شهر، تأییدیه، کاتالوگ و مرتب‌سازی بر اساس امتیاز و جدیدترین‌ها.")
-                FeatureItem("۱۲", "دیتابیس بومی ۱۰۰٪ آفلاین (Room Database)", "ذخیره‌سازی کامل بر روی حافظه گوشی بدون نیاز به اینترنت، با پشتیبانی کامل از خروجی و ورودی فایل اکسل و CSV.")
+                FeatureItem("۱", t("مدیریت جامع وندورها و تأمین‌کنندگان"), t("ثبت، ویرایش، حذف، برچسب‌گذاری، وضعیت تأییدیه رسمی و ثبت یادداشت‌های محرمانه داخلی برای هر شرکت."))
+                FeatureItem("۲", t("سیستم چندشماره‌ای تماس و ارتباطات"), t("پشتیبانی از چندین خط ثابت و چندین شماره همراه برای هر وندور به همراه دکمه‌های مستقیم تماس و پیامک."))
+                FeatureItem("۳", t("ارتباط سریع با پیام‌رسان‌های مطرح"), t("امکان ارسال مستقیم پیام در واتس‌اپ، تلگرام، بله و روبیکا به شماره‌های شرکت و تک‌تک پرسنل."))
+                FeatureItem("۴", t("مدیریت پرسنل و مدیران ارتباطی در فرم وندور"), t("ثبت و ویرایش مدیرعامل، مسئول فروش، کارشناسان فنی با نام، سمت، داخلی و شماره همراه در حین افزودن و ویرایش وندور."))
+                FeatureItem("۵", t("انتخاب و ویرایش لوگوی شرکت"), t("انتخاب لوگوی واقعی از گالری گوشی (Photo Picker استاندارد) و ذخیره‌سازی محلی به همراه نشان‌های اختصاری شکیل."))
+                FeatureItem("۶", t("آپلود و نمایش کاتالوگ دیجیتال (PDF)"), t("بارگذاری فایل‌های PDF کاتالوگ و بروشورها، پیش‌نمایش و باز کردن مستقیم با برنامه‌های PDFخوان و امکان اشتراک‌گذاری."))
+                FeatureItem("۷", t("مدیریت کامل محصولات و تجهیزات وندور"), t("امکان افزودن، ویرایش و حذف تک‌تک محصولات صنعتی، مدل‌ها، کدهای فنی و مشخصات هیدرولیکی/مکانیکی."))
+                FeatureItem("۸", t("موقعیت‌یابی تعاملی روی نقشه (GPS)"), t("نقشه لمسی تعاملی با قابلیت جابجایی پین، ورودی دستی طول و عرض جغرافیایی، انتخاب شهرک‌های صنعتی ایران و اتصال به نشان و بلد."))
+                FeatureItem("۹", t("اطلاعات مالی، بانکی و ثبتی"), t("امکان ثبت چندین حساب بانکی با نام بانک، شعبه، شماره حساب و شماره شبا با دکمه کپی، به همراه کد اقتصادی، شناسه ملی و شماره ثبت."))
+                FeatureItem("۱۰", t("مدیریت پویای انواع فعالیت و دسته‌بندی‌ها"), t("امکان تعریف، ویرایش و حذف انواع فعالیت (تولیدی، بازرگانی و...) و زمینه‌های صنعتی مستقیماً از بخش تنظیمات."))
+                FeatureItem("۱۱", t("موتور جستجوی بلادرنگ و فیلترهای پیشرفته"), t("جستجوی هوشمند با اصلاح ی/ک عربی و نیم‌فاصله، فیلتر شهر، تأییدیه، کاتالوگ و مرتب‌سازی بر اساس امتیاز و جدیدترین‌ها."))
+                FeatureItem("۱۲", t("دیتابیس بومی ۱۰۰٪ آفلاین (Room Database)"), t("ذخیره‌سازی کامل بر روی حافظه گوشی بدون نیاز به اینترنت، با پشتیبانی کامل از خروجی و ورودی فایل اکسل و CSV."))
             }
         },
         confirmButton = {
@@ -62,7 +64,7 @@ fun FeaturesDialog(onDismiss: () -> Unit) {
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
             ) {
-                Text("بستن")
+                Text(t("بستن"))
             }
         }
     )
@@ -86,7 +88,7 @@ fun ManageActivityTypesDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.BusinessCenter, contentDescription = null, tint = BrandPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("مدیریت انواع فعالیت شرکت‌ها", fontWeight = FontWeight.Bold)
+                Text(t("مدیریت انواع فعالیت شرکت‌ها"), fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -97,7 +99,7 @@ fun ManageActivityTypesDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "انواع فعالیت قابل انتخاب در فرم ثبت وندور:",
+                    text = t("انواع فعالیت قابل انتخاب در فرم ثبت وندور:"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -112,7 +114,7 @@ fun ManageActivityTypesDialog(
                     OutlinedTextField(
                         value = newActName,
                         onValueChange = { newActName = it },
-                        placeholder = { Text("نوع جدید (مثال: بازرگانی)") },
+                        placeholder = { Text(t("نوع جدید (مثال: بازرگانی)")) },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
@@ -125,7 +127,7 @@ fun ManageActivityTypesDialog(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                     ) {
-                        Text("افزودن", fontWeight = FontWeight.Bold)
+                        Text(t("افزودن"), fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -142,7 +144,7 @@ fun ManageActivityTypesDialog(
                             OutlinedTextField(
                                 value = editActName,
                                 onValueChange = { editActName = it },
-                                label = { Text("ویرایش عنوان فعالیت") },
+                                label = { Text(t("ویرایش عنوان فعالیت")) },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -152,7 +154,7 @@ fun ManageActivityTypesDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 TextButton(onClick = { editingActType = null }) {
-                                    Text("انصراف")
+                                    Text(t("انصراف"))
                                 }
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Button(
@@ -164,7 +166,7 @@ fun ManageActivityTypesDialog(
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                                 ) {
-                                    Text("ذخیره", fontWeight = FontWeight.Bold)
+                                    Text(t("ذخیره"), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -191,13 +193,13 @@ fun ManageActivityTypesDialog(
                                 },
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = BrandPrimary, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Edit, contentDescription = t("ویرایش"), tint = BrandPrimary, modifier = Modifier.size(16.dp))
                             }
                             IconButton(
                                 onClick = { onRequestDelete(act) },
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Delete, contentDescription = t("حذف"), tint = RedFavorite, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
@@ -206,7 +208,7 @@ fun ManageActivityTypesDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("بستن")
+                Text(t("بستن"))
             }
         }
     )
@@ -230,7 +232,7 @@ fun ManageCategoriesDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Category, contentDescription = null, tint = BrandPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("مدیریت زمینه‌های فعالیت و دسته‌ها", fontWeight = FontWeight.Bold)
+                Text(t("مدیریت زمینه‌های فعالیت و دسته‌ها"), fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -241,7 +243,7 @@ fun ManageCategoriesDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "دسته‌بندی‌های صنعتی فعال در برنامه:",
+                    text = t("دسته‌بندی‌های صنعتی فعال در برنامه:"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -256,7 +258,7 @@ fun ManageCategoriesDialog(
                     OutlinedTextField(
                         value = newCatName,
                         onValueChange = { newCatName = it },
-                        placeholder = { Text("نام زمینه (مثال: ابزار دقیق)") },
+                        placeholder = { Text(t("نام زمینه (مثال: ابزار دقیق)")) },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
@@ -269,7 +271,7 @@ fun ManageCategoriesDialog(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                     ) {
-                        Text("افزودن", fontWeight = FontWeight.Bold)
+                        Text(t("افزودن"), fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -286,7 +288,7 @@ fun ManageCategoriesDialog(
                             OutlinedTextField(
                                 value = editCatName,
                                 onValueChange = { editCatName = it },
-                                label = { Text("ویرایش عنوان زمینه فعالیت") },
+                                label = { Text(t("ویرایش عنوان زمینه فعالیت")) },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -296,7 +298,7 @@ fun ManageCategoriesDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 TextButton(onClick = { editingCategory = null }) {
-                                    Text("انصراف")
+                                    Text(t("انصراف"))
                                 }
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Button(
@@ -308,7 +310,7 @@ fun ManageCategoriesDialog(
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                                 ) {
-                                    Text("ذخیره", fontWeight = FontWeight.Bold)
+                                    Text(t("ذخیره"), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -335,13 +337,13 @@ fun ManageCategoriesDialog(
                                 },
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = BrandPrimary, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Edit, contentDescription = t("ویرایش"), tint = BrandPrimary, modifier = Modifier.size(16.dp))
                             }
                             IconButton(
                                 onClick = { onRequestDelete(cat) },
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Delete, contentDescription = t("حذف"), tint = RedFavorite, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
@@ -350,7 +352,7 @@ fun ManageCategoriesDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("بستن")
+                Text(t("بستن"))
             }
         }
     )
@@ -367,14 +369,14 @@ fun ConfirmDeleteActivityTypeDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = if (lang == AppLanguage.FA) "تأیید حذف نوع فعالیت" else "Confirm Delete Activity Type",
+                text = if (lang == AppLanguage.FA) t("تأیید حذف نوع فعالیت") else "Confirm Delete Activity Type",
                 fontWeight = FontWeight.Bold
             )
         },
         text = {
             Text(
                 text = if (lang == AppLanguage.FA) {
-                    "آیا از حذف نوع فعالیت «${act.name}» اطمینان دارید؟ این عمل قابل بازگشت نیست."
+                    tf("آیا از حذف نوع فعالیت «{0}» اطمینان دارید؟ این عمل قابل بازگشت نیست.", act.name)
                 } else {
                     "Are you sure you want to delete '${act.name}'? This action cannot be undone."
                 }
@@ -385,12 +387,12 @@ fun ConfirmDeleteActivityTypeDialog(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = RedFavorite)
             ) {
-                Text(if (lang == AppLanguage.FA) "حذف" else "Delete", color = Color.White)
+                Text(if (lang == AppLanguage.FA) t("حذف") else "Delete", color = Color.White)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(if (lang == AppLanguage.FA) "انصراف" else "Cancel")
+                Text(if (lang == AppLanguage.FA) t("انصراف") else "Cancel")
             }
         }
     )
@@ -407,14 +409,14 @@ fun ConfirmDeleteCategoryDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = if (lang == AppLanguage.FA) "تأیید حذف زمینه فعالیت" else "Confirm Delete Category",
+                text = if (lang == AppLanguage.FA) t("تأیید حذف زمینه فعالیت") else "Confirm Delete Category",
                 fontWeight = FontWeight.Bold
             )
         },
         text = {
             Text(
                 text = if (lang == AppLanguage.FA) {
-                    "آیا از حذف زمینه فعالیت «${cat.name}» اطمینان دارید؟ این عمل قابل بازگشت نیست."
+                    tf("آیا از حذف زمینه فعالیت «{0}» اطمینان دارید؟ این عمل قابل بازگشت نیست.", cat.name)
                 } else {
                     "Are you sure you want to delete '${cat.name}'? This action cannot be undone."
                 }
@@ -425,12 +427,12 @@ fun ConfirmDeleteCategoryDialog(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = RedFavorite)
             ) {
-                Text(if (lang == AppLanguage.FA) "حذف" else "Delete", color = Color.White)
+                Text(if (lang == AppLanguage.FA) t("حذف") else "Delete", color = Color.White)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(if (lang == AppLanguage.FA) "انصراف" else "Cancel")
+                Text(if (lang == AppLanguage.FA) t("انصراف") else "Cancel")
             }
         }
     )
@@ -444,21 +446,21 @@ fun DatabaseInfoDialog(onDismiss: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(imageVector = Icons.Default.Storage, contentDescription = null, tint = BrandPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("محل و نحوه ذخیره‌سازی داده‌ها", fontWeight = FontWeight.Bold)
+                Text(t("محل و نحوه ذخیره‌سازی داده‌ها"), fontWeight = FontWeight.Bold)
             }
         },
         text = {
             Column {
                 Text(
-                    text = "اطلاعات به صورت کاملاً پایدار و آفلاین در دیتابیس بومی زیر ذخیره می‌شوند:",
+                    text = t("اطلاعات به صورت کاملاً پایدار و آفلاین در دیتابیس بومی زیر ذخیره می‌شوند:"),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("• دیتابیس محلی: Room Database مبتنی بر SQLite")
-                Text("• جدول‌های فعال: vendors (وندورها), contact_persons (پرسنل), categories (دسته‌ها), products (محصولات), activity_types (انواع فعالیت)")
-                Text("• ماندگاری: اطلاعات با بستن یا راه‌اندازی مجدد گوشی هرگز پاک نمی‌شوند.")
-                Text("• فایل‌های کاتالوگ و لوگوها: در پوشه اختصاصی امن برنامه (filesDir) به شکل آفلاین نگهداری می‌شوند.")
-                Text("• پشتیبان‌گیری: امکان استخراج فایل استاندارد CSV / Excel و ورود مجدد آن در هر زمان فراهم است.")
+                Text(t("• دیتابیس محلی: Room Database مبتنی بر SQLite"))
+                Text(t("• جدول‌های فعال: vendors (وندورها), contact_persons (پرسنل), categories (دسته‌ها), products (محصولات), activity_types (انواع فعالیت)"))
+                Text(t("• ماندگاری: اطلاعات با بستن یا راه‌اندازی مجدد گوشی هرگز پاک نمی‌شوند."))
+                Text(t("• فایل‌های کاتالوگ و لوگوها: در پوشه اختصاصی امن برنامه (filesDir) به شکل آفلاین نگهداری می‌شوند."))
+                Text(t("• پشتیبان‌گیری: امکان استخراج فایل استاندارد CSV / Excel و ورود مجدد آن در هر زمان فراهم است."))
             }
         },
         confirmButton = {
@@ -466,7 +468,7 @@ fun DatabaseInfoDialog(onDismiss: () -> Unit) {
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
             ) {
-                Text("متوجه شدم")
+                Text(t("متوجه شدم"))
             }
         }
     )
@@ -479,19 +481,19 @@ fun ResetSampleDataDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("بازیابی اطلاعات نمونه", fontWeight = FontWeight.Bold) },
-        text = { Text("آیا مایلید اطلاعات اولیه و نمونه‌های آزمایشی مجدداً در دیتابیس بارگذاری شوند؟") },
+        title = { Text(t("بازیابی اطلاعات نمونه"), fontWeight = FontWeight.Bold) },
+        text = { Text(t("آیا مایلید اطلاعات اولیه و نمونه‌های آزمایشی مجدداً در دیتابیس بارگذاری شوند؟")) },
         confirmButton = {
             Button(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
             ) {
-                Text("تأیید و بازیابی")
+                Text(t("تأیید و بازیابی"))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("انصراف")
+                Text(t("انصراف"))
             }
         }
     )
@@ -501,21 +503,21 @@ fun ResetSampleDataDialog(
 fun AboutAppDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("سامانه وندوریاب (VendorYab)", fontWeight = FontWeight.Bold) },
+        title = { Text(t("سامانه وندوریاب (VendorYab)"), fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                Text("نسخه: ۱.۱.۰")
+                Text(t("نسخه: ۱.۱.۰"))
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("برنامه‌نویس و توسعه‌دهنده:")
-                Text("رضا فراهانی", fontWeight = FontWeight.Bold)
-                Text("ایمیل: Rezafarahani2008@gmail.com")
+                Text(t("برنامه‌نویس و توسعه‌دهنده:"))
+                Text(t("رضا فراهانی"), fontWeight = FontWeight.Bold)
+                Text(t("ایمیل: Rezafarahani2008@gmail.com"))
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("امکانات برجسته:")
-                Text("• سیستم چندشماره‌ای تماس و ارتباط در واتس‌اپ، تلگرام، بله و روبیکا")
-                Text("• نقشه تعاملی با موقعیت‌یاب لمسی GPS")
-                Text("• آپلود و نمایش کاتالوگ دیجیتال PDF")
-                Text("• ثبت شماره شبا، بانک، شعبه و کدهای ثبتی")
-                Text("• مدیریت و ویرایش محصولات و پرسنل وندور")
+                Text(t("امکانات برجسته:"))
+                Text(t("• سیستم چندشماره‌ای تماس و ارتباط در واتس‌اپ، تلگرام، بله و روبیکا"))
+                Text(t("• نقشه تعاملی با موقعیت‌یاب لمسی GPS"))
+                Text(t("• آپلود و نمایش کاتالوگ دیجیتال PDF"))
+                Text(t("• ثبت شماره شبا، بانک، شعبه و کدهای ثبتی"))
+                Text(t("• مدیریت و ویرایش محصولات و پرسنل وندور"))
             }
         },
         confirmButton = {
@@ -523,7 +525,7 @@ fun AboutAppDialog(onDismiss: () -> Unit) {
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
             ) {
-                Text("بستن")
+                Text(t("بستن"))
             }
         }
     )

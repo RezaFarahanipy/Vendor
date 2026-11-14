@@ -32,7 +32,7 @@ object MessengerUtils {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             context.startActivity(intent)
         } catch (_: Exception) {
-            Toast.makeText(context, "برنامه واتس‌اپ یافت نشد", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, t("برنامه واتس‌اپ یافت نشد"), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -42,7 +42,7 @@ object MessengerUtils {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/+$phone"))
             context.startActivity(intent)
         } catch (_: Exception) {
-            Toast.makeText(context, "برنامه تلگرام یافت نشد", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, t("برنامه تلگرام یافت نشد"), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -52,7 +52,7 @@ object MessengerUtils {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ble.ir/+$phone"))
             context.startActivity(intent)
         } catch (_: Exception) {
-            Toast.makeText(context, "پیام‌رسان بله باز نشد", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, t("پیام‌رسان بله باز نشد"), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -62,7 +62,7 @@ object MessengerUtils {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://rubika.ir/joing/$phone"))
             context.startActivity(intent)
         } catch (_: Exception) {
-            Toast.makeText(context, "پیام‌رسان روبیکا باز نشد", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, t("پیام‌رسان روبیکا باز نشد"), Toast.LENGTH_SHORT).show()
         }
     }
 }

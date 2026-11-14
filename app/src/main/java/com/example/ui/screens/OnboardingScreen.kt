@@ -46,6 +46,7 @@ import com.example.ui.theme.InkDeep
 import com.example.ui.theme.BrandLight
 import com.example.ui.theme.BrandPrimary
 import com.example.ui.theme.StatusBarStyle
+import com.example.util.t
 
 @Composable
 fun OnboardingScreen(
@@ -93,7 +94,7 @@ fun OnboardingScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.vendor_app_icon),
-                        contentDescription = "وندورلیست لوگو",
+                        contentDescription = t("وندورلیست لوگو"),
                         modifier = Modifier
                             .size(74.dp)
                             .clip(RoundedCornerShape(18.dp))
@@ -103,7 +104,7 @@ fun OnboardingScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "وندوریاب",
+                    text = t("وندوریاب"),
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -112,7 +113,7 @@ fun OnboardingScreen(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "دسترسی سریع به تأمین‌کنندگان معتبر",
+                    text = t("دسترسی سریع به تأمین‌کنندگان معتبر"),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color(0xFF94A3B8),
                     textAlign = TextAlign.Center
@@ -142,15 +143,15 @@ fun OnboardingScreen(
             ) {
                 OnboardingFeatureItem(
                     icon = Icons.Default.Search,
-                    title = "جستجوی\nهوشمند"
+                    title = t("جستجوی\nهوشمند")
                 )
                 OnboardingFeatureItem(
                     icon = Icons.Default.Inventory2,
-                    title = "کاتالوگ\nمحصولات"
+                    title = t("کاتالوگ\nمحصولات")
                 )
                 OnboardingFeatureItem(
                     icon = Icons.Default.Call,
-                    title = "تماس\nمستقیم"
+                    title = t("تماس\nمستقیم")
                 )
             }
 
@@ -176,7 +177,7 @@ fun OnboardingScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "شروع با پایگاه داده خالی",
+                            text = t("شروع با پایگاه داده خالی"),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -215,7 +216,7 @@ fun OnboardingScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "بارگذاری با داده‌های نمونه جهت آزمایش",
+                            text = t("بارگذاری با داده‌های نمونه جهت آزمایش"),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold
                         )

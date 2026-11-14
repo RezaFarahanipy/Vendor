@@ -95,6 +95,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.example.ui.theme.staggerIn
 import com.example.ui.theme.StatusBarStyle
+import com.example.util.tf
+import com.example.util.t
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,7 +138,7 @@ fun SearchScreen(
     }
 
     val categoryChips = remember(categories, lang) {
-        val allLabel = if (lang == AppLanguage.FA) "همه" else "All"
+        val allLabel = t("همه")
         val names = if (categories.isNotEmpty()) categories.map { it.name } else listOf("صنعتی", "بازرگانی", "استیل", "صنایع غذایی", "برق")
         listOf(allLabel) + names
     }
@@ -164,7 +166,7 @@ fun SearchScreen(
                     onValueChange = { viewModel.searchQuery.value = it },
                     placeholder = {
                         Text(
-                            text = if (lang == AppLanguage.FA) "جستجوی وندور، محصول، کد اقتصادی، شماره تماس..." else Localization.get("search_placeholder", lang),
+                            text = t("جستجوی وندور، محصول، کد اقتصادی، شماره تماس..."),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     },
@@ -180,7 +182,7 @@ fun SearchScreen(
                             IconButton(onClick = { viewModel.searchQuery.value = "" }) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
-                                    contentDescription = if (lang == AppLanguage.FA) "پاک کردن" else "Clear",
+                                    contentDescription = t("پاک کردن"),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -208,7 +210,7 @@ fun SearchScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(categoryChips) { cat ->
-                        val isSelected = selectedCategory == cat || (selectedCategory == "همه" && cat == (if (lang == AppLanguage.FA) "همه" else "All"))
+                        val isSelected = selectedCategory == cat || (selectedCategory == "همه" && cat == (t("همه")))
                         FilterChip(
                             selected = isSelected,
                             onClick = {
@@ -216,7 +218,7 @@ fun SearchScreen(
                             },
                             label = {
                                 Text(
-                                    text = cat,
+                                    text = t(cat),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
@@ -227,165 +229,6 @@ fun SearchScreen(
                             ),
                             shape = RoundedCornerShape(20.dp)
                         )
-                    }
-                }
-            }
-        }
-
-        // Dashboard StatCards moved here as requested: "در صفحه جستجو کارتهای داشبورد قرار بده"
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            DashboardMiniStatCard(
-                modifier = Modifier.weight(1f),
-                title = if (lang == AppLanguage.FA) "کل وندورها" else Localization.get("stat_total_vendors", lang),
-                count = if (lang == AppLanguage.FA) PersianUtils.toPersianDigits(allVendors.size) else allVendors.size.toString(),
-                icon = Icons.Default.Apartment,
-                iconTint = BrandPrimary,
-                onClick = {
-                    viewModel.searchQuery.value = ""
-                    viewModel.selectedCategoryFilter.value = "همه"
-                }
-            )
-
-            DashboardMiniStatCard(
-                modifier = Modifier.weight(1f),
-                title = if (lang == AppLanguage.FA) "علاقه‌مندی‌ها" else Localization.get("stat_favorites", lang),
-                count = if (lang == AppLanguage.FA) PersianUtils.toPersianDigits(favoriteVendors.size) else favoriteVendors.size.toString(),
-                icon = Icons.Default.Favorite,
-                iconTint = RedFavorite,
-                onClick = {
-                    viewModel.currentTab.value = MainTab.FAVORITES
-                }
-            )
-
-            DashboardMiniStatCard(
-                modifier = Modifier.weight(1f),
-                title = if (lang == AppLanguage.FA) "تماس‌های اخیر" else Localization.get("stat_recent_calls", lang),
-                count = if (lang == AppLanguage.FA) PersianUtils.toPersianDigits(recentVendors.size) else recentVendors.size.toString(),
-                icon = Icons.Default.Call,
-                iconTint = Color(0xFF00A389),
-                onClick = {}
-            )
-        }
-
-        // Main Categories Grid transferred from Home Screen
-        if (query.isBlank()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (lang == AppLanguage.FA) "دسته‌بندی‌های اصلی" else Localization.get("main_categories", lang),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    if (selectedCategory != "همه") {
-                        TextButton(onClick = { viewModel.selectedCategoryFilter.value = "همه" }) {
-                            Text(
-                                text = if (lang == AppLanguage.FA) "نمایش همه" else Localization.get("all", lang),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = BrandDark
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                val displayCats = if (categories.isNotEmpty()) categories.take(6) else listOf(
-                    Category(name = "صنعتی", vendorCount = 0),
-                    Category(name = "ساختمان و عمرانی", vendorCount = 0),
-                    Category(name = "آهن‌آلات", vendorCount = 0),
-                    Category(name = "ماشین‌آلات", vendorCount = 0),
-                    Category(name = "مواد شیمیایی", vendorCount = 0),
-                    Category(name = "برق و الکترونیک", vendorCount = 0)
-                )
-
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    displayCats.chunked(2).forEach { pair ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            pair.forEach { catItem ->
-                                val isCatSelected = selectedCategory == catItem.name
-                                Card(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            viewModel.selectedCategoryFilter.value = if (isCatSelected) "همه" else catItem.name
-                                        },
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = if (isCatSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
-                                    ),
-                                    border = if (isCatSelected) {
-                                        BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
-                                    } else {
-                                        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-                                    },
-                                    elevation = CardDefaults.cardElevation(defaultElevation = if (isCatSelected) 2.dp else 1.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 8.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        val catIcon = when (catItem.name) {
-                                            "صنعتی" -> Icons.Default.PrecisionManufacturing
-                                            "ساختمان و عمرانی" -> Icons.Default.Apartment
-                                            "آهن‌آلات", "فلزات و آهن‌آلات" -> Icons.Default.Hardware
-                                            "ماشین‌آلات" -> Icons.Default.Agriculture
-                                            "مواد غذایی" -> Icons.Default.Restaurant
-                                            "مواد شیمیایی" -> Icons.Default.Science
-                                            "برق و الکترونیک" -> Icons.Default.Bolt
-                                            else -> Icons.Default.Business
-                                        }
-                                        Box(
-                                            modifier = Modifier
-                                                .size(28.dp)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(if (isCatSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = catIcon,
-                                                contentDescription = null,
-                                                tint = if (isCatSelected) Color.White else MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = Localization.translateCategory(catItem.name, lang),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = if (isCatSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = if (isCatSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            fontSize = 11.sp,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                }
-                            }
-                            if (pair.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
-                        }
                     }
                 }
             }
@@ -416,7 +259,7 @@ fun SearchScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = if (lang == AppLanguage.FA) "فهرست" else "List",
+                        text = if (lang == AppLanguage.FA) t("فهرست") else "List",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (!isCardView) FontWeight.Bold else FontWeight.Normal,
                         color = if (!isCardView) Color.White else MaterialTheme.colorScheme.onSurface
@@ -430,7 +273,7 @@ fun SearchScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = if (lang == AppLanguage.FA) "کارت‌ها" else "Cards",
+                        text = if (lang == AppLanguage.FA) t("کارت‌ها") else "Cards",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (isCardView) FontWeight.Bold else FontWeight.Normal,
                         color = if (isCardView) Color.White else MaterialTheme.colorScheme.onSurface
@@ -510,7 +353,7 @@ fun SearchScreen(
                 if (query.isNotBlank()) {
                     item {
                         ActiveFilterChip(
-                            label = "جستجو: $query",
+                            label = tf("جستجو: {0}", query),
                             onClear = { viewModel.searchQuery.value = "" }
                         )
                     }
@@ -518,7 +361,7 @@ fun SearchScreen(
                 if (selectedCategory != "همه") {
                     item {
                         ActiveFilterChip(
-                            label = "دسته: $selectedCategory",
+                            label = tf("دسته: {0}", selectedCategory),
                             onClear = { viewModel.selectedCategoryFilter.value = "همه" }
                         )
                     }
@@ -526,7 +369,7 @@ fun SearchScreen(
                 if (selectedCity != "همه") {
                     item {
                         ActiveFilterChip(
-                            label = "شهر: $selectedCity",
+                            label = tf("شهر: {0}", selectedCity),
                             onClear = { viewModel.selectedCityFilter.value = "همه" }
                         )
                     }
@@ -534,7 +377,7 @@ fun SearchScreen(
                 if (onlyVerified) {
                     item {
                         ActiveFilterChip(
-                            label = "فقط تأیید شده",
+                            label = t("فقط تأیید شده"),
                             onClear = { viewModel.onlyVerifiedFilter.value = false }
                         )
                     }
@@ -542,7 +385,7 @@ fun SearchScreen(
                 if (onlyCatalog) {
                     item {
                         ActiveFilterChip(
-                            label = "دارای کاتالوگ",
+                            label = t("دارای کاتالوگ"),
                             onClear = { viewModel.onlyCatalogFilter.value = false }
                         )
                     }
@@ -557,7 +400,7 @@ fun SearchScreen(
                             viewModel.onlyCatalogFilter.value = false
                         }
                     ) {
-                        Text("پاک‌سازی همه", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                        Text(t("پاک‌سازی همه"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -571,7 +414,7 @@ fun SearchScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val countStr = if (lang == AppLanguage.FA) "${PersianUtils.toPersianDigits(filteredVendors.size)} وندور یافت شد" else "${filteredVendors.size} vendors found"
+            val countStr = tf("{0} وندور یافت شد", PersianUtils.toPersianDigits(filteredVendors.size))
             Text(
                 text = countStr,
                 style = MaterialTheme.typography.bodySmall,
@@ -588,7 +431,7 @@ fun SearchScreen(
                     }
                 ) {
                     Text(
-                        text = if (lang == AppLanguage.FA) "پاک کردن فیلترها" else "Clear Filters",
+                        text = if (lang == AppLanguage.FA) t("پاک کردن فیلترها") else "Clear Filters",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -613,14 +456,14 @@ fun SearchScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = if (lang == AppLanguage.FA) "وندوری با مشخصات مورد نظر یافت نشد" else "No matching vendors found",
+                        text = if (lang == AppLanguage.FA) t("وندوری با مشخصات مورد نظر یافت نشد") else "No matching vendors found",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = if (lang == AppLanguage.FA) "کلمات جستجو یا فیلترهای انتخابی را تغییر دهید." else "Try modifying search terms or filter criteria.",
+                        text = if (lang == AppLanguage.FA) t("کلمات جستجو یا فیلترهای انتخابی را تغییر دهید.") else "Try modifying search terms or filter criteria.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -656,7 +499,7 @@ fun SearchScreen(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = if (lang == AppLanguage.FA) "فیلترهای پیشرفته وندور" else "Advanced Vendor Filters",
+                    text = if (lang == AppLanguage.FA) t("فیلترهای پیشرفته وندور") else "Advanced Vendor Filters",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -666,7 +509,7 @@ fun SearchScreen(
 
                 // City filter
                 Text(
-                    text = if (lang == AppLanguage.FA) "استان و شهر:" else "Province & City:",
+                    text = if (lang == AppLanguage.FA) t("استان و شهر:") else "Province & City:",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -700,7 +543,7 @@ fun SearchScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (lang == AppLanguage.FA) "فقط وندورهای تأیید شده و دارای پروانه" else "Only verified & licensed vendors",
+                        text = if (lang == AppLanguage.FA) t("فقط وندورهای تأیید شده و دارای پروانه") else "Only verified & licensed vendors",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -721,7 +564,7 @@ fun SearchScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (lang == AppLanguage.FA) "فقط وندورهای دارای کاتالوگ PDF" else "Only vendors with technical catalog PDF",
+                        text = if (lang == AppLanguage.FA) t("فقط وندورهای دارای کاتالوگ PDF") else "Only vendors with technical catalog PDF",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -740,7 +583,7 @@ fun SearchScreen(
                             viewModel.onlyCatalogFilter.value = false
                         }
                     ) {
-                        Text(if (lang == AppLanguage.FA) "بازنشانی" else "Reset", color = MaterialTheme.colorScheme.error)
+                        Text(if (lang == AppLanguage.FA) t("بازنشانی") else "Reset", color = MaterialTheme.colorScheme.error)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
@@ -752,7 +595,7 @@ fun SearchScreen(
                             }
                         }
                     ) {
-                        Text(if (lang == AppLanguage.FA) "اعمال فیلتر" else "Apply Filter", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text(if (lang == AppLanguage.FA) t("اعمال فیلتر") else "Apply Filter", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -845,7 +688,7 @@ fun ActiveFilterChip(
             ) {
                 Icon(
                     imageVector = Icons.Default.Clear,
-                    contentDescription = "حذف فیلتر",
+                    contentDescription = t("حذف فیلتر"),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(14.dp)
                 )

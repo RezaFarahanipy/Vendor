@@ -46,6 +46,8 @@ import com.example.ui.viewmodel.VendorViewModel
 import com.example.util.PersianUtils
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.example.ui.theme.staggerIn
+import com.example.util.t
+import com.example.util.tf
 
 enum class FavTab {
     VENDORS,
@@ -67,11 +69,11 @@ fun FavoritesScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         AppHeader(
-            title = "علاقه‌مندی‌ها",
+            title = t("علاقه‌مندی‌ها"),
             subtitle = if (selectedTab == FavTab.VENDORS)
-                "${PersianUtils.toPersianDigits(favoriteVendors.size)} وندور نشان‌شده"
+                tf("{0} وندور نشان‌شده", PersianUtils.toPersianDigits(favoriteVendors.size))
             else
-                "${PersianUtils.toPersianDigits(favoriteProducts.size)} محصول نشان‌شده"
+                tf("{0} محصول نشان‌شده", PersianUtils.toPersianDigits(favoriteProducts.size))
         )
 
         // Segmented Tab Switch (وندورها / محصولات)
@@ -98,7 +100,7 @@ fun FavoritesScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "وندورها",
+                            text = t("وندورها"),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = if (selectedTab == FavTab.VENDORS) Color.White else MaterialTheme.colorScheme.onSurface
@@ -115,7 +117,7 @@ fun FavoritesScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "محصولات",
+                            text = t("محصولات"),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = if (selectedTab == FavTab.PRODUCTS) Color.White else MaterialTheme.colorScheme.onSurface
@@ -128,7 +130,7 @@ fun FavoritesScreen(
         // List Content
         if (selectedTab == FavTab.VENDORS) {
             if (favoriteVendors.isEmpty()) {
-                FavoritesEmptyState(message = "هنوز هیچ وندوری به لیست علاقه‌مندی‌ها اضافه نشده است.")
+                FavoritesEmptyState(message = t("هنوز هیچ وندوری به لیست علاقه‌مندی‌ها اضافه نشده است."))
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -147,7 +149,7 @@ fun FavoritesScreen(
             }
         } else {
             if (favoriteProducts.isEmpty()) {
-                FavoritesEmptyState(message = "هنوز هیچ محصولی به لیست علاقه‌مندی‌ها اضافه نشده است.")
+                FavoritesEmptyState(message = t("هنوز هیچ محصولی به لیست علاقه‌مندی‌ها اضافه نشده است."))
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -183,7 +185,7 @@ private fun FavoritesEmptyState(message: String) {
             )
             Spacer(modifier = Modifier.height(14.dp))
             Text(
-                text = "لیست علاقه‌مندی‌ها خالی است",
+                text = t("لیست علاقه‌مندی‌ها خالی است"),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface

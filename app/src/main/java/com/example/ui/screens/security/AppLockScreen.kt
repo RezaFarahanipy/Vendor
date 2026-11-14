@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.InkDeep
 import com.example.ui.theme.BrandPrimary
+import com.example.util.t
 
 @Composable
 fun AppLockScreen(
@@ -46,7 +47,7 @@ fun AppLockScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,
-                    contentDescription = "قفل برنامه",
+                    contentDescription = t("قفل برنامه"),
                     tint = BrandPrimary,
                     modifier = Modifier.size(48.dp)
                 )
@@ -55,7 +56,7 @@ fun AppLockScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "سامانه وندوریاب قفل است",
+                text = t("سامانه وندوریاب قفل است"),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -65,7 +66,7 @@ fun AppLockScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "جهت محافظت از اطلاعات حساس بانکی، حقوقی و مشخصات تأمین‌کنندگان، لطفاً هویت خود را احراز کنید.",
+                text = t("جهت محافظت از اطلاعات حساس بانکی، حقوقی و مشخصات تأمین‌کنندگان، لطفاً هویت خود را احراز کنید."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -93,7 +94,7 @@ fun AppLockScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "بازگشایی با اثر انگشت یا رمز دستگاه",
+                    text = t("بازگشایی با اثر انگشت یا رمز دستگاه"),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )

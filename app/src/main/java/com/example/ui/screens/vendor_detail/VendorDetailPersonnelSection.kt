@@ -54,6 +54,8 @@ import com.example.ui.theme.BrandPrimary
 import com.example.util.MessengerUtils
 import com.example.util.PersianUtils
 import com.example.ui.theme.BrandViolet
+import com.example.util.tf
+import com.example.util.t
 
 /**
  * Modular Personnel Section for Vendor Detail Screen
@@ -87,7 +89,7 @@ fun VendorDetailPersonnelSection(
                     Icon(Icons.Default.People, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "پرسنل و مدیران ارتباطی (${PersianUtils.toPersianDigits(contacts.size)} نفر)",
+                        text = tf("پرسنل و مدیران ارتباطی ({0} نفر)", PersianUtils.toPersianDigits(contacts.size)),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -99,7 +101,7 @@ fun VendorDetailPersonnelSection(
 
             if (contacts.isEmpty()) {
                 Text(
-                    text = "هنوز پرسنلی برای این شرکت ثبت نشده است.",
+                    text = t("هنوز پرسنلی برای این شرکت ثبت نشده است."),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -165,11 +167,11 @@ private fun PersonnelItem(
                 }
 
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Edit, contentDescription = t("ویرایش"), tint = BrandPrimary, modifier = Modifier.size(18.dp))
                 }
 
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Delete, contentDescription = t("حذف"), tint = RedFavorite, modifier = Modifier.size(18.dp))
                 }
             }
 
@@ -196,7 +198,7 @@ private fun PersonnelItem(
                                     .background(BrandPrimary.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Call, contentDescription = "تماس", tint = BrandPrimary, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Call, contentDescription = t("تماس"), tint = BrandPrimary, modifier = Modifier.size(16.dp))
                             }
                         }
 
@@ -212,7 +214,7 @@ private fun PersonnelItem(
                                         .background(BlueAccent.copy(alpha = 0.15f)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(Icons.AutoMirrored.Filled.Message, contentDescription = "پیامک", tint = BlueAccent, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.AutoMirrored.Filled.Message, contentDescription = t("پیامک"), tint = BlueAccent, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
@@ -238,7 +240,7 @@ private fun PersonnelItem(
                 ) {
                     Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(14.dp), tint = BrandDark)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("ایمیل", fontSize = 11.sp, maxLines = 1, softWrap = false)
+                    Text(t("ایمیل"), fontSize = 11.sp, maxLines = 1, softWrap = false)
                 }
             }
         }
@@ -251,7 +253,7 @@ private fun dial(context: Context, phone: String) {
         val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$clean"))
         context.startActivity(intent)
     } catch (e: Exception) {
-        Toast.makeText(context, "امکان برقراری تماس وجود ندارد", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, t("امکان برقراری تماس وجود ندارد"), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -261,7 +263,7 @@ private fun sms(context: Context, phone: String) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("sms:$clean"))
         context.startActivity(intent)
     } catch (e: Exception) {
-        Toast.makeText(context, "امکان ارسال پیامک وجود ندارد", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, t("امکان ارسال پیامک وجود ندارد"), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -270,6 +272,6 @@ private fun email(context: Context, address: String) {
         val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$address"))
         context.startActivity(intent)
     } catch (e: Exception) {
-        Toast.makeText(context, "امکان ارسال ایمیل وجود ندارد", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, t("امکان ارسال ایمیل وجود ندارد"), Toast.LENGTH_SHORT).show()
     }
 }

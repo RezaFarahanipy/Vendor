@@ -74,6 +74,8 @@ import com.example.ui.theme.BrandLight
 import com.example.ui.theme.BrandPrimary
 import com.example.ui.viewmodel.VendorViewModel
 import com.example.util.PersianUtils
+import com.example.util.tf
+import com.example.util.t
 
 @Composable
 fun CatalogScreen(
@@ -103,8 +105,8 @@ fun CatalogScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         AppHeader(
-            title = "کاتالوگ محصولات",
-            subtitle = "${PersianUtils.toPersianDigits(products.size)} محصول تخصصی"
+            title = t("کاتالوگ محصولات"),
+            subtitle = tf("{0} محصول تخصصی", PersianUtils.toPersianDigits(products.size))
         )
 
         LazyColumn(
@@ -208,13 +210,13 @@ fun CatalogScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "دانلود کاتالوگ جامع صنعتی",
+                                text = t("دانلود کاتالوگ جامع صنعتی"),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
                             Text(
-                                text = "۲۴ صفحه استاندارد و جدول مشخصات هیدرولیکی (۵.۸ MB)",
+                                text = t("۲۴ صفحه استاندارد و جدول مشخصات هیدرولیکی (۵.۸ MB)"),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = BrandLight
                             )
@@ -231,7 +233,7 @@ fun CatalogScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "گالری خطوط تولید و تجهیزات",
+                        text = t("گالری خطوط تولید و تجهیزات"),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -295,7 +297,7 @@ fun CatalogScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "برند: ${prod.brand} | مدل: ${prod.model}",
+                        text = tf("برند: {0} | مدل: {1}", prod.brand, prod.model),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -307,7 +309,7 @@ fun CatalogScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "مشخصات فنی:",
+                        text = t("مشخصات فنی:"),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -327,12 +329,12 @@ fun CatalogScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
-                    Text("مشاهده اطلاعات وندور", fontWeight = FontWeight.Bold)
+                    Text(t("مشاهده اطلاعات وندور"), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { selectedProductForDetail = null }) {
-                    Text("بستن")
+                    Text(t("بستن"))
                 }
             }
         )
@@ -392,7 +394,7 @@ private fun CatalogProductGridCard(
                 ) {
                     Icon(
                         imageVector = if (product.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "علاقه‌مندی",
+                        contentDescription = t("علاقه‌مندی"),
                         tint = if (product.isFavorite) RedFavorite else Color.White,
                         modifier = Modifier.size(16.dp)
                     )
@@ -411,7 +413,7 @@ private fun CatalogProductGridCard(
             )
 
             Text(
-                text = "مدل ${product.model}",
+                text = tf("مدل {0}", product.model),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -431,7 +433,7 @@ private fun CatalogProductGridCard(
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
-                    text = "مشاهده جزئیات",
+                    text = t("مشاهده جزئیات"),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold
                 )

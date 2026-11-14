@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.Vendor
 import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
+import com.example.util.tf
+import com.example.util.t
 
 /**
  * Legal and Financial Section: Economic Code, National ID, Bank Accounts and copyable IBAN
@@ -63,7 +65,7 @@ fun VendorDetailLegalBankSection(vendor: Vendor) {
                 Icon(Icons.Default.AccountBalance, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "اطلاعات حقوقی، ثبتی و بانکی",
+                    text = t("اطلاعات حقوقی، ثبتی و بانکی"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -76,7 +78,7 @@ fun VendorDetailLegalBankSection(vendor: Vendor) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("کد اقتصادی:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(t("کد اقتصادی:"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(PersianUtils.toPersianDigits(vendor.economicCode), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -87,7 +89,7 @@ fun VendorDetailLegalBankSection(vendor: Vendor) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("شناسه ملی:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(t("شناسه ملی:"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(PersianUtils.toPersianDigits(vendor.nationalId), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -98,7 +100,7 @@ fun VendorDetailLegalBankSection(vendor: Vendor) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("شماره ثبت شرکت:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(t("شماره ثبت شرکت:"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(PersianUtils.toPersianDigits(vendor.registrationNumber), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -106,7 +108,7 @@ fun VendorDetailLegalBankSection(vendor: Vendor) {
             if (bankAccounts.isNotEmpty()) {
                 Divider(modifier = Modifier.padding(vertical = 4.dp))
                 Text(
-                    text = "حساب‌های بانکی (${PersianUtils.toPersianDigits(bankAccounts.size)} حساب):",
+                    text = tf("حساب‌های بانکی ({0} حساب):", PersianUtils.toPersianDigits(bankAccounts.size)),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -128,14 +130,14 @@ fun VendorDetailLegalBankSection(vendor: Vendor) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "${acc.bankName.ifBlank { "بانک" }} ${if (acc.branch.isNotBlank()) "• شعبه ${acc.branch}" else ""}",
+                                    text = "${acc.bankName.ifBlank { t("بانک") }} ${if (acc.branch.isNotBlank()) "• شعبه ${acc.branch}" else ""}",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 if (acc.accountNumber.isNotBlank()) {
                                     Text(
-                                        text = "حساب: ${PersianUtils.toPersianDigits(acc.accountNumber)}",
+                                        text = tf("حساب: {0}", PersianUtils.toPersianDigits(acc.accountNumber)),
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
@@ -148,7 +150,7 @@ fun VendorDetailLegalBankSection(vendor: Vendor) {
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "شبا: ${acc.iban}",
+                                        text = tf("شبا: {0}", acc.iban),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -156,11 +158,11 @@ fun VendorDetailLegalBankSection(vendor: Vendor) {
                                         onClick = {
                                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                             clipboard.setPrimaryClip(ClipData.newPlainText("IBAN", acc.iban))
-                                            Toast.makeText(context, "شماره شبا در حافظه کپی شد", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, t("شماره شبا در حافظه کپی شد"), Toast.LENGTH_SHORT).show()
                                         },
                                         modifier = Modifier.size(24.dp)
                                     ) {
-                                        Icon(Icons.Default.ContentCopy, contentDescription = "کپی شبا", tint = BrandPrimary, modifier = Modifier.size(16.dp))
+                                        Icon(Icons.Default.ContentCopy, contentDescription = t("کپی شبا"), tint = BrandPrimary, modifier = Modifier.size(16.dp))
                                     }
                                 }
                             }

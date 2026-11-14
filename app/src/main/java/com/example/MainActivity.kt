@@ -23,6 +23,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
+import com.example.util.t
+import androidx.compose.runtime.remember
+import com.example.util.AppLanguage
+import com.example.util.Lang
 
 class MainActivity : FragmentActivity() {
 
@@ -47,6 +51,8 @@ class MainActivity : FragmentActivity() {
             val isAppLocked by viewModel.isAppLocked.collectAsState()
             val isAppLockEnabled by viewModel.isAppLockEnabled.collectAsState()
             val isSettingsLoaded by viewModel.isSettingsLoaded.collectAsState()
+            val appLang by viewModel.appLanguage.collectAsState()
+            remember(appLang) { Lang.isFa = (appLang == AppLanguage.FA); appLang }
             val isScreenshotBlockEnabled by viewModel.isScreenshotBlockEnabled.collectAsState()
             val isDynamicColorEnabled by viewModel.isDynamicColorEnabled.collectAsState()
 
@@ -71,7 +77,7 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            VendorListTheme(darkTheme = useDark, dynamicColor = isDynamicColorEnabled) {
+            VendorListTheme(darkTheme = useDark, dynamicColor = false) {
                 if (!isSettingsLoaded) {
                     // Wait for persisted settings so locked content never flashes on screen
                     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
@@ -129,8 +135,8 @@ class MainActivity : FragmentActivity() {
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("احراز هویت وندوریاب")
-            .setSubtitle("ورود امن به برنامه با اثر انگشت یا پین/رمز دستگاه")
+            .setTitle(t("احراز هویت وندوریاب"))
+            .setSubtitle(t("ورود امن به برنامه با اثر انگشت یا پین/رمز دستگاه"))
             .setAllowedAuthenticators(
                 if (android.os.Build.VERSION.SDK_INT >= 30) {
                     BiometricManager.Authenticators.BIOMETRIC_STRONG or

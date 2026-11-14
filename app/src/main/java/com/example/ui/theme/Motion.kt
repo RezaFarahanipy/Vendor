@@ -36,6 +36,7 @@ import android.app.Activity
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.example.util.t
 import kotlinx.coroutines.delay
 
 /** Springy press feedback: scales the element down while it is pressed. */
@@ -107,7 +108,7 @@ fun AnimatedHeart(
     val tint by animateColorAsState(if (isFavorite) RedFavorite else offTint, label = "heart_tint")
     Icon(
         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-        contentDescription = "علاقه‌مندی",
+        contentDescription = t("علاقه‌مندی"),
         tint = tint,
         modifier = modifier.graphicsLayer { scaleX = scale.value; scaleY = scale.value }
     )

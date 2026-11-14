@@ -43,6 +43,8 @@ import com.example.ui.theme.BrandDark
 import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 import com.example.util.ShebaUtils
+import com.example.util.tf
+import com.example.util.t
 
 /**
  * Step 2: Legal, Registration & Bank Accounts with live Sheba validation
@@ -59,7 +61,7 @@ fun Step2LegalFinancial(
     bankAccountsList: SnapshotStateList<BankAccount>
 ) {
     Text(
-        text = "اطلاعات حقوقی، ثبتی و حساب‌های بانکی",
+        text = t("اطلاعات حقوقی، ثبتی و حساب‌های بانکی"),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onBackground
@@ -76,14 +78,14 @@ fun Step2LegalFinancial(
                 onEconomicCodeChange(digits)
             }
         },
-        label = { Text("کد اقتصادی (۱۲ رقمی)") },
+        label = { Text(t("کد اقتصادی (۱۲ رقمی)")) },
         placeholder = { Text("411354897621") },
         singleLine = true,
         isError = isEconomicError,
         supportingText = if (isEconomicError) {
-            { Text("کد اقتصادی باید دقیقاً ۱۲ رقم باشد (${PersianUtils.toPersianDigits(cleanEconomic.length)} از ۱۲)", color = MaterialTheme.colorScheme.error) }
+            { Text(tf("کد اقتصادی باید دقیقاً ۱۲ رقم باشد ({0} از ۱۲)", PersianUtils.toPersianDigits(cleanEconomic.length)), color = MaterialTheme.colorScheme.error) }
         } else {
-            { Text("کد ۱۲ رقمی ثبت شده در سامانه مالیاتی", fontSize = 11.sp) }
+            { Text(t("کد ۱۲ رقمی ثبت شده در سامانه مالیاتی"), fontSize = 11.sp) }
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = Modifier.fillMaxWidth()
@@ -102,11 +104,11 @@ fun Step2LegalFinancial(
                     onNationalIdChange(digits)
                 }
             },
-            label = { Text("شناسه ملی (۱۱ رقمی)") },
+            label = { Text(t("شناسه ملی (۱۱ رقمی)")) },
             placeholder = { Text("10103487920") },
             singleLine = true,
             isError = isNatError,
-            supportingText = if (isNatError) { { Text(nationalIdError ?: "شناسه یا کد ملی نامعتبر است", color = MaterialTheme.colorScheme.error) } } else null,
+            supportingText = if (isNatError) { { Text(nationalIdError ?: t("شناسه یا کد ملی نامعتبر است"), color = MaterialTheme.colorScheme.error) } } else null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.weight(1f)
         )
@@ -117,7 +119,7 @@ fun Step2LegalFinancial(
                 val digits = PersianUtils.toEnglishDigits(input).filter { it.isDigit() }
                 onRegistrationNumberChange(digits)
             },
-            label = { Text("شماره ثبت شرکت") },
+            label = { Text(t("شماره ثبت شرکت")) },
             placeholder = { Text("284910") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -137,7 +139,7 @@ fun Step2LegalFinancial(
             Icon(Icons.Default.AccountBalance, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "حساب‌های بانکی و شماره شبا (${PersianUtils.toPersianDigits(bankAccountsList.size)} حساب)",
+                text = tf("حساب‌های بانکی و شماره شبا ({0} حساب)", PersianUtils.toPersianDigits(bankAccountsList.size)),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -173,7 +175,7 @@ fun Step2LegalFinancial(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "افزودن حساب بانکی و شماره شبا جدید",
+                text = t("افزودن حساب بانکی و شماره شبا جدید"),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = BrandDark
@@ -206,7 +208,7 @@ fun Step2LegalFinancial(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "حساب شماره ${PersianUtils.toPersianDigits(index + 1)}",
+                        text = tf("حساب شماره {0}", PersianUtils.toPersianDigits(index + 1)),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -216,7 +218,7 @@ fun Step2LegalFinancial(
                             onClick = { bankAccountsList.removeAt(index) },
                             modifier = Modifier.size(24.dp)
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Delete, contentDescription = t("حذف"), tint = RedFavorite, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -239,7 +241,7 @@ fun Step2LegalFinancial(
                             bankName = newBankName
                         )
                     },
-                    label = { Text("شماره شبا (IBAN)") },
+                    label = { Text(t("شماره شبا (IBAN)")) },
                     placeholder = { Text("IR120120000000001234567890") },
                     singleLine = true,
                     isError = shebaValidation != null && !shebaValidation.isValid && account.iban.length > 5,
@@ -247,7 +249,7 @@ fun Step2LegalFinancial(
                         if (shebaValidation != null) {
                             if (!shebaValidation.isValid && account.iban.length > 5) {
                                 Text(
-                                    text = shebaValidation.errorMessage ?: "شماره شبا نامعتبر است",
+                                    text = shebaValidation.errorMessage ?: t("شماره شبا نامعتبر است"),
                                     color = MaterialTheme.colorScheme.error,
                                     fontSize = 11.sp
                                 )
@@ -261,7 +263,7 @@ fun Step2LegalFinancial(
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "شماره شبا معتبر است (${shebaValidation.detectedBankName ?: "بانک ایرانی"})",
+                                        text = "شماره شبا معتبر است (${shebaValidation.detectedBankName ?: t("بانک ایرانی")})",
                                         color = GreenVerified,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
@@ -289,11 +291,11 @@ fun Step2LegalFinancial(
                         value = account.bankName,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("نام بانک (شناسایی با شبا)") },
-                        placeholder = { Text("تکمیل خودکار از روی شبا") },
+                        label = { Text(t("نام بانک (شناسایی با شبا)")) },
+                        placeholder = { Text(t("تکمیل خودکار از روی شبا")) },
                         singleLine = true,
                         supportingText = {
-                            Text("تکمیل خودکار بر اساس کد شبا", fontSize = 10.sp, color = BrandDark)
+                            Text(t("تکمیل خودکار بر اساس کد شبا"), fontSize = 10.sp, color = BrandDark)
                         },
                         modifier = Modifier.weight(1.2f)
                     )
@@ -303,8 +305,8 @@ fun Step2LegalFinancial(
                         onValueChange = {
                             bankAccountsList[index] = account.copy(branch = it)
                         },
-                        label = { Text("نام یا کد شعبه") },
-                        placeholder = { Text("شعبه مرکزی") },
+                        label = { Text(t("نام یا کد شعبه")) },
+                        placeholder = { Text(t("شعبه مرکزی")) },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
@@ -317,7 +319,7 @@ fun Step2LegalFinancial(
                         val digits = PersianUtils.toEnglishDigits(it).filter { c -> c.isDigit() }
                         bankAccountsList[index] = account.copy(accountNumber = digits)
                     },
-                    label = { Text("شماره حساب") },
+                    label = { Text(t("شماره حساب")) },
                     placeholder = { Text("123456789") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

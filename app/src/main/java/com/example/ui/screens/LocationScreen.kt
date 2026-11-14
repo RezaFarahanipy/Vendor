@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.ui.components.AppHeader
-import com.example.ui.components.InteractiveMapPicker
+import com.example.ui.components.LocationPickerCard
 import com.example.ui.components.openMap
 import com.example.ui.theme.BlueAccent
 import com.example.ui.theme.InkDeep
@@ -58,6 +58,8 @@ import com.example.ui.theme.BrandDark
 import com.example.ui.theme.BrandPrimary
 import com.example.ui.viewmodel.VendorViewModel
 import com.example.util.PersianUtils
+import com.example.util.tf
+import com.example.util.t
 
 @Composable
 fun LocationScreen(
@@ -71,7 +73,7 @@ fun LocationScreen(
 
     if (vendor == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("اطلاعات وندور یافت نشد")
+            Text(t("اطلاعات وندور یافت نشد"))
         }
         return
     }
@@ -82,7 +84,7 @@ fun LocationScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         AppHeader(
-            title = "موقعیت و آدرس",
+            title = t("موقعیت و آدرس"),
             subtitle = vendor.name,
             onBack = onBack
         )
@@ -95,11 +97,12 @@ fun LocationScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Interactive Map Canvas
-            InteractiveMapPicker(
+            LocationPickerCard(
                 latitude = vendor.latitude,
                 longitude = vendor.longitude,
-                onLocationChange = { _, _, _, _ -> },
-                vendorTitle = vendor.name
+                onLocationChange = { _, _ -> },
+                vendorTitle = vendor.name,
+                readOnly = true
             )
 
             // Address Details Card
@@ -116,14 +119,14 @@ fun LocationScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "آدرس کارخانه و دفتر مرکزی",
+                        text = t("آدرس کارخانه و دفتر مرکزی"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Text(
-                        text = vendor.address.ifBlank { "آدرس دقیق در سیستم ثبت نشده است." },
+                        text = vendor.address.ifBlank { t("آدرس دقیق در سیستم ثبت نشده است.") },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -133,12 +136,12 @@ fun LocationScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "استان: ${vendor.province}",
+                            text = tf("استان: {0}", vendor.province),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "شهر: ${vendor.city}",
+                            text = tf("شهر: {0}", vendor.city),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -163,7 +166,7 @@ fun LocationScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "مسیریابی با برنامه‌های نقشه (نشان، بلد، گوگل)",
+                            text = t("مسیریابی با برنامه‌های نقشه (نشان، بلد، گوگل)"),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -186,7 +189,7 @@ fun LocationScreen(
                 ) {
                     Column {
                         Text(
-                            text = "هماهنگی جهت مراجعه حضوری",
+                            text = t("هماهنگی جهت مراجعه حضوری"),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -205,7 +208,7 @@ fun LocationScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = BrandDark, contentColor = Color.White),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text("تماس")
+                        Text(t("تماس"))
                     }
                 }
             }

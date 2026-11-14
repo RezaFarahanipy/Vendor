@@ -50,6 +50,7 @@ import com.example.ui.theme.BrandDark
 import com.example.ui.theme.BrandPrimary
 import java.io.File
 import com.example.ui.theme.BrandViolet
+import com.example.util.t
 
 /**
  * Step 1: Basic Information, Activity Type & Logo
@@ -73,7 +74,7 @@ fun Step1BaseInfo(
     onDescriptionChange: (String) -> Unit
 ) {
     Text(
-        text = "اطلاعات پایه، نشان تجاری و لوگو",
+        text = t("اطلاعات پایه، نشان تجاری و لوگو"),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onBackground
@@ -112,7 +113,7 @@ fun Step1BaseInfo(
                 if (hasLogo) {
                     AsyncImage(
                         model = File(logoUri),
-                        contentDescription = "لوگوی وندور",
+                        contentDescription = t("لوگوی وندور"),
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(6.dp),
@@ -132,13 +133,13 @@ fun Step1BaseInfo(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "لوگو و نشان تجاری شرکت",
+                    text = t("لوگو و نشان تجاری شرکت"),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "امکان انتخاب تصویر از گالری یا نماد اختصاصی",
+                    text = t("امکان انتخاب تصویر از گالری یا نماد اختصاصی"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -154,7 +155,7 @@ fun Step1BaseInfo(
                     ) {
                         Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (logoUri.isNotBlank()) "تغییر لوگو" else "انتخاب لوگو", fontSize = 11.sp)
+                        Text(if (logoUri.isNotBlank()) t("تغییر لوگو") else t("انتخاب لوگو"), fontSize = 11.sp)
                     }
 
                     if (logoUri.isNotBlank()) {
@@ -162,7 +163,7 @@ fun Step1BaseInfo(
                             onClick = { onLogoUriChange("") },
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("حذف لوگو", fontSize = 11.sp, color = RedFavorite)
+                            Text(t("حذف لوگو"), fontSize = 11.sp, color = RedFavorite)
                         }
                     }
                 }
@@ -173,8 +174,8 @@ fun Step1BaseInfo(
     OutlinedTextField(
         value = name,
         onValueChange = onNameChange,
-        label = { Text("نام شرکت یا وندور *") },
-        placeholder = { Text("مثال: بازرگانی پارس تجهیز") },
+        label = { Text(t("نام شرکت یا وندور *")) },
+        placeholder = { Text(t("مثال: بازرگانی پارس تجهیز")) },
         isError = nameError != null,
         supportingText = if (nameError != null) { { Text(nameError, color = MaterialTheme.colorScheme.error) } } else null,
         singleLine = true,
@@ -185,7 +186,7 @@ fun Step1BaseInfo(
 
     // Dynamic Activity Types from Room Database
     Text(
-        text = "نوع فعالیت شرکت (قابل انتخاب و مدیریت):",
+        text = t("نوع فعالیت شرکت (قابل انتخاب و مدیریت):"),
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurface,
         fontWeight = FontWeight.Bold
@@ -206,7 +207,7 @@ fun Step1BaseInfo(
             FilterChip(
                 selected = isSelected,
                 onClick = { onActivityTypeChange(opt) },
-                label = { Text(opt, style = MaterialTheme.typography.labelSmall) },
+                label = { Text(t(opt), style = MaterialTheme.typography.labelSmall) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = BrandPrimary,
                     selectedLabelColor = Color.White
@@ -217,7 +218,7 @@ fun Step1BaseInfo(
 
     // Dynamic Categories from Room Database
     Text(
-        text = "زمینه‌های فعالیت و شاخه‌ها:",
+        text = t("زمینه‌های فعالیت و شاخه‌ها:"),
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurface,
         fontWeight = FontWeight.Bold
@@ -242,7 +243,7 @@ fun Step1BaseInfo(
                         if (isSelected) selectedCategories - cat else selectedCategories + cat
                     )
                 },
-                label = { Text(cat, style = MaterialTheme.typography.labelSmall) },
+                label = { Text(t(cat), style = MaterialTheme.typography.labelSmall) },
                 leadingIcon = if (isSelected) {
                     { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.White) }
                 } else null,
@@ -257,8 +258,8 @@ fun Step1BaseInfo(
     OutlinedTextField(
         value = description,
         onValueChange = onDescriptionChange,
-        label = { Text("توضیحات و زمینه تخصصی") },
-        placeholder = { Text("معرفی خدمات، استانداردهای بین‌المللی، برندهای قابل تأمین...") },
+        label = { Text(t("توضیحات و زمینه تخصصی")) },
+        placeholder = { Text(t("معرفی خدمات، استانداردهای بین‌المللی، برندهای قابل تأمین...")) },
         modifier = Modifier.fillMaxWidth(),
         minLines = 2
     )

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.Visibility
@@ -18,32 +19,38 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.ui.theme.BrandDark
+import com.example.data.model.CatalogItem
+import com.example.ui.theme.BrandContainer
 import com.example.ui.theme.BrandPrimary
+import com.example.ui.theme.RedFavorite
+import com.example.util.PersianUtils
+import com.example.util.tf
+import com.example.util.t
 
 /**
- * Step 7: Catalog PDF Attachment
+ * Step 7: Catalog files. A vendor can have several catalogs / brochures (PDF).
  */
 @Composable
 fun Step7Catalog(
-    catalogTitle: String,
-    onCatalogTitleChange: (String) -> Unit,
-    catalogLocalPath: String,
-    onUploadPdfClick: () -> Unit,
-    onTestCatalogClick: () -> Unit
+    catalogs: List<CatalogItem>,
+    onTitleChange: (Int, String) -> Unit,
+    onRemove: (Int) -> Unit,
+    onView: (CatalogItem) -> Unit,
+    onUploadPdfClick: () -> Unit
 ) {
     Text(
-        text = "کاتالوگ دیجیتال و اسناد فنی",
+        text = t("کاتالوگ دیجیتال و اسناد فنی"),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onBackground
@@ -51,76 +58,71 @@ fun Step7Catalog(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "ضمیمه کاتالوگ یا بروشور فنی (PDF)",
+                    text = t("کاتالوگ‌ها و بروشورهای فنی (PDF)"),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
+                if (catalogs.isNotEmpty()) {
+                    Text(
+                        text = tf("{0} فایل", PersianUtils.toPersianDigits(catalogs.size)),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = BrandPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Text(
-                text = "می‌توانید کاتالوگ رسمی، مشخصات فنی یا بروشور محصولات وندور را به صورت فایل PDF بارگذاری نمایید تا در صفحه اختصاصی وندور مستقیماً قابل نمایش و دانلود باشد.",
+                text = t("می‌توانید چند فایل PDF (کاتالوگ رسمی، مشخصات فنی، بروشور محصولات) برای این وندور ضمیمه کنید تا در صفحه وندور قابل نمایش و دانلود باشند."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            OutlinedTextField(
-                value = catalogTitle,
-                onValueChange = onCatalogTitleChange,
-                label = { Text("عنوان یا نسخه کاتالوگ") },
-                placeholder = { Text("مثال: کاتالوگ جامع محصولات ۱۴۰۳") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (catalogLocalPath.isNotBlank()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = CardDefaults.cardColors(containerColor = BrandPrimary.copy(alpha = 0.12f))
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+            catalogs.forEachIndexed { index, item ->
+                key(item.path) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = BrandContainer.copy(alpha = 0.55f))
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = BrandDark)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "فایل کاتالوگ با موفقیت متصل شده است",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandDark
-                            )
-                        }
-
-                        Button(
-                            onClick = onTestCatalogClick,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = BrandDark,
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(8.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("مشاهده فایل", fontSize = 11.sp)
+                            Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = RedFavorite, modifier = Modifier.size(28.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
+                            OutlinedTextField(
+                                value = item.title,
+                                onValueChange = { onTitleChange(index, it) },
+                                label = { Text(t("عنوان کاتالوگ")) },
+                                supportingText = { Text(item.fileName, maxLines = 1) },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = { onView(item) }) {
+                                Icon(Icons.Default.Visibility, contentDescription = t("مشاهده فایل"), tint = BrandPrimary)
+                            }
+                            IconButton(onClick = { onRemove(index) }) {
+                                Icon(Icons.Default.Delete, contentDescription = t("حذف فایل"), tint = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                 }
@@ -132,15 +134,16 @@ fun Step7Catalog(
                     containerColor = BrandPrimary,
                     contentColor = Color.White
                 ),
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.UploadFile, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (catalogLocalPath.isBlank()) "انتخاب و بارگذاری فایل PDF از حافظه" else "تغییر یا جایگزینی فایل کاتالوگ",
-                    fontWeight = FontWeight.Bold
-                )
+                if (catalogs.isEmpty()) {
+                    Text(text = t("انتخاب و بارگذاری فایل‌های PDF"), fontWeight = FontWeight.Bold)
+                } else {
+                    Text(text = t("افزودن فایل‌های دیگر"), fontWeight = FontWeight.Bold)
+                }
             }
         }
     }

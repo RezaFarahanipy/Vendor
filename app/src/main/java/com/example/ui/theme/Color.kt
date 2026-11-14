@@ -38,7 +38,7 @@ val RedFavorite = Color(0xFFF43F5E)    // Favorite heart / delete
 val ErrorRed = Color(0xFFDC2626)       // Validation errors only
 
 // Neutrals – light
-val LightBg = Color(0xFFF5F6FF)
+val LightBg = Color(0xFFEEF0FB)
 val LightCard = Color(0xFFFFFFFF)
 val LightCardBorder = Color(0xFFE4E7F7)
 val LightTextPrimary = Color(0xFF1E1B4B)

@@ -110,7 +110,6 @@ import com.example.data.model.Vendor
 import com.example.ui.components.AppHeader
 import com.example.ui.components.CatalogFileUtils
 import com.example.ui.components.CatalogViewerDialog
-import com.example.ui.components.InteractiveMapPicker
 import com.example.ui.theme.AmberRating
 import com.example.ui.theme.BlueAccent
 import com.example.ui.theme.InkDeep
@@ -136,6 +135,16 @@ import com.example.ui.screens.vendor_form.Step7Catalog
 import com.example.ui.screens.vendor_form.Step8Rating
 import java.io.File
 import java.io.FileOutputStream
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.layout.navigationBarsPadding
+import com.example.util.t
+import com.example.util.tf
+import com.example.data.model.CatalogItem
+import com.example.data.model.CatalogCodec
+import com.example.data.model.catalogItems
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -266,8 +275,8 @@ fun AddEditVendorScreen(
             } else addr ?: ""
         )
     }
-    var latitude by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.latitude ?: 35.73576) }
-    var longitude by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.longitude ?: 51.44678) }
+    var latitude by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.latitude ?: 0.0) }
+    var longitude by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.longitude ?: 0.0) }
 
     // Step 5: Products & Catalog
     val vendorProductsList = remember(editingVendor) { mutableStateListOf<Product>() }
@@ -287,11 +296,10 @@ fun AddEditVendorScreen(
         hasLoadedInitialProducts = true
     }
 
-    var catalogTitle by rememberSaveable(editingVendor) {
-        mutableStateOf(editingVendor?.catalogTitle ?: "")
+    val catalogList = remember(editingVendor) {
+        mutableStateListOf<CatalogItem>().apply { addAll(editingVendor?.catalogItems() ?: emptyList()) }
     }
-    var catalogLocalPath by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.catalogLocalPath ?: "") }
-    var catalogFileName by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.catalogFileName ?: "") }
+    var viewingCatalog by remember { mutableStateOf<CatalogItem?>(null) }
     var notes by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.notes ?: "") }
     var isVerified by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.isVerified ?: false) }
     var rating by rememberSaveable(editingVendor) { mutableStateOf(editingVendor?.rating ?: 0f) }
@@ -335,9 +343,9 @@ fun AddEditVendorScreen(
                     }
                 }
                 prodImageUriInput = imgFile.absolutePath
-                Toast.makeText(context, "تصویر محصول انتخاب شد", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, t("تصویر محصول انتخاب شد"), Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Toast.makeText(context, "خطا در ذخیره تصویر محصول", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, t("خطا در ذخیره تصویر محصول"), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -357,33 +365,44 @@ fun AddEditVendorScreen(
                     }
                 }
                 logoUri = logoFile.absolutePath
-                Toast.makeText(context, "لوگوی شرکت با موفقیت ثبت شد", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, t("لوگوی شرکت با موفقیت ثبت شد"), Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Toast.makeText(context, "خطا در ذخیره لوگو", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, t("خطا در ذخیره لوگو"), Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    // Document picker for catalog PDF
+    // Document picker for catalog PDFs (several files at once)
     val docPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            try {
-                val catDir = File(context.filesDir, "catalogs")
-                if (!catDir.exists()) catDir.mkdirs()
-                val pdfFile = File(catDir, "catalog_${System.currentTimeMillis()}.pdf")
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    FileOutputStream(pdfFile).use { output ->
-                        input.copyTo(output)
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            var added = 0
+            uris.forEachIndexed { index, uri ->
+                try {
+                    val catDir = File(context.filesDir, "catalogs")
+                    if (!catDir.exists()) catDir.mkdirs()
+                    val pdfFile = File(catDir, "catalog_${System.currentTimeMillis()}_$index.pdf")
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        FileOutputStream(pdfFile).use { output -> input.copyTo(output) }
                     }
+                    var display = ""
+                    context.contentResolver.query(uri, null, null, null, null)?.use { c ->
+                        val col = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                        if (col >= 0 && c.moveToFirst()) display = c.getString(col) ?: ""
+                    }
+                    val title = display.substringBeforeLast('.').ifBlank { tf("کاتالوگ {0}", catalogList.size + 1) }
+                    catalogList.add(CatalogItem(title = title, fileName = display.ifBlank { pdfFile.name }, path = pdfFile.absolutePath))
+                    added++
+                } catch (e: Exception) {
+                    // skip files that could not be copied
                 }
-                catalogLocalPath = pdfFile.absolutePath
-                catalogFileName = "کاتالوگ_${name.ifBlank { "شرکت" }}.pdf"
-                Toast.makeText(context, "فایل کاتالوگ با موفقیت بارگذاری شد", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "خطا در بارگذاری فایل کاتالوگ", Toast.LENGTH_SHORT).show()
             }
+            Toast.makeText(
+                context,
+                if (added > 0) tf("{0} فایل کاتالوگ اضافه شد", added) else t("خطا در بارگذاری فایل کاتالوگ"),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -394,13 +413,13 @@ fun AddEditVendorScreen(
     ) {
         val performSave = {
             if (name.isBlank()) {
-                Toast.makeText(context, "لطفاً نام شرکت را وارد نمایید", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, t("لطفاً نام شرکت را وارد نمایید"), Toast.LENGTH_SHORT).show()
                 currentStep = 1
             } else if (primaryMobile.isNotBlank() && !PersianUtils.isValidIranianMobile(primaryMobile)) {
-                Toast.makeText(context, "شماره موبایل نامعتبر است (مثال: ۰۹۱۲۳۴۵۶۷۸۹)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, t("شماره موبایل نامعتبر است (مثال: ۰۹۱۲۳۴۵۶۷۸۹)"), Toast.LENGTH_SHORT).show()
                 currentStep = 3
             } else if (nationalId.isNotBlank() && !PersianUtils.isValidNationalIdOrCode(nationalId)) {
-                Toast.makeText(context, "کد ملی یا شناسه ملی نامعتبر است", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, t("کد ملی یا شناسه ملی نامعتبر است"), Toast.LENGTH_SHORT).show()
                 currentStep = 2
             } else {
                 val serializedAccounts = BankAccountUtils.serialize(bankAccountsList)
@@ -432,9 +451,10 @@ fun AddEditVendorScreen(
                         latitude = latitude,
                         longitude = longitude,
                         logoUri = logoUri,
-                        catalogTitle = catalogTitle.trim(),
-                        catalogLocalPath = catalogLocalPath,
-                        catalogFileName = catalogFileName,
+                        catalogTitle = catalogList.firstOrNull()?.title.orEmpty().trim(),
+                        catalogLocalPath = catalogList.firstOrNull()?.path.orEmpty(),
+                        catalogFileName = catalogList.firstOrNull()?.fileName.orEmpty(),
+                        catalogFilesJson = CatalogCodec.encode(catalogList.toList()),
                         notes = notes.trim(),
                         economicCode = economicCode.trim(),
                         nationalId = nationalId.trim(),
@@ -463,9 +483,10 @@ fun AddEditVendorScreen(
                         latitude = latitude,
                         longitude = longitude,
                         logoUri = logoUri,
-                        catalogTitle = catalogTitle.trim(),
-                        catalogLocalPath = catalogLocalPath,
-                        catalogFileName = catalogFileName,
+                        catalogTitle = catalogList.firstOrNull()?.title.orEmpty().trim(),
+                        catalogLocalPath = catalogList.firstOrNull()?.path.orEmpty(),
+                        catalogFileName = catalogList.firstOrNull()?.fileName.orEmpty(),
+                        catalogFilesJson = CatalogCodec.encode(catalogList.toList()),
                         notes = notes.trim(),
                         economicCode = economicCode.trim(),
                         nationalId = nationalId.trim(),
@@ -506,8 +527,8 @@ fun AddEditVendorScreen(
         }
 
         AppHeader(
-            title = if (isEdit) "ویرایش اطلاعات وندور" else "افزودن وندور جدید",
-            subtitle = if (isEdit) name else "ثبت اطلاعات در پایگاه داده آفلاین",
+            title = if (isEdit) t("ویرایش اطلاعات وندور") else t("افزودن وندور جدید"),
+            subtitle = if (isEdit) name else t("ثبت اطلاعات در پایگاه داده آفلاین"),
             onBack = onBack,
             actions = {
                 Button(
@@ -522,7 +543,7 @@ fun AddEditVendorScreen(
                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "ذخیره",
+                        text = t("ذخیره"),
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         maxLines = 1,
@@ -532,40 +553,15 @@ fun AddEditVendorScreen(
             }
         )
 
-        // Wizard Stepper Indicator with Clickable Badges
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 8.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                StepBadge(step = 1, currentStep = currentStep, label = "پایه و لوگو", onStepClick = { currentStep = it })
-                StepDivider(isPassed = currentStep > 1)
-                StepBadge(step = 2, currentStep = currentStep, label = "ثبتی و بانک", onStepClick = { currentStep = it })
-                StepDivider(isPassed = currentStep > 2)
-                StepBadge(step = 3, currentStep = currentStep, label = "اطلاعات تماس", onStepClick = { currentStep = it })
-                StepDivider(isPassed = currentStep > 3)
-                StepBadge(step = 4, currentStep = currentStep, label = "نقشه و آدرس", onStepClick = { currentStep = it })
-                StepDivider(isPassed = currentStep > 4)
-                StepBadge(step = 5, currentStep = currentStep, label = "پرسنل", onStepClick = { currentStep = it })
-                StepDivider(isPassed = currentStep > 5)
-                StepBadge(step = 6, currentStep = currentStep, label = "محصولات", onStepClick = { currentStep = it })
-                StepDivider(isPassed = currentStep > 6)
-                StepBadge(step = 7, currentStep = currentStep, label = "کاتالوگ", onStepClick = { currentStep = it })
-                StepDivider(isPassed = currentStep > 7)
-                StepBadge(step = 8, currentStep = currentStep, label = "امتیاز و یادداشت", onStepClick = { currentStep = it })
-            }
-        }
+        // Compact wizard progress (title, progress bar and tappable dots)
+        StepProgress(
+            currentStep = currentStep,
+            labels = listOf(
+                t("پایه و لوگو"), t("ثبتی و بانک"), t("اطلاعات تماس"), t("نشانی و موقعیت"),
+                t("پرسنل"), t("محصولات"), t("کاتالوگ"), t("امتیاز و یادداشت")
+            ),
+            onStepClick = { currentStep = it }
+        )
 
         // Animated Form Content
         Box(
@@ -720,15 +716,11 @@ fun AddEditVendorScreen(
                             }
                         )
                         7 -> Step7Catalog(
-                            catalogTitle = catalogTitle,
-                            onCatalogTitleChange = { catalogTitle = it },
-                            catalogLocalPath = catalogLocalPath,
-                            onUploadPdfClick = {
-                                docPickerLauncher.launch("application/pdf")
-                            },
-                            onTestCatalogClick = {
-                                showTestCatalogDialog = true
-                            }
+                            catalogs = catalogList,
+                            onTitleChange = { i, v -> if (i in catalogList.indices) catalogList[i] = catalogList[i].copy(title = v) },
+                            onRemove = { i -> if (i in catalogList.indices) catalogList.removeAt(i) },
+                            onView = { viewingCatalog = it },
+                            onUploadPdfClick = { docPickerLauncher.launch("application/pdf") }
                         )
                         8 -> Step8Rating(
                             rating = rating,
@@ -746,44 +738,57 @@ fun AddEditVendorScreen(
         // Stepper Navigation Actions Bottom Bar
         Surface(
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp,
+            shadowElevation = 8.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .navigationBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (currentStep > 1) {
                     OutlinedButton(
                         onClick = { currentStep-- },
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp)
+                            .testTag("prev_step_button")
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("مرحله قبل")
+                        Text(t("مرحله قبل"), maxLines = 1)
                     }
-                } else {
-                    Spacer(modifier = Modifier.width(8.dp))
                 }
 
                 Button(
-                    onClick = { performSave() },
+                    onClick = { if (currentStep < 8) currentStep++ else performSave() },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = BrandPrimary,
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.testTag("save_vendor_button")
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .weight(if (currentStep > 1) 1.4f else 1f)
+                        .height(50.dp)
+                        .testTag(if (currentStep < 8) "next_step_button" else "save_vendor_button")
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isEdit) "ذخیره تغییرات وندور" else "ثبت نهایی وندور",
-                        fontWeight = FontWeight.Bold
-                    )
+                    if (currentStep < 8) {
+                        Text(t("مرحله بعد"), fontWeight = FontWeight.Bold, maxLines = 1)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
+                    } else {
+                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        if (isEdit) {
+                            Text(t("ذخیره تغییرات وندور"), fontWeight = FontWeight.Bold, maxLines = 1)
+                        } else {
+                            Text(t("ثبت نهایی وندور"), fontWeight = FontWeight.Bold, maxLines = 1)
+                        }
+                    }
                 }
             }
         }
@@ -795,7 +800,7 @@ fun AddEditVendorScreen(
             onDismissRequest = { showPersonDialog = false },
             title = {
                 Text(
-                    text = if (editingPersonIndex >= 0) "ویرایش پرسنل شرکت" else "افزودن پرسنل جدید",
+                    text = if (editingPersonIndex >= 0) t("ویرایش پرسنل شرکت") else t("افزودن پرسنل جدید"),
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -809,8 +814,8 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = personNameInput,
                         onValueChange = { personNameInput = it },
-                        label = { Text("نام و نام خانوادگی *") },
-                        placeholder = { Text("مثال: مهندس مجید محمودی") },
+                        label = { Text(t("نام و نام خانوادگی *")) },
+                        placeholder = { Text(t("مثال: مهندس مجید محمودی")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -818,8 +823,8 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = personRoleInput,
                         onValueChange = { personRoleInput = it },
-                        label = { Text("سمت / عنوان سازمانی") },
-                        placeholder = { Text("مدیرعامل، مدیر فروش، کارشناس فنی...") },
+                        label = { Text(t("سمت / عنوان سازمانی")) },
+                        placeholder = { Text(t("مدیرعامل، مدیر فروش، کارشناس فنی...")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -827,7 +832,7 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = personMobileInput,
                         onValueChange = { personMobileInput = it },
-                        label = { Text("شماره همراه") },
+                        label = { Text(t("شماره همراه")) },
                         placeholder = { Text("09123456789") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
@@ -844,7 +849,7 @@ fun AddEditVendorScreen(
                             onValueChange = { input ->
                                 personPhoneInput = PersianUtils.formatLandlinePhone(input)
                             },
-                            label = { Text("تلفن مستقیم") },
+                            label = { Text(t("تلفن مستقیم")) },
                             placeholder = { Text("021-77654321") },
                             singleLine = true,
                             trailingIcon = {
@@ -865,7 +870,7 @@ fun AddEditVendorScreen(
                                 }
                             },
                             supportingText = if (personCity != null) {
-                                { Text("شهر شناسایی‌شده: $personCity", fontSize = 10.sp, color = BrandDark) }
+                                { Text(tf("شهر شناسایی‌شده: {0}", personCity), fontSize = 10.sp, color = BrandDark) }
                             } else null,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                             modifier = Modifier.weight(1.5f)
@@ -873,7 +878,7 @@ fun AddEditVendorScreen(
                         OutlinedTextField(
                             value = personExtInput,
                             onValueChange = { personExtInput = it },
-                            label = { Text("داخلی") },
+                            label = { Text(t("داخلی")) },
                             placeholder = { Text("101") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -884,7 +889,7 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = personEmailInput,
                         onValueChange = { personEmailInput = it },
-                        label = { Text("ایمیل پرسنل") },
+                        label = { Text(t("ایمیل پرسنل")) },
                         placeholder = { Text("person@company.com") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
@@ -895,7 +900,7 @@ fun AddEditVendorScreen(
                 Button(
                     onClick = {
                         if (personNameInput.isBlank()) {
-                            Toast.makeText(context, "نام شخص الزامی است", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, t("نام شخص الزامی است"), Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         val newContact = ContactPerson(
@@ -917,12 +922,12 @@ fun AddEditVendorScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
-                    Text("تأیید")
+                    Text(t("تأیید"))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPersonDialog = false }) {
-                    Text("انصراف")
+                    Text(t("انصراف"))
                 }
             }
         )
@@ -934,7 +939,7 @@ fun AddEditVendorScreen(
             onDismissRequest = { showProductDialog = false },
             title = {
                 Text(
-                    text = if (editingProductIndex >= 0) "ویرایش محصول" else "افزودن محصول جدید",
+                    text = if (editingProductIndex >= 0) t("ویرایش محصول") else t("افزودن محصول جدید"),
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -948,8 +953,8 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = prodNameInput,
                         onValueChange = { prodNameInput = it },
-                        label = { Text("نام محصول یا دستگاه *") },
-                        placeholder = { Text("پمپ سانتریفیوژ استیل مدل TP-100") },
+                        label = { Text(t("نام محصول یا دستگاه *")) },
+                        placeholder = { Text(t("پمپ سانتریفیوژ استیل مدل TP-100")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -961,15 +966,15 @@ fun AddEditVendorScreen(
                         OutlinedTextField(
                             value = prodBrandInput,
                             onValueChange = { prodBrandInput = it },
-                            label = { Text("برند") },
-                            placeholder = { Text("پارس پمپ") },
+                            label = { Text(t("برند")) },
+                            placeholder = { Text(t("پارس پمپ")) },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
                             value = prodModelInput,
                             onValueChange = { prodModelInput = it },
-                            label = { Text("مدل") },
+                            label = { Text(t("مدل")) },
                             placeholder = { Text("TP-100") },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
@@ -979,7 +984,7 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = prodCodeInput,
                         onValueChange = { prodCodeInput = it },
-                        label = { Text("کد فنی / استاندارد") },
+                        label = { Text(t("کد فنی / استاندارد")) },
                         placeholder = { Text("PP-TP100-SS316") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
@@ -988,8 +993,8 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = prodSpecsInput,
                         onValueChange = { prodSpecsInput = it },
-                        label = { Text("مشخصات فنی و هیدرولیکی") },
-                        placeholder = { Text("دبی ۱۲۰ مترمکعب، هد ۶۵ متر، پروانه استیل ۳۱۶") },
+                        label = { Text(t("مشخصات فنی و هیدرولیکی")) },
+                        placeholder = { Text(t("دبی ۱۲۰ مترمکعب، هد ۶۵ متر، پروانه استیل ۳۱۶")) },
                         minLines = 2,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -997,8 +1002,8 @@ fun AddEditVendorScreen(
                     OutlinedTextField(
                         value = prodDescInput,
                         onValueChange = { prodDescInput = it },
-                        label = { Text("توضیحات کاربردی") },
-                        placeholder = { Text("مخصوص انتقال سیالات خورنده در صنایع شیمیایی") },
+                        label = { Text(t("توضیحات کاربردی")) },
+                        placeholder = { Text(t("مخصوص انتقال سیالات خورنده در صنایع شیمیایی")) },
                         minLines = 2,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1038,7 +1043,7 @@ fun AddEditVendorScreen(
                         ) {
                             Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(if (prodImageUriInput.isNotBlank()) "تغییر تصویر" else "انتخاب تصویر محصول", fontSize = 11.sp)
+                            Text(if (prodImageUriInput.isNotBlank()) t("تغییر تصویر") else t("انتخاب تصویر محصول"), fontSize = 11.sp)
                         }
                         if (prodImageUriInput.isNotBlank()) {
                             Spacer(modifier = Modifier.width(6.dp))
@@ -1046,7 +1051,7 @@ fun AddEditVendorScreen(
                                 onClick = { prodImageUriInput = "" },
                                 shape = RoundedCornerShape(8.dp)
                             ) {
-                                Text("حذف", fontSize = 11.sp, color = RedFavorite)
+                                Text(t("حذف"), fontSize = 11.sp, color = RedFavorite)
                             }
                         }
                     }
@@ -1056,7 +1061,7 @@ fun AddEditVendorScreen(
                 Button(
                     onClick = {
                         if (prodNameInput.isBlank()) {
-                            Toast.makeText(context, "نام محصول الزامی است", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, t("نام محصول الزامی است"), Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         val newProduct = Product(
@@ -1081,25 +1086,25 @@ fun AddEditVendorScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
-                    Text("تأیید محصول")
+                    Text(t("تأیید محصول"))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showProductDialog = false }) {
-                    Text("انصراف")
+                    Text(t("انصراف"))
                 }
             }
         )
     }
 
-    // Dialog for testing catalog
-    if (showTestCatalogDialog) {
+    // Catalog viewer
+    viewingCatalog?.let { item ->
         CatalogViewerDialog(
-            vendorName = name.ifBlank { "شرکت" },
-            catalogTitle = catalogTitle,
-            catalogLocalPath = catalogLocalPath,
+            vendorName = name.ifBlank { t("شرکت") },
+            catalogTitle = item.title,
+            catalogLocalPath = item.path,
             catalogPdfUrl = "",
-            onDismiss = { showTestCatalogDialog = false }
+            onDismiss = { viewingCatalog = null }
         )
     }
 
@@ -1108,11 +1113,11 @@ fun AddEditVendorScreen(
         AlertDialog(
             onDismissRequest = { showDuplicateDialog = false },
             title = {
-                Text("هشدار ثبت وندور تکراری", fontWeight = FontWeight.Bold)
+                Text(t("هشدار ثبت وندور تکراری"), fontWeight = FontWeight.Bold)
             },
             text = {
                 Text(
-                    text = "وندوری با اطلاعات مشابه (نام، شناسه ملی یا شماره موبایل) با عنوان «${duplicateFoundVendor?.name}» از قبل در سامانه ثبت شده است.\nآیا با وجود تشابه، مایل به ذخیره‌سازی این وندور هستید؟",
+                    text = tf("وندوری با اطلاعات مشابه (نام، شناسه ملی یا شماره موبایل) با عنوان «{0}» از قبل در سامانه ثبت شده است.\nآیا با وجود تشابه، مایل به ذخیره‌سازی این وندور هستید؟", duplicateFoundVendor?.name),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -1136,12 +1141,12 @@ fun AddEditVendorScreen(
                         contentColor = Color.White
                     )
                 ) {
-                    Text("ثبت با این حال", fontWeight = FontWeight.Bold)
+                    Text(t("ثبت با این حال"), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDuplicateDialog = false }) {
-                    Text("انصراف و ویرایش")
+                    Text(t("انصراف و ویرایش"))
                 }
             }
         )
@@ -1210,4 +1215,75 @@ private fun StepDivider(isPassed: Boolean) {
             .height(2.dp)
             .background(if (isPassed) BrandDark else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
     )
+}
+
+
+@Composable
+private fun StepProgress(
+    currentStep: Int,
+    labels: List<String>,
+    onStepClick: (Int) -> Unit
+) {
+    val total = labels.size
+    val progress by animateFloatAsState(
+        targetValue = currentStep.toFloat() / total,
+        animationSpec = tween(400),
+        label = "wizard_progress"
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = labels[(currentStep - 1).coerceIn(0, total - 1)],
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = BrandDark
+            )
+            Text(
+                text = tf("مرحله {0} از {1}", PersianUtils.toPersianDigits(currentStep), PersianUtils.toPersianDigits(total)),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp)),
+            color = BrandPrimary,
+            trackColor = BrandPrimary.copy(alpha = 0.15f)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            for (i in 1..total) {
+                val dotSize by animateDpAsState(if (i == currentStep) 14.dp else 9.dp, label = "dot_size")
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .clickable { onStepClick(i) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(dotSize)
+                            .clip(CircleShape)
+                            .background(if (i <= currentStep) BrandPrimary else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+                    )
+                }
+            }
+        }
+    }
 }

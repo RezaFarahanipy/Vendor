@@ -126,8 +126,12 @@ import com.example.util.MessengerUtils
 import com.example.util.PersianUtils
 import java.io.File
 import com.example.ui.theme.StatusBarStyle
+import com.example.data.model.CatalogItem
+import com.example.data.model.catalogItems
+import com.example.util.t
+import com.example.util.tf
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun VendorDetailScreen(
     vendorId: Long,
@@ -144,7 +148,7 @@ fun VendorDetailScreen(
 
     if (vendor == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("وندور مورد نظر یافت نشد")
+            Text(t("وندور مورد نظر یافت نشد"))
         }
         return
     }
@@ -177,9 +181,10 @@ fun VendorDetailScreen(
     var prodCode by remember { mutableStateOf("") }
     var prodSpecs by remember { mutableStateOf("") }
     var prodDesc by remember { mutableStateOf("") }
-    var prodCat by remember { mutableStateOf("پمپ‌های سانتریفیوژ") }
+    var prodCat by remember { mutableStateOf("") }
 
-    var showCatalogViewer by remember { mutableStateOf(false) }
+    var showCatalogList by remember { mutableStateOf(false) }
+    var viewingCatalog by remember { mutableStateOf<CatalogItem?>(null) }
 
     LazyColumn(
         modifier = Modifier
@@ -206,7 +211,7 @@ fun VendorDetailScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "بازگشت",
+                        contentDescription = t("بازگشت"),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -219,7 +224,7 @@ fun VendorDetailScreen(
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                     ) {
-                        Icon(Icons.Default.Share, contentDescription = "اشتراک‌گذاری", tint = MaterialTheme.colorScheme.onSurface)
+                        Icon(Icons.Default.Share, contentDescription = t("اشتراک‌گذاری"), tint = MaterialTheme.colorScheme.onSurface)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -234,7 +239,7 @@ fun VendorDetailScreen(
                     ) {
                         Icon(
                             imageVector = if (vendor.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "علاقه‌مندی",
+                            contentDescription = t("علاقه‌مندی"),
                             tint = if (vendor.isFavorite) RedFavorite else MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -248,7 +253,7 @@ fun VendorDetailScreen(
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.Edit, contentDescription = t("ویرایش"), tint = MaterialTheme.colorScheme.primary)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -261,7 +266,7 @@ fun VendorDetailScreen(
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                             .testTag("delete_vendor_button")
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "حذف وندور", tint = RedFavorite)
+                        Icon(Icons.Default.Delete, contentDescription = t("حذف وندور"), tint = RedFavorite)
                     }
                 }
             }
@@ -289,7 +294,7 @@ fun VendorDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "ارتباط مستقیم با وندور",
+                        text = t("ارتباط مستقیم با وندور"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -328,7 +333,7 @@ fun VendorDetailScreen(
                             ) {
                                 Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("تماس تلفنی", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(t("تماس تلفنی"), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                             }
 
                             if (vendor.mobile.isNotBlank()) {
@@ -339,7 +344,7 @@ fun VendorDetailScreen(
                                 ) {
                                     Icon(Icons.Default.Message, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("ارسال پیامک", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    Text(t("ارسال پیامک"), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                 }
                             }
                         }
@@ -349,7 +354,7 @@ fun VendorDetailScreen(
                     val allPhones = vendor.getAllPhones()
                     if (allPhones.isNotEmpty()) {
                         Text(
-                            text = "تلفن‌های ثابت:",
+                            text = t("تلفن‌های ثابت:"),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -375,7 +380,7 @@ fun VendorDetailScreen(
                                         )
                                         if (detectedCity != null) {
                                             Text(
-                                                text = "پیش‌شماره $detectedCity",
+                                                text = tf("پیش‌شماره {0}", detectedCity),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = BrandDark,
                                                 fontSize = 10.sp
@@ -384,7 +389,7 @@ fun VendorDetailScreen(
                                     }
                                 }
                                 IconButton(onClick = { dialPhone(context, p) }, modifier = Modifier.size(28.dp)) {
-                                    Icon(Icons.Default.Call, contentDescription = "تماس", tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Call, contentDescription = t("تماس"), tint = BrandPrimary, modifier = Modifier.size(18.dp))
                                 }
                             }
                         }
@@ -394,7 +399,7 @@ fun VendorDetailScreen(
                     val allMobiles = vendor.getAllMobiles()
                     if (allMobiles.isNotEmpty()) {
                         Text(
-                            text = "شماره‌های همراه:",
+                            text = t("شماره‌های همراه:"),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -419,10 +424,10 @@ fun VendorDetailScreen(
                                 }
                                 Row {
                                     IconButton(onClick = { dialPhone(context, m) }, modifier = Modifier.size(28.dp)) {
-                                        Icon(Icons.Default.Call, contentDescription = "تماس", tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.Call, contentDescription = t("تماس"), tint = BrandPrimary, modifier = Modifier.size(18.dp))
                                     }
                                     IconButton(onClick = { sendSms(context, m) }, modifier = Modifier.size(28.dp)) {
-                                        Icon(Icons.Default.Message, contentDescription = "پیامک", tint = BlueAccent, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.Message, contentDescription = t("پیامک"), tint = BlueAccent, modifier = Modifier.size(18.dp))
                                     }
                                 }
                             }
@@ -443,7 +448,7 @@ fun VendorDetailScreen(
                                 ) {
                                     Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("ایمیل", fontSize = 11.sp)
+                                    Text(t("ایمیل"), fontSize = 11.sp)
                                 }
                             }
                             if (vendor.website.isNotBlank()) {
@@ -454,7 +459,7 @@ fun VendorDetailScreen(
                                 ) {
                                     Icon(Icons.Default.Language, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("وبسایت", fontSize = 11.sp)
+                                    Text(t("وبسایت"), fontSize = 11.sp)
                                 }
                             }
                         }
@@ -475,7 +480,7 @@ fun VendorDetailScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${vendor.province}، ${vendor.city}",
+                                    text = tf("{0}، {1}", vendor.province, vendor.city),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -492,7 +497,7 @@ fun VendorDetailScreen(
                                 onClick = { onOpenMap(vendor.id) },
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Default.LocationOn, contentDescription = "نقشه", tint = BrandPrimary)
+                                Icon(Icons.Default.LocationOn, contentDescription = t("نقشه"), tint = BrandPrimary)
                             }
                         }
                     }
@@ -525,8 +530,8 @@ fun VendorDetailScreen(
             )
         }
 
-        // Full PDF Catalog Card
-        item {
+        // Full PDF Catalog Card (only when the vendor has catalog files)
+        if (vendor.catalogItems().isNotEmpty() || vendor.catalogPdfUrl.isNotBlank()) item {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -559,13 +564,17 @@ fun VendorDetailScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = vendor.catalogTitle,
+                                text = vendor.catalogItems().let { items ->
+                                    if (items.size > 1) tf("کاتالوگ‌ها ({0} فایل)", PersianUtils.toPersianDigits(items.size))
+                                    else (items.firstOrNull()?.title ?: vendor.catalogTitle).ifBlank { t("کاتالوگ فنی") }
+                                },
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "شامل مشخصات فنی، نقشه‌های ابعادی و استانداردها",
+                                text = vendor.catalogItems().joinToString("، ") { it.title.ifBlank { it.fileName } },
+                                maxLines = 2,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -579,14 +588,21 @@ fun VendorDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Button(
-                            onClick = { showCatalogViewer = true },
+                            onClick = {
+                                val items = vendor.catalogItems()
+                                when {
+                                    items.size > 1 -> showCatalogList = true
+                                    items.size == 1 -> viewingCatalog = items[0]
+                                    else -> viewingCatalog = CatalogItem(vendor.catalogTitle, "", "")
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White),
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("مشاهده و دانلود کاتالوگ")
+                            Text(t("مشاهده و دانلود کاتالوگ"))
                         }
                     }
                 }
@@ -609,7 +625,7 @@ fun VendorDetailScreen(
                         Icon(Icons.Default.Inventory, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "محصولات و تجهیزات تخصصی (${PersianUtils.toPersianDigits(vendorProducts.size)})",
+                            text = tf("محصولات و تجهیزات تخصصی ({0})", PersianUtils.toPersianDigits(vendorProducts.size)),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -638,7 +654,7 @@ fun VendorDetailScreen(
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("افزودن محصول", style = MaterialTheme.typography.labelSmall)
+                        Text(t("افزودن محصول"), style = MaterialTheme.typography.labelSmall)
                     }
                 }
 
@@ -646,7 +662,7 @@ fun VendorDetailScreen(
 
                 if (vendorProducts.isEmpty()) {
                     Text(
-                        text = "محصولی ثبت نشده است. با دکمه بالا می‌توانید محصول یا تجهیز اضافه کنید.",
+                        text = t("محصولی ثبت نشده است. با دکمه بالا می‌توانید محصول یا تجهیز اضافه کنید."),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -695,20 +711,20 @@ fun VendorDetailScreen(
                                             showProductDialog = true
                                         }
                                     ) {
-                                        Icon(Icons.Default.Edit, contentDescription = "ویرایش محصول", tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.Edit, contentDescription = t("ویرایش محصول"), tint = BrandPrimary, modifier = Modifier.size(18.dp))
                                     }
 
                                     IconButton(
                                         onClick = { viewModel.deleteProduct(product.id) }
                                     ) {
-                                        Icon(Icons.Default.Delete, contentDescription = "حذف محصول", tint = RedFavorite, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.Delete, contentDescription = t("حذف محصول"), tint = RedFavorite, modifier = Modifier.size(18.dp))
                                     }
                                 }
 
                                 if (product.specifications.isNotBlank()) {
                                     Spacer(modifier = Modifier.height(6.dp))
                                     Text(
-                                        text = "مشخصات فنی: ${product.specifications}",
+                                        text = tf("مشخصات فنی: {0}", product.specifications),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -745,7 +761,7 @@ fun VendorDetailScreen(
                             Icon(Icons.Default.NoteAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "یادداشت‌های داخلی (محرمانه)",
+                                text = t("یادداشت‌های داخلی (محرمانه)"),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -753,14 +769,14 @@ fun VendorDetailScreen(
                         }
 
                         IconButton(onClick = { showNotesDialog = true }) {
-                            Icon(Icons.Default.Edit, contentDescription = "ویرایش یادداشت", tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Default.Edit, contentDescription = t("ویرایش یادداشت"), tint = MaterialTheme.colorScheme.primary)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = if (vendor.notes.isNotBlank()) vendor.notes else "هیچ یادداشتی ثبت نشده است.",
+                        text = if (vendor.notes.isNotBlank()) vendor.notes else t("هیچ یادداشتی ثبت نشده است."),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -770,14 +786,51 @@ fun VendorDetailScreen(
 
     }
 
-    // Catalog Viewer Dialog
-    if (showCatalogViewer) {
+    // Catalog list (several files) and viewer
+    if (showCatalogList) {
+        AlertDialog(
+            onDismissRequest = { showCatalogList = false },
+            title = { Text(tf("کاتالوگ‌های {0}", vendor.name), fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    vendor.catalogItems().forEach { item ->
+                        Card(
+                            onClick = { showCatalogList = false; viewingCatalog = item },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = RedFavorite)
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = item.title.ifBlank { item.fileName },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 2
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCatalogList = false }) { Text(t("بستن")) }
+            }
+        )
+    }
+    viewingCatalog?.let { item ->
         CatalogViewerDialog(
             vendorName = vendor.name,
-            catalogTitle = vendor.catalogTitle,
-            catalogLocalPath = vendor.catalogLocalPath,
-            catalogPdfUrl = vendor.catalogPdfUrl,
-            onDismiss = { showCatalogViewer = false }
+            catalogTitle = item.title,
+            catalogLocalPath = item.path,
+            catalogPdfUrl = if (item.path.isBlank()) vendor.catalogPdfUrl else "",
+            onDismiss = { viewingCatalog = null }
         )
     }
 
@@ -787,7 +840,7 @@ fun VendorDetailScreen(
             onDismissRequest = { showContactDialog = false },
             title = {
                 Text(
-                    text = if (editingContact != null) "ویرایش پرسنل" else "افزودن پرسنل به وندور",
+                    text = if (editingContact != null) t("ویرایش پرسنل") else t("افزودن پرسنل به وندور"),
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -799,22 +852,22 @@ fun VendorDetailScreen(
                     OutlinedTextField(
                         value = contactName,
                         onValueChange = { contactName = it },
-                        label = { Text("نام و نام خانوادگی *") },
+                        label = { Text(t("نام و نام خانوادگی *")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = contactRole,
                         onValueChange = { contactRole = it },
-                        label = { Text("سمت سازمانی") },
-                        placeholder = { Text("مدیرعامل، کارشناس فنی...") },
+                        label = { Text(t("سمت سازمانی")) },
+                        placeholder = { Text(t("مدیرعامل، کارشناس فنی...")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = contactMobile,
                         onValueChange = { contactMobile = it },
-                        label = { Text("شماره همراه") },
+                        label = { Text(t("شماره همراه")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -825,14 +878,14 @@ fun VendorDetailScreen(
                         OutlinedTextField(
                             value = contactPhone,
                             onValueChange = { contactPhone = it },
-                            label = { Text("تلفن ثابت") },
+                            label = { Text(t("تلفن ثابت")) },
                             singleLine = true,
                             modifier = Modifier.weight(1.5f)
                         )
                         OutlinedTextField(
                             value = contactExt,
                             onValueChange = { contactExt = it },
-                            label = { Text("داخلی") },
+                            label = { Text(t("داخلی")) },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
@@ -840,7 +893,7 @@ fun VendorDetailScreen(
                     OutlinedTextField(
                         value = contactEmail,
                         onValueChange = { contactEmail = it },
-                        label = { Text("ایمیل") },
+                        label = { Text(t("ایمیل")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -850,7 +903,7 @@ fun VendorDetailScreen(
                 Button(
                     onClick = {
                         if (contactName.isBlank()) {
-                            Toast.makeText(context, "نام شخص الزامی است", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, t("نام شخص الزامی است"), Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         val toSave = ContactPerson(
@@ -868,12 +921,12 @@ fun VendorDetailScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
-                    Text("ذخیره")
+                    Text(t("ذخیره"))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showContactDialog = false }) {
-                    Text("انصراف")
+                    Text(t("انصراف"))
                 }
             }
         )
@@ -885,7 +938,7 @@ fun VendorDetailScreen(
             onDismissRequest = { showProductDialog = false },
             title = {
                 Text(
-                    text = if (editingProduct != null) "ویرایش محصول" else "افزودن محصول جدید",
+                    text = if (editingProduct != null) t("ویرایش محصول") else t("افزودن محصول جدید"),
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -899,7 +952,7 @@ fun VendorDetailScreen(
                     OutlinedTextField(
                         value = prodName,
                         onValueChange = { prodName = it },
-                        label = { Text("نام محصول *") },
+                        label = { Text(t("نام محصول *")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -910,14 +963,14 @@ fun VendorDetailScreen(
                         OutlinedTextField(
                             value = prodBrand,
                             onValueChange = { prodBrand = it },
-                            label = { Text("برند") },
+                            label = { Text(t("برند")) },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
                             value = prodModel,
                             onValueChange = { prodModel = it },
-                            label = { Text("مدل") },
+                            label = { Text(t("مدل")) },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
@@ -925,21 +978,21 @@ fun VendorDetailScreen(
                     OutlinedTextField(
                         value = prodCode,
                         onValueChange = { prodCode = it },
-                        label = { Text("کد فنی استاندارد") },
+                        label = { Text(t("کد فنی استاندارد")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = prodSpecs,
                         onValueChange = { prodSpecs = it },
-                        label = { Text("مشخصات فنی و هیدرولیکی") },
+                        label = { Text(t("مشخصات فنی و هیدرولیکی")) },
                         minLines = 2,
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = prodDesc,
                         onValueChange = { prodDesc = it },
-                        label = { Text("توضیحات کاربردی") },
+                        label = { Text(t("توضیحات کاربردی")) },
                         minLines = 2,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -949,7 +1002,7 @@ fun VendorDetailScreen(
                 Button(
                     onClick = {
                         if (prodName.isBlank()) {
-                            Toast.makeText(context, "نام محصول الزامی است", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, t("نام محصول الزامی است"), Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         val toSave = Product(
@@ -969,12 +1022,12 @@ fun VendorDetailScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
-                    Text("ذخیره محصول")
+                    Text(t("ذخیره محصول"))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showProductDialog = false }) {
-                    Text("انصراف")
+                    Text(t("انصراف"))
                 }
             }
         )
@@ -984,8 +1037,8 @@ fun VendorDetailScreen(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("حذف وندور") },
-            text = { Text("آیا از حذف شرکت «${vendor.name}» از لیست وندورها اطمینان دارید؟ تمامی پرسنل و محصولات این وندور نیز حذف خواهند شد.") },
+            title = { Text(t("حذف وندور")) },
+            text = { Text(tf("آیا از حذف شرکت «{0}» از لیست وندورها اطمینان دارید؟ تمامی پرسنل و محصولات این وندور نیز حذف خواهند شد.", vendor.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -994,12 +1047,12 @@ fun VendorDetailScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("حذف قطعی")
+                    Text(t("حذف قطعی"))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text("انصراف")
+                    Text(t("انصراف"))
                 }
             }
         )
@@ -1009,12 +1062,12 @@ fun VendorDetailScreen(
     if (showNotesDialog) {
         AlertDialog(
             onDismissRequest = { showNotesDialog = false },
-            title = { Text("ویرایش یادداشت محرمانه") },
+            title = { Text(t("ویرایش یادداشت محرمانه")) },
             text = {
                 OutlinedTextField(
                     value = notesText,
                     onValueChange = { notesText = it },
-                    label = { Text("یادداشت‌های داخلی") },
+                    label = { Text(t("یادداشت‌های داخلی")) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 4
                 )
@@ -1027,12 +1080,12 @@ fun VendorDetailScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
-                    Text("ذخیره یادداشت")
+                    Text(t("ذخیره یادداشت"))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showNotesDialog = false }) {
-                    Text("انصراف")
+                    Text(t("انصراف"))
                 }
             }
         )
@@ -1042,9 +1095,9 @@ fun VendorDetailScreen(
     if (showInquiryDialog) {
         AlertDialog(
             onDismissRequest = { showInquiryDialog = false },
-            title = { Text("درخواست استعلام قیمت و کاتالوگ") },
+            title = { Text(t("درخواست استعلام قیمت و کاتالوگ")) },
             text = {
-                Text("درخواست استعلام قیمت با اطلاعات تماس شما برای ${vendor.name} ارسال خواهد شد. همچنین می‌توانید مستقیماً از طریق پیام‌رسان‌ها پیام دهید.")
+                Text(tf("درخواست استعلام قیمت با اطلاعات تماس شما برای {0} ارسال خواهد شد. همچنین می‌توانید مستقیماً از طریق پیام‌رسان‌ها پیام دهید.", vendor.name))
             },
             confirmButton = {
                 Button(
@@ -1055,12 +1108,12 @@ fun VendorDetailScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
                 ) {
-                    Text("ارسال در واتس‌اپ")
+                    Text(t("ارسال در واتس‌اپ"))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showInquiryDialog = false }) {
-                    Text("بستن")
+                    Text(t("بستن"))
                 }
             }
         )

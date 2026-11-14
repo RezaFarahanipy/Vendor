@@ -33,7 +33,7 @@ import com.example.util.PersianUtils
         VendorPhone::class,
         BankAccount::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -279,6 +279,27 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v6: vendors can have several catalog files (JSON list), seeded from the legacy single catalog. */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE vendors ADD COLUMN catalogFilesJson TEXT NOT NULL DEFAULT '[]'")
+                class Row(val id: Long, val title: String, val file: String, val path: String)
+                val rows = ArrayList<Row>()
+                db.query("SELECT id, catalogTitle, catalogFileName, catalogLocalPath FROM vendors WHERE catalogLocalPath IS NOT NULL AND catalogLocalPath != ''").use { c ->
+                    while (c.moveToNext()) {
+                        rows.add(Row(c.getLong(0), c.getString(1) ?: "", c.getString(2) ?: "", c.getString(3) ?: ""))
+                    }
+                }
+                for (r in rows) {
+                    val json = org.json.JSONArray()
+                        .put(org.json.JSONObject().put("title", r.title).put("fileName", r.file).put("path", r.path))
+                        .toString()
+                    db.execSQL("UPDATE vendors SET catalogFilesJson = ? WHERE id = ?", arrayOf<Any?>(json, r.id))
+                }
+                Log.i(TAG, "MIGRATION_5_6 finished for ${rows.size} vendors")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 try {
@@ -287,7 +308,7 @@ abstract class AppDatabase : RoomDatabase() {
                         AppDatabase::class.java,
                         "vendorlist_database"
                     )
-                        .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
+                        .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                         .addCallback(object : RoomDatabase.Callback() {
                             override fun onOpen(db: SupportSQLiteDatabase) {
                                 super.onOpen(db)

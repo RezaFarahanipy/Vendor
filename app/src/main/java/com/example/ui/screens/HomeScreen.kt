@@ -96,6 +96,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.graphicsLayer
 import com.example.ui.theme.StatusBarStyle
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ExtendedFloatingActionButton
+import com.example.util.t
 
 @Composable
 fun HomeScreen(
@@ -109,130 +112,118 @@ fun HomeScreen(
     val categories by viewModel.allCategories.collectAsState()
     val isDark by viewModel.isDarkMode.collectAsState()
     val lang by viewModel.appLanguage.collectAsState()
-    val isFa = lang == AppLanguage.FA
     val shownCategories = remember(categories) { if (categories.isEmpty()) defaultCategories() else categories }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 96.dp)
-    ) {
-        item {
-            HomeHero(
-                isDark = isDark,
-                lang = lang,
-                vendorCount = allVendors.size,
-                favoriteCount = allVendors.count { it.isFavorite },
-                categoryCount = shownCategories.size,
-                onToggleTheme = { viewModel.toggleDarkMode() },
-                onToggleLanguage = { viewModel.toggleLanguage() },
-                onOpenSearch = { onOpenSearch("") }
-            )
-        }
-
-        item {
-            SectionTitle(
-                title = if (isFa) "دسته‌بندی‌ها" else "Categories",
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 8.dp)
-            )
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                itemsIndexed(shownCategories) { index, cat ->
-                    CategoryChipTile(
-                        category = cat,
-                        index = index,
-                        modifier = Modifier.staggerIn(index),
-                        onClick = { onOpenSearch(cat.name) }
-                    )
-                }
-            }
-        }
-
-        item {
-            val addInteraction = remember { MutableInteractionSource() }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp)
-                    .height(54.dp)
-                    .pressScale(addInteraction)
-                    .shadow(8.dp, RoundedCornerShape(16.dp), ambientColor = BrandPrimary, spotColor = BrandPrimary)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(BrandGradient)
-                    .clickable(interactionSource = addInteraction, indication = LocalIndication.current) { onOpenAddVendor() }
-                    .testTag("add_vendor_button"),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (isFa) "ثبت وندور جدید" else Localization.get("new_vendor_btn", lang),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
-                }
-            }
-        }
-
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SectionTitle(title = Localization.get("latest_vendors", lang))
-                Text(
-                    text = if (isFa) "${PersianUtils.toPersianDigits(allVendors.size)} وندور" else "${allVendors.size} Vendors",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 96.dp)
+        ) {
+            item {
+                HomeHero(
+                    isDark = isDark,
+                    lang = lang,
+                    onToggleTheme = { viewModel.toggleDarkMode() },
+                    onToggleLanguage = { viewModel.toggleLanguage() },
+                    onOpenSearch = { onOpenSearch("") }
                 )
             }
-        }
 
-        if (allVendors.isEmpty()) {
             item {
-                Column(
+                SectionTitle(
+                    title = t("دسته‌بندی‌ها"),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 8.dp)
+                )
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    itemsIndexed(shownCategories) { index, cat ->
+                        CategoryChipTile(
+                            category = cat,
+                            index = index,
+                            modifier = Modifier.staggerIn(index),
+                            onClick = { onOpenSearch(cat.name) }
+                        )
+                    }
+                }
+            }
+
+            item {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(32.dp)
-                        .staggerIn(0),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(start = 16.dp, end = 16.dp, top = 22.dp, bottom = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(BrandContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Store, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(34.dp))
+                    SectionTitle(title = t("آخرین وندورهای ثبت‌شده"))
+                    if (allVendors.size > 5) {
+                        TextButton(onClick = { onOpenSearch("") }) {
+                            Text(
+                                text = t("مشاهده همه"),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = if (isFa) "هنوز وندوری ثبت نشده. اولین وندور را اضافه کنید!" else "No vendors yet. Add the first one!",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            }
+
+            if (allVendors.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp)
+                            .staggerIn(0),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(BrandContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Store, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(34.dp))
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = t("هنوز وندوری ثبت نشده. اولین وندور را اضافه کنید!"),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                itemsIndexed(allVendors.take(5), key = { _, vendor -> vendor.id }) { index, vendor ->
+                    VendorCard(
+                        vendor = vendor,
+                        onClick = { onVendorClick(vendor.id) },
+                        onFavoriteClick = { viewModel.toggleVendorFavorite(vendor) },
+                        modifier = Modifier
+                            .animateItem()
+                            .staggerIn(index)
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
                     )
                 }
             }
-        } else {
-            itemsIndexed(allVendors, key = { _, vendor -> vendor.id }) { index, vendor ->
-                VendorCard(
-                    vendor = vendor,
-                    onClick = { onVendorClick(vendor.id) },
-                    onFavoriteClick = { viewModel.toggleVendorFavorite(vendor) },
-                    modifier = Modifier
-                        .animateItem()
-                        .staggerIn(index)
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                )
-            }
+        }
+
+        ExtendedFloatingActionButton(
+            onClick = onOpenAddVendor,
+            containerColor = BrandPrimary,
+            contentColor = Color.White,
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .testTag("add_vendor_fab")
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(t("ثبت وندور جدید"), fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -263,9 +254,6 @@ private fun SectionTitle(title: String, modifier: Modifier = Modifier) {
 private fun HomeHero(
     isDark: Boolean,
     lang: AppLanguage,
-    vendorCount: Int,
-    favoriteCount: Int,
-    categoryCount: Int,
     onToggleTheme: () -> Unit,
     onToggleLanguage: () -> Unit,
     onOpenSearch: () -> Unit
@@ -315,7 +303,7 @@ private fun HomeHero(
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.vendor_app_icon),
-                            contentDescription = Localization.get("app_title", lang),
+                            contentDescription = t("وندوریاب"),
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(RoundedCornerShape(10.dp))
@@ -324,13 +312,13 @@ private fun HomeHero(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = Localization.get("app_title", lang),
+                            text = t("وندوریاب"),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = Localization.get("app_subtitle", lang),
+                            text = t("سامانه جامع تأمین‌کنندگان صنعتی"),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.85f)
                         )
@@ -349,7 +337,7 @@ private fun HomeHero(
                         Icon(Icons.Default.Language, contentDescription = "Language", tint = Color.White, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (isFa) "EN" else "فا",
+                            text = if (isFa) "EN" else "FA",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -377,15 +365,8 @@ private fun HomeHero(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                HeroStat(Icons.Default.Store, vendorCount, if (isFa) "وندور" else "Vendors", Modifier.weight(1f))
-                HeroStat(Icons.Default.Favorite, favoriteCount, if (isFa) "نشان‌شده" else "Favorites", Modifier.weight(1f))
-                HeroStat(Icons.Default.Widgets, categoryCount, if (isFa) "دسته" else "Categories", Modifier.weight(1f))
-            }
+            Spacer(modifier = Modifier.height(4.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val searchInteraction = remember { MutableInteractionSource() }
             Surface(
                 onClick = onOpenSearch,
                 interactionSource = searchInteraction,
@@ -404,7 +385,7 @@ private fun HomeHero(
                     Icon(Icons.Default.Search, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = if (isFa) "جستجوی وندور، محصول یا شماره…" else "Search vendors, products or numbers…",
+                        text = t("جستجوی وندور، محصول یا شماره…"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -413,32 +394,6 @@ private fun HomeHero(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun HeroStat(icon: ImageVector, value: Int, label: String, modifier: Modifier = Modifier) {
-    val animated by animateIntAsState(targetValue = value, animationSpec = tween(900), label = "hero_stat")
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White.copy(alpha = 0.18f))
-            .padding(vertical = 10.dp, horizontal = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-        Text(
-            text = PersianUtils.toPersianDigits(animated),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.ExtraBold,
-            color = Color.White
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.9f),
-            maxLines = 1
-        )
     }
 }
 
@@ -497,7 +452,7 @@ private fun CategoryChipTile(
         }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = category.name,
+            text = t(category.name),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = InkDeep,

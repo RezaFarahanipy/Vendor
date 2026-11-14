@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.example.util.tf
+import com.example.util.t
 
 enum class AppScreen {
     ONBOARDING,
@@ -421,7 +423,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     fun updateVendorNotes(vendorId: Long, notes: String) {
         viewModelScope.launch {
             repository.updateNotes(vendorId, notes)
-            userNotice.value = "یادداشت با موفقیت ذخیره شد"
+            userNotice.value = t("یادداشت با موفقیت ذخیره شد")
         }
     }
 
@@ -434,10 +436,10 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             try {
                 val savedId = repository.saveVendorWithRelations(vendor, contacts, products)
-                userNotice.value = "اطلاعات وندور و جزئیات با موفقیت ذخیره شد"
+                userNotice.value = t("اطلاعات وندور و جزئیات با موفقیت ذخیره شد")
                 onComplete(savedId)
             } catch (e: Exception) {
-                userNotice.value = "خطا در ذخیره‌سازی: ${e.localizedMessage}"
+                userNotice.value = tf("خطا در ذخیره‌سازی: {0}", e.localizedMessage)
             }
         }
     }
@@ -446,10 +448,10 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             try {
                 repository.restoreSampleData()
-                userNotice.value = "داده‌های نمونه با موفقیت بارگذاری شدند"
+                userNotice.value = t("داده‌های نمونه با موفقیت بارگذاری شدند")
                 onComplete?.invoke()
             } catch (e: Exception) {
-                userNotice.value = "خطا در بارگذاری داده‌های نمونه: ${e.localizedMessage}"
+                userNotice.value = tf("خطا در بارگذاری داده‌های نمونه: {0}", e.localizedMessage)
             }
         }
     }
@@ -458,7 +460,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             repository.deleteVendor(vendorId)
             currentScreen.value = AppScreen.MAIN_TABS
-            userNotice.value = "وندور حذف شد"
+            userNotice.value = t("وندور حذف شد")
         }
     }
 
@@ -466,21 +468,21 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     fun addCategory(name: String, icon: String = "category") {
         viewModelScope.launch {
             repository.addCategory(Category(name = name.trim(), iconName = icon))
-            userNotice.value = "دسته‌بندی جدید افزوده شد"
+            userNotice.value = t("دسته‌بندی جدید افزوده شد")
         }
     }
 
     fun updateCategory(category: Category) {
         viewModelScope.launch {
             repository.updateCategory(category)
-            userNotice.value = "دسته‌بندی ویرایش شد"
+            userNotice.value = t("دسته‌بندی ویرایش شد")
         }
     }
 
     fun deleteCategory(categoryId: Long) {
         viewModelScope.launch {
             repository.deleteCategory(categoryId)
-            userNotice.value = "دسته‌بندی حذف شد"
+            userNotice.value = t("دسته‌بندی حذف شد")
         }
     }
 
@@ -488,21 +490,21 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     fun addActivityType(name: String) {
         viewModelScope.launch {
             repository.addActivityType(name.trim())
-            userNotice.value = "نوع فعالیت جدید افزوده شد"
+            userNotice.value = t("نوع فعالیت جدید افزوده شد")
         }
     }
 
     fun updateActivityType(activityType: ActivityType) {
         viewModelScope.launch {
             repository.updateActivityType(activityType)
-            userNotice.value = "نوع فعالیت بروزرسانی شد"
+            userNotice.value = t("نوع فعالیت بروزرسانی شد")
         }
     }
 
     fun deleteActivityType(activityTypeId: Long) {
         viewModelScope.launch {
             repository.deleteActivityType(activityTypeId)
-            userNotice.value = "نوع فعالیت حذف شد"
+            userNotice.value = t("نوع فعالیت حذف شد")
         }
     }
 
@@ -510,7 +512,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     fun saveProduct(product: Product, onComplete: () -> Unit = {}) {
         viewModelScope.launch {
             repository.saveProduct(product)
-            userNotice.value = "اطلاعات محصول ذخیره شد"
+            userNotice.value = t("اطلاعات محصول ذخیره شد")
             onComplete()
         }
     }
@@ -518,7 +520,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     fun deleteProduct(productId: Long) {
         viewModelScope.launch {
             repository.deleteProduct(productId)
-            userNotice.value = "محصول حذف شد"
+            userNotice.value = t("محصول حذف شد")
         }
     }
 
@@ -532,7 +534,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     fun saveContact(contact: ContactPerson, onComplete: () -> Unit = {}) {
         viewModelScope.launch {
             repository.saveContact(contact)
-            userNotice.value = "اطلاعات پرسنل با موفقیت ثبت شد"
+            userNotice.value = t("اطلاعات پرسنل با موفقیت ثبت شد")
             onComplete()
         }
     }
@@ -540,7 +542,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     fun deleteContact(contactId: Long) {
         viewModelScope.launch {
             repository.deleteContact(contactId)
-            userNotice.value = "پرسنل حذف شد"
+            userNotice.value = t("پرسنل حذف شد")
         }
     }
 
@@ -559,14 +561,14 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             val csv = repository.exportCsv()
             onSuccess(csv)
-            userNotice.value = "خروجی CSV آماده شد"
+            userNotice.value = t("خروجی CSV آماده شد")
         }
     }
 
     fun importFromCsv(csv: String, onComplete: ((com.example.util.ImportSummary) -> Unit)? = null) {
         viewModelScope.launch {
             val summary = repository.importCsv(csv)
-            userNotice.value = "تعداد ${summary.newCount} وندور جدید وارد شد. ${summary.duplicateSkippedCount} مورد تکراری رد شد."
+            userNotice.value = tf("تعداد {0} وندور جدید وارد شد. {1} مورد تکراری رد شد.", summary.newCount, summary.duplicateSkippedCount)
             onComplete?.invoke(summary)
         }
     }
@@ -575,14 +577,14 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             val json = repository.exportFullBackupJson()
             onSuccess(json)
-            userNotice.value = "فایل پشتیبان کامل JSON آماده شد"
+            userNotice.value = t("فایل پشتیبان کامل JSON آماده شد")
         }
     }
 
     fun exportFullBackupZip(context: Context, outputStream: java.io.OutputStream, onComplete: () -> Unit) {
         viewModelScope.launch {
             repository.exportFullBackupZip(context, outputStream)
-            userNotice.value = "فایل پشتیبان کامل (ZIP شامل تصاویر و کاتالوگ‌ها) با موفقیت ذخیره شد"
+            userNotice.value = t("فایل پشتیبان کامل (ZIP شامل تصاویر و کاتالوگ‌ها) با موفقیت ذخیره شد")
             onComplete()
         }
     }
@@ -590,7 +592,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     fun restoreFullBackupStream(context: Context, inputStream: java.io.InputStream, onComplete: ((inserted: Int, skipped: Int) -> Unit)? = null) {
         viewModelScope.launch {
             val (inserted, skipped) = repository.restoreFullBackupStream(context, inputStream)
-            userNotice.value = "پشتیبان بازیابی شد: $inserted وندور جدید، $skipped تکراری رد شد."
+            userNotice.value = tf("پشتیبان بازیابی شد: {0} وندور جدید، {1} تکراری رد شد.", inserted, skipped)
             onComplete?.invoke(inserted, skipped)
         }
     }
@@ -598,7 +600,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     fun restoreFullBackupJson(jsonString: String, onComplete: ((inserted: Int, skipped: Int) -> Unit)? = null) {
         viewModelScope.launch {
             val (inserted, skipped) = repository.restoreFullBackupJson(jsonString)
-            userNotice.value = "پشتیبان بازیابی شد: $inserted وندور جدید، $skipped تکراری رد شد."
+            userNotice.value = tf("پشتیبان بازیابی شد: {0} وندور جدید، {1} تکراری رد شد.", inserted, skipped)
             onComplete?.invoke(inserted, skipped)
         }
     }
@@ -606,7 +608,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     fun resetToSampleData() {
         viewModelScope.launch {
             repository.restoreSampleData()
-            userNotice.value = "اطلاعات پیش‌فرض بازیابی شدند"
+            userNotice.value = t("اطلاعات پیش‌فرض بازیابی شدند")
         }
     }
 

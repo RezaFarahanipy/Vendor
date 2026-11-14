@@ -23,6 +23,8 @@ import com.example.data.model.VendorCategoryCrossRef
 import com.example.data.model.VendorPhone
 import com.example.data.model.VendorTagCrossRef
 import kotlinx.coroutines.withContext
+import com.example.data.model.catalogItems
+import com.example.util.t
 
 class VendorRepository(private val database: AppDatabase) {
 
@@ -147,19 +149,19 @@ class VendorRepository(private val database: AppDatabase) {
             relationDao.deleteVendorPhonesByVendorId(savedVendorId)
             val phonesToInsert = mutableListOf<VendorPhone>()
             if (vendor.phone.isNotBlank()) {
-                phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "LANDLINE", number = vendor.phone.trim(), label = "تلفن ثابت"))
+                phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "LANDLINE", number = vendor.phone.trim(), label = t("تلفن ثابت")))
             }
             if (vendor.mobile.isNotBlank()) {
-                phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "MOBILE", number = vendor.mobile.trim(), label = "موبایل اصلی"))
+                phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "MOBILE", number = vendor.mobile.trim(), label = t("موبایل اصلی")))
             }
             if (vendor.secondaryPhones.isNotBlank()) {
                 vendor.secondaryPhones.split(",", "،", "\n").map { it.trim() }.filter { it.isNotBlank() }.forEach { sec ->
-                    phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "LANDLINE", number = sec, label = "تلفن فرعی"))
+                    phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "LANDLINE", number = sec, label = t("تلفن فرعی")))
                 }
             }
             if (vendor.additionalMobiles.isNotBlank()) {
                 vendor.additionalMobiles.split(",", "،", "\n").map { it.trim() }.filter { it.isNotBlank() }.forEach { mob ->
-                    phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "MOBILE", number = mob, label = "موبایل فرعی"))
+                    phonesToInsert.add(VendorPhone(vendorId = savedVendorId, type = "MOBILE", number = mob, label = t("موبایل فرعی")))
                 }
             }
             if (phonesToInsert.isNotEmpty()) {
@@ -228,9 +230,9 @@ class VendorRepository(private val database: AppDatabase) {
                     if (file.exists() && file.isFile) file.delete()
                 } catch (_: Exception) {}
             }
-            if (vendor.catalogLocalPath.isNotBlank()) {
+            vendor.catalogItems().forEach { item ->
                 try {
-                    val file = File(vendor.catalogLocalPath)
+                    val file = File(item.path)
                     if (file.exists() && file.isFile) file.delete()
                 } catch (_: Exception) {}
             }

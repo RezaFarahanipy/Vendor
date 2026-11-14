@@ -36,6 +36,8 @@ import com.example.ui.theme.InkDeep
 import com.example.ui.theme.RedFavorite
 import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
+import com.example.util.tf
+import com.example.util.t
 
 /**
  * Step 6: Products (محصولات) - Dedicated step with single-line button and product items
@@ -47,7 +49,7 @@ fun Step6Products(
     onEditProductClick: (index: Int, product: Product) -> Unit
 ) {
     Text(
-        text = "محصولات",
+        text = t("محصولات"),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onBackground
@@ -65,7 +67,7 @@ fun Step6Products(
             Icon(Icons.Default.Inventory, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "محصولات (${PersianUtils.toPersianDigits(vendorProductsList.size)} کالا)",
+                text = tf("محصولات ({0} کالا)", PersianUtils.toPersianDigits(vendorProductsList.size)),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -85,7 +87,7 @@ fun Step6Products(
             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "افزودن محصول",
+                text = t("افزودن محصول"),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -101,7 +103,7 @@ fun Step6Products(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
         ) {
             Text(
-                text = "هنوز محصول یا کالایی برای این وندور ثبت نشده است. با زدن دکمه «افزودن محصول» می‌توانید نام دستگاه، برند، کد فنی و مشخصات فنی را اضافه کنید.",
+                text = t("هنوز محصول یا کالایی برای این وندور ثبت نشده است. با زدن دکمه «افزودن محصول» می‌توانید نام دستگاه، برند، کد فنی و مشخصات فنی را اضافه کنید."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(14.dp)
@@ -145,13 +147,13 @@ fun Step6Products(
                     IconButton(
                         onClick = { onEditProductClick(index, prod) }
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = "ویرایش", tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Edit, contentDescription = t("ویرایش"), tint = BrandPrimary, modifier = Modifier.size(18.dp))
                     }
 
                     IconButton(
                         onClick = { vendorProductsList.removeAt(index) }
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "حذف", tint = RedFavorite, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Delete, contentDescription = t("حذف"), tint = RedFavorite, modifier = Modifier.size(18.dp))
                     }
                 }
             }

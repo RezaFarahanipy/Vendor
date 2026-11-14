@@ -36,6 +36,8 @@ import com.example.ui.theme.RedFavorite
 import com.example.ui.theme.BrandDark
 import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
+import com.example.util.tf
+import com.example.util.t
 
 /**
  * Step 3: Contacts (Landline with 021-xxxxxxxx mask & city detection, Mobiles, Stacked Email & Website)
@@ -55,7 +57,7 @@ fun Step3Contacts(
     onWebsiteChange: (String) -> Unit
 ) {
     Text(
-        text = "اطلاعات تماس، ارتباطات و وب‌سایت",
+        text = t("اطلاعات تماس، ارتباطات و وب‌سایت"),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onBackground
@@ -70,7 +72,7 @@ fun Step3Contacts(
             Icon(Icons.Default.Phone, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "شماره‌های تلفن ثابت شرکت (با کد شهر)",
+                text = t("شماره‌های تلفن ثابت شرکت (با کد شهر)"),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -83,7 +85,7 @@ fun Step3Contacts(
                 val formatted = PersianUtils.formatLandlinePhone(input)
                 onPrimaryPhoneChange(formatted)
             },
-            label = { Text("تلفن ثابت اصلی (ماسک 021-xxxxxxxx)") },
+            label = { Text(t("تلفن ثابت اصلی (ماسک 021-xxxxxxxx)")) },
             placeholder = { Text("021-77654321") },
             singleLine = true,
             trailingIcon = {
@@ -105,9 +107,9 @@ fun Step3Contacts(
             },
             supportingText = {
                 if (primaryCity != null) {
-                    Text("شهر شناسایی‌شده: $primaryCity", color = BrandDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(tf("شهر شناسایی‌شده: {0}", primaryCity), color = BrandDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 } else {
-                    Text("الگوی معتبر: کد شهر ۳ رقم + ۸ رقم تلفن (مثال: 021-88776655)", fontSize = 10.sp)
+                    Text(t("الگوی معتبر: کد شهر ۳ رقم + ۸ رقم تلفن (مثال: 021-88776655)"), fontSize = 10.sp)
                 }
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
@@ -125,7 +127,7 @@ fun Step3Contacts(
                     onValueChange = { input ->
                         additionalPhones[idx] = PersianUtils.formatLandlinePhone(input)
                     },
-                    label = { Text("تلفن ثابت فرعی ${PersianUtils.toPersianDigits(idx + 1)}") },
+                    label = { Text(tf("تلفن ثابت فرعی {0}", PersianUtils.toPersianDigits(idx + 1))) },
                     placeholder = { Text("021-77654322") },
                     singleLine = true,
                     trailingIcon = {
@@ -149,7 +151,7 @@ fun Step3Contacts(
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = { additionalPhones.removeAt(idx) }) {
-                    Icon(Icons.Default.Delete, contentDescription = "حذف خط", tint = RedFavorite)
+                    Icon(Icons.Default.Delete, contentDescription = t("حذف خط"), tint = RedFavorite)
                 }
             }
         }
@@ -161,7 +163,7 @@ fun Step3Contacts(
             TextButton(onClick = { additionalPhones.add("") }) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("افزودن خط ثابت دیگر")
+                Text(t("افزودن خط ثابت دیگر"))
             }
         }
     }
@@ -175,7 +177,7 @@ fun Step3Contacts(
             Icon(Icons.Default.PhoneAndroid, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "شماره‌های همراه شرکت (ارتباط پیام‌رسان‌ها)",
+                text = t("شماره‌های همراه شرکت (ارتباط پیام‌رسان‌ها)"),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -185,14 +187,14 @@ fun Step3Contacts(
         OutlinedTextField(
             value = primaryMobile,
             onValueChange = onPrimaryMobileChange,
-            label = { Text("شماره همراه اصلی") },
+            label = { Text(t("شماره همراه اصلی")) },
             placeholder = { Text("09123456789") },
             singleLine = true,
             isError = isMobError,
             supportingText = if (isMobError) {
-                { Text(mobileError ?: "شماره همراه باید ۱۱ رقم بوده و با ۰۹ شروع شود", color = MaterialTheme.colorScheme.error) }
+                { Text(mobileError ?: t("شماره همراه باید ۱۱ رقم بوده و با ۰۹ شروع شود"), color = MaterialTheme.colorScheme.error) }
             } else {
-                { Text("برای تماس مستقیم و اتصال به روبیکا، تلگرام، بله و واتس‌اپ", fontSize = 10.sp) }
+                { Text(t("برای تماس مستقیم و اتصال به روبیکا، تلگرام، بله و واتس‌اپ"), fontSize = 10.sp) }
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             modifier = Modifier.fillMaxWidth()
@@ -206,14 +208,14 @@ fun Step3Contacts(
                 OutlinedTextField(
                     value = m,
                     onValueChange = { additionalMobiles[idx] = it },
-                    label = { Text("شماره همراه فرعی ${PersianUtils.toPersianDigits(idx + 1)}") },
+                    label = { Text(tf("شماره همراه فرعی {0}", PersianUtils.toPersianDigits(idx + 1))) },
                     placeholder = { Text("09129876543") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = { additionalMobiles.removeAt(idx) }) {
-                    Icon(Icons.Default.Delete, contentDescription = "حذف شماره", tint = RedFavorite)
+                    Icon(Icons.Default.Delete, contentDescription = t("حذف شماره"), tint = RedFavorite)
                 }
             }
         }
@@ -225,7 +227,7 @@ fun Step3Contacts(
             TextButton(onClick = { additionalMobiles.add("") }) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("افزودن شماره همراه دیگر")
+                Text(t("افزودن شماره همراه دیگر"))
             }
         }
     }
@@ -238,7 +240,7 @@ fun Step3Contacts(
         OutlinedTextField(
             value = email,
             onValueChange = onEmailChange,
-            label = { Text("پست الکترونیک (ایمیل رسمی)") },
+            label = { Text(t("پست الکترونیک (ایمیل رسمی)")) },
             placeholder = { Text("info@company.com") },
             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = BrandPrimary) },
             singleLine = true,
@@ -249,7 +251,7 @@ fun Step3Contacts(
         OutlinedTextField(
             value = website,
             onValueChange = onWebsiteChange,
-            label = { Text("وبسایت رسمی شرکت") },
+            label = { Text(t("وبسایت رسمی شرکت")) },
             placeholder = { Text("www.company.com") },
             leadingIcon = { Icon(Icons.Default.Language, contentDescription = null, tint = BrandPrimary) },
             singleLine = true,

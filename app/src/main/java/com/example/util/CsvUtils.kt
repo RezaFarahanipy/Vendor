@@ -16,6 +16,9 @@ import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import com.example.data.model.CatalogItem
+import com.example.data.model.CatalogCodec
+import com.example.data.model.catalogItems
 
 data class FullBackupData(
     val version: Int = 1,
@@ -313,6 +316,7 @@ object CsvUtils {
             vo.put("catalogTitle", v.catalogTitle)
             vo.put("catalogLocalPath", v.catalogLocalPath)
             vo.put("catalogFileName", v.catalogFileName)
+            vo.put("catalogFilesJson", v.catalogFilesJson)
             vo.put("isVerified", v.isVerified)
             vo.put("isFavorite", v.isFavorite)
             vo.put("rating", v.rating.toDouble())
@@ -397,6 +401,7 @@ object CsvUtils {
                         catalogTitle = vo.optString("catalogTitle", ""),
                         catalogLocalPath = vo.optString("catalogLocalPath", ""),
                         catalogFileName = vo.optString("catalogFileName", ""),
+                        catalogFilesJson = vo.optString("catalogFilesJson", "[]"),
                         isVerified = vo.optBoolean("isVerified", false),
                         isFavorite = vo.optBoolean("isFavorite", false),
                         rating = vo.optDouble("rating", 0.0).toFloat(),
@@ -508,6 +513,7 @@ object CsvUtils {
             vo.put("catalogTitle", v.catalogTitle)
             vo.put("catalogLocalPath", v.catalogLocalPath)
             vo.put("catalogFileName", v.catalogFileName)
+            vo.put("catalogFilesJson", v.catalogFilesJson)
             vo.put("isVerified", v.isVerified)
             vo.put("isFavorite", v.isFavorite)
             vo.put("rating", v.rating.toDouble())
@@ -535,18 +541,28 @@ object CsvUtils {
                 }
             }
 
-            // Pack catalog PDF if present locally
-            if (v.catalogLocalPath.isNotBlank()) {
-                val catFile = File(v.catalogLocalPath)
-                if (catFile.exists() && catFile.isFile) {
-                    val entryName = "files/catalogs/v_${v.id}_${catFile.name}"
+            // Pack all catalog files (multiple) if present locally
+            val catalogsOut = JSONArray()
+            v.catalogItems().forEachIndexed { idx, item ->
+                val catFile = if (item.path.isNotBlank()) File(item.path) else null
+                if (catFile != null && catFile.exists() && catFile.isFile) {
+                    val entryName = "files/catalogs/v_${v.id}_${idx}_${catFile.name}"
                     if (filesWritten.add(entryName)) {
                         zipOut.putNextEntry(ZipEntry(entryName))
                         catFile.inputStream().use { input -> input.copyTo(zipOut) }
                         zipOut.closeEntry()
                     }
-                    vo.put("relativeCatalogPath", entryName)
+                    catalogsOut.put(
+                        JSONObject()
+                            .put("title", item.title)
+                            .put("fileName", item.fileName)
+                            .put("relativePath", entryName)
+                    )
                 }
+            }
+            if (catalogsOut.length() > 0) {
+                vo.put("catalogs", catalogsOut)
+                vo.put("relativeCatalogPath", catalogsOut.getJSONObject(0).getString("relativePath"))
             }
 
             vendorsArray.put(vo)
@@ -670,6 +686,23 @@ object CsvUtils {
                 if (relCat.isNotBlank() && extractedFiles.containsKey(relCat)) {
                     val localCatFile = File(extractedFiles[relCat]!!)
                     updated = updated.copy(catalogLocalPath = localCatFile.absolutePath)
+                }
+                val catArr = vo.optJSONArray("catalogs")
+                if (catArr != null && catArr.length() > 0) {
+                    val restored = ArrayList<CatalogItem>()
+                    for (ci in 0 until catArr.length()) {
+                        val co = catArr.optJSONObject(ci) ?: continue
+                        val extracted = extractedFiles[co.optString("relativePath", "")] ?: continue
+                        restored.add(CatalogItem(co.optString("title", ""), co.optString("fileName", ""), File(extracted).absolutePath))
+                    }
+                    if (restored.isNotEmpty()) {
+                        updated = updated.copy(
+                            catalogFilesJson = CatalogCodec.encode(restored),
+                            catalogLocalPath = restored[0].path,
+                            catalogFileName = restored[0].fileName,
+                            catalogTitle = restored[0].title.ifBlank { updated.catalogTitle }
+                        )
+                    }
                 }
             }
             updated

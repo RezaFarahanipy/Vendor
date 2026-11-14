@@ -28,8 +28,8 @@ data class Vendor(
     val province: String = "تهران",
     val city: String = "تهران",
     val address: String = "",
-    val latitude: Double = 35.73576,
-    val longitude: Double = 51.44678,
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
     val logoDrawable: String = "vendor_app_icon",
     val logoUri: String = "", // Saved file path or content URI
     val businessCardUrl: String = "",
@@ -37,6 +37,7 @@ data class Vendor(
     val catalogLocalPath: String = "", // Local offline PDF file path
     val catalogFileName: String = "",
     val catalogTitle: String = "",
+    val catalogFilesJson: String = "[]", // JSON list of attached catalog files
     val isVerified: Boolean = false,
     val isFavorite: Boolean = false,
     val rating: Float = 0f,
