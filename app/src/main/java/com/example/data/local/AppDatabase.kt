@@ -33,7 +33,7 @@ import com.example.util.PersianUtils
         VendorPhone::class,
         BankAccount::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -300,6 +300,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v7: vendors can have several addresses (JSON list); older rows fall back to the legacy address fields. */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE vendors ADD COLUMN addressesJson TEXT NOT NULL DEFAULT '[]'")
+                Log.i(TAG, "MIGRATION_6_7 finished")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 try {
@@ -308,7 +316,7 @@ abstract class AppDatabase : RoomDatabase() {
                         AppDatabase::class.java,
                         "vendorlist_database"
                     )
-                        .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                        .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                         .addCallback(object : RoomDatabase.Callback() {
                             override fun onOpen(db: SupportSQLiteDatabase) {
                                 super.onOpen(db)

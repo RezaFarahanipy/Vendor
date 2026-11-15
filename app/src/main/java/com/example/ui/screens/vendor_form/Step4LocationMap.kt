@@ -7,51 +7,52 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.model.VendorAddress
 import com.example.ui.components.LocationPickerCard
-import com.example.util.t
-import com.example.ui.theme.InkDeep
+import com.example.ui.theme.BrandDark
 import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import com.example.util.t
 import com.example.util.tf
 
 /**
- * Step 4: Address (type, province/city, postal code, full address) and map location.
+ * Step 4: One or more addresses (type, province/city, postal code, full address) with a map location each.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Step4LocationMap(
     name: String,
-    latitude: Double,
-    longitude: Double,
-    onLocationChange: (lat: Double, lng: Double, prov: String?, cty: String?) -> Unit,
-    province: String,
-    onProvinceChange: (String) -> Unit,
-    city: String,
-    onCityChange: (String) -> Unit,
-    addressType: String = "کارخانه / کارگاه",
-    onAddressTypeChange: (String) -> Unit = {},
-    postalCode: String = "",
-    onPostalCodeChange: (String) -> Unit = {},
-    address: String,
-    onAddressChange: (String) -> Unit
+    addresses: List<VendorAddress>,
+    onUpdate: (Int, VendorAddress) -> Unit,
+    onAdd: () -> Unit,
+    onRemove: (Int) -> Unit
 ) {
     Text(
         text = t("نشانی و موقعیت مکانی"),
@@ -60,6 +61,40 @@ fun Step4LocationMap(
         color = MaterialTheme.colorScheme.onBackground
     )
 
+    addresses.forEachIndexed { index, addr ->
+        key(addr.uid) {
+            AddressEditor(
+                index = index,
+                total = addresses.size,
+                addr = addr,
+                vendorName = name,
+                onChange = { onUpdate(index, it) },
+                onRemove = { onRemove(index) }
+            )
+        }
+    }
+
+    OutlinedButton(
+        onClick = onAdd,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(t("افزودن آدرس دیگر"), fontWeight = FontWeight.Bold)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AddressEditor(
+    index: Int,
+    total: Int,
+    addr: VendorAddress,
+    vendorName: String,
+    onChange: (VendorAddress) -> Unit,
+    onRemove: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -72,6 +107,26 @@ fun Step4LocationMap(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Place, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(22.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = tf("آدرس شماره {0}", PersianUtils.toPersianDigits(index + 1)),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandDark,
+                    modifier = Modifier.weight(1f)
+                )
+                if (total > 1) {
+                    IconButton(onClick = onRemove) {
+                        Icon(Icons.Default.Delete, contentDescription = t("حذف آدرس"), tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+
             Text(
                 text = t("نوع محل"),
                 style = MaterialTheme.typography.titleSmall,
@@ -84,10 +139,9 @@ fun Step4LocationMap(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 addressTypes.forEach { typeOption ->
-                    val isSelected = addressType == typeOption
                     FilterChip(
-                        selected = isSelected,
-                        onClick = { onAddressTypeChange(typeOption) },
+                        selected = addr.type == typeOption,
+                        onClick = { onChange(addr.copy(type = typeOption)) },
                         label = { Text(t(typeOption), style = MaterialTheme.typography.labelMedium) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = BrandPrimary,
@@ -103,16 +157,16 @@ fun Step4LocationMap(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 OutlinedTextField(
-                    value = province,
-                    onValueChange = onProvinceChange,
+                    value = addr.province,
+                    onValueChange = { onChange(addr.copy(province = it)) },
                     label = { Text(t("استان")) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
-                    value = city,
-                    onValueChange = onCityChange,
+                    value = addr.city,
+                    onValueChange = { onChange(addr.copy(city = it)) },
                     label = { Text(t("شهر")) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
@@ -120,13 +174,12 @@ fun Step4LocationMap(
                 )
             }
 
-            val postalDigits = PersianUtils.toEnglishDigits(postalCode).filter { it.isDigit() }
-            val isPostalError = postalCode.isNotBlank() && postalDigits.length != 10
+            val postalDigits = PersianUtils.toEnglishDigits(addr.postalCode).filter { it.isDigit() }
+            val isPostalError = addr.postalCode.isNotBlank() && postalDigits.length != 10
             OutlinedTextField(
-                value = postalCode,
+                value = addr.postalCode,
                 onValueChange = { input ->
-                    val digits = PersianUtils.toEnglishDigits(input).filter { it.isDigit() }.take(10)
-                    onPostalCodeChange(digits)
+                    onChange(addr.copy(postalCode = PersianUtils.toEnglishDigits(input).filter { it.isDigit() }.take(10)))
                 },
                 label = { Text(t("کد پستی (۱۰ رقمی)")) },
                 placeholder = { Text("1234567890") },
@@ -141,21 +194,21 @@ fun Step4LocationMap(
             )
 
             OutlinedTextField(
-                value = address,
-                onValueChange = onAddressChange,
+                value = addr.address,
+                onValueChange = { onChange(addr.copy(address = it)) },
                 label = { Text(t("نشانی پستی دقیق")) },
                 placeholder = { Text(t("خیابان، کوچه، پلاک، واحد...")) },
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2
             )
+
+            LocationPickerCard(
+                latitude = addr.latitude,
+                longitude = addr.longitude,
+                onLocationChange = { lat, lng -> onChange(addr.copy(latitude = lat, longitude = lng)) },
+                vendorTitle = vendorName.ifBlank { "Vendor" } + if (index > 0) " (${index + 1})" else ""
+            )
         }
     }
-
-    LocationPickerCard(
-        latitude = latitude,
-        longitude = longitude,
-        onLocationChange = { lat, lng -> onLocationChange(lat, lng, null, null) },
-        vendorTitle = name.ifBlank { "Vendor" }
-    )
 }

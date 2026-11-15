@@ -490,5 +490,10 @@ object EnglishTranslations {
         "نام شرکت" to "Company name",
         "FA" to "FA",
         "فا" to "FA",
+        "آدرس شماره {0}" to "Address #{0}",
+        "افزودن آدرس دیگر" to "Add another address",
+        "حذف آدرس" to "Remove address",
+        "کد پستی: {0}" to "Postal code: {0}",
+        "نام بانک" to "Bank name",
     )
 }

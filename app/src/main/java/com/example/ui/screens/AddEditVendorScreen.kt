@@ -145,6 +145,9 @@ import com.example.util.tf
 import com.example.data.model.CatalogItem
 import com.example.data.model.CatalogCodec
 import com.example.data.model.catalogItems
+import com.example.data.model.VendorAddress
+import com.example.data.model.AddressCodec
+import com.example.data.model.addressItems
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -249,34 +252,12 @@ fun AddEditVendorScreen(
 
     // Step 4: Location & Map
     val currentVendor = editingVendor
-    var province by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.province ?: "تهران") }
-    var city by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.city ?: "تهران") }
-    var addressType by rememberSaveable(currentVendor) {
-        val addr = currentVendor?.address
-        mutableStateOf(
-            if (addr != null && addr.startsWith("[") && addr.contains("]")) {
-                addr.substringAfter("[").substringBefore("]")
-            } else "کارخانه / کارگاه"
-        )
+    val addressList = remember(currentVendor) {
+        mutableStateListOf<VendorAddress>().apply {
+            addAll(currentVendor?.addressItems() ?: emptyList())
+            if (isEmpty()) add(VendorAddress())
+        }
     }
-    var postalCode by rememberSaveable(currentVendor) {
-        val addr = currentVendor?.address
-        mutableStateOf(
-            if (addr != null && addr.contains("کد پستی:")) {
-                addr.substringAfter("کد پستی:").filter { it.isDigit() }.take(10)
-            } else ""
-        )
-    }
-    var address by rememberSaveable(currentVendor) {
-        val addr = currentVendor?.address
-        mutableStateOf(
-            if (addr != null && addr.startsWith("[") && addr.contains("]")) {
-                addr.substringAfter("]").substringBefore("(کد پستی:").trim()
-            } else addr ?: ""
-        )
-    }
-    var latitude by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.latitude ?: 0.0) }
-    var longitude by rememberSaveable(currentVendor) { mutableStateOf(currentVendor?.longitude ?: 0.0) }
 
     // Step 5: Products & Catalog
     val vendorProductsList = remember(editingVendor) { mutableStateListOf<Product>() }
@@ -425,11 +406,7 @@ fun AddEditVendorScreen(
                 val serializedAccounts = BankAccountUtils.serialize(bankAccountsList)
                 val currentEditing = editingVendor
 
-                val fullAddress = when {
-                    postalCode.isNotBlank() && !address.contains("کد پستی") -> "[$addressType] ${address.trim()} (کد پستی: $postalCode)"
-                    addressType.isNotBlank() && !address.startsWith("[") -> "[$addressType] ${address.trim()}"
-                    else -> address.trim()
-                }
+                val firstAddress = addressList.firstOrNull() ?: VendorAddress()
 
                 val vendorToSave = if (currentEditing != null) {
                     currentEditing.copy(
@@ -445,11 +422,12 @@ fun AddEditVendorScreen(
                         additionalMobiles = additionalMobiles.filter { it.isNotBlank() }.joinToString(", "),
                         email = email.trim(),
                         website = website.trim(),
-                        province = province.trim(),
-                        city = city.trim(),
-                        address = fullAddress,
-                        latitude = latitude,
-                        longitude = longitude,
+                        province = firstAddress.province.trim(),
+                        city = firstAddress.city.trim(),
+                        address = firstAddress.composite(),
+                        latitude = firstAddress.latitude,
+                        longitude = firstAddress.longitude,
+                        addressesJson = AddressCodec.encode(addressList.toList()),
                         logoUri = logoUri,
                         catalogTitle = catalogList.firstOrNull()?.title.orEmpty().trim(),
                         catalogLocalPath = catalogList.firstOrNull()?.path.orEmpty(),
@@ -477,11 +455,12 @@ fun AddEditVendorScreen(
                         additionalMobiles = additionalMobiles.filter { it.isNotBlank() }.joinToString(", "),
                         email = email.trim(),
                         website = website.trim(),
-                        province = province.trim(),
-                        city = city.trim(),
-                        address = fullAddress,
-                        latitude = latitude,
-                        longitude = longitude,
+                        province = firstAddress.province.trim(),
+                        city = firstAddress.city.trim(),
+                        address = firstAddress.composite(),
+                        latitude = firstAddress.latitude,
+                        longitude = firstAddress.longitude,
+                        addressesJson = AddressCodec.encode(addressList.toList()),
                         logoUri = logoUri,
                         catalogTitle = catalogList.firstOrNull()?.title.orEmpty().trim(),
                         catalogLocalPath = catalogList.firstOrNull()?.path.orEmpty(),
@@ -646,24 +625,10 @@ fun AddEditVendorScreen(
                         )
                         4 -> Step4LocationMap(
                             name = name,
-                            latitude = latitude,
-                            longitude = longitude,
-                            onLocationChange = { lat, lng, prov, cty ->
-                                latitude = lat
-                                longitude = lng
-                                if (prov != null) province = prov
-                                if (cty != null) city = cty
-                            },
-                            province = province,
-                            onProvinceChange = { province = it },
-                            city = city,
-                            onCityChange = { city = it },
-                            addressType = addressType,
-                            onAddressTypeChange = { addressType = it },
-                            postalCode = postalCode,
-                            onPostalCodeChange = { postalCode = it },
-                            address = address,
-                            onAddressChange = { address = it }
+                            addresses = addressList,
+                            onUpdate = { i, a -> if (i in addressList.indices) addressList[i] = a },
+                            onAdd = { addressList.add(VendorAddress(province = "", city = "")) },
+                            onRemove = { i -> if (addressList.size > 1 && i in addressList.indices) addressList.removeAt(i) }
                         )
                         5 -> Step5Personnel(
                             personnelList = personnelList,
@@ -772,7 +737,7 @@ fun AddEditVendorScreen(
                     ),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
-                        .weight(if (currentStep > 1) 1.4f else 1f)
+                        .weight(1f)
                         .height(50.dp)
                         .testTag(if (currentStep < 8) "next_step_button" else "save_vendor_button")
                 ) {

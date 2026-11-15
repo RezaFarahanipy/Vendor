@@ -38,6 +38,7 @@ data class Vendor(
     val catalogFileName: String = "",
     val catalogTitle: String = "",
     val catalogFilesJson: String = "[]", // JSON list of attached catalog files
+    val addressesJson: String = "[]", // JSON list of addresses (first one mirrors the legacy fields)
     val isVerified: Boolean = false,
     val isFavorite: Boolean = false,
     val rating: Float = 0f,

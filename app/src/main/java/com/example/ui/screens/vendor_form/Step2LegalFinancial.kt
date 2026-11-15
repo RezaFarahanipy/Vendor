@@ -291,7 +291,7 @@ fun Step2LegalFinancial(
                         value = account.bankName,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text(t("نام بانک (شناسایی با شبا)")) },
+                        label = { Text(t("نام بانک")) },
                         placeholder = { Text(t("تکمیل خودکار از روی شبا")) },
                         singleLine = true,
                         supportingText = {

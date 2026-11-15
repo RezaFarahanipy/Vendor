@@ -317,6 +317,7 @@ object CsvUtils {
             vo.put("catalogLocalPath", v.catalogLocalPath)
             vo.put("catalogFileName", v.catalogFileName)
             vo.put("catalogFilesJson", v.catalogFilesJson)
+            vo.put("addressesJson", v.addressesJson)
             vo.put("isVerified", v.isVerified)
             vo.put("isFavorite", v.isFavorite)
             vo.put("rating", v.rating.toDouble())
@@ -402,6 +403,7 @@ object CsvUtils {
                         catalogLocalPath = vo.optString("catalogLocalPath", ""),
                         catalogFileName = vo.optString("catalogFileName", ""),
                         catalogFilesJson = vo.optString("catalogFilesJson", "[]"),
+                        addressesJson = vo.optString("addressesJson", "[]"),
                         isVerified = vo.optBoolean("isVerified", false),
                         isFavorite = vo.optBoolean("isFavorite", false),
                         rating = vo.optDouble("rating", 0.0).toFloat(),
@@ -514,6 +516,7 @@ object CsvUtils {
             vo.put("catalogLocalPath", v.catalogLocalPath)
             vo.put("catalogFileName", v.catalogFileName)
             vo.put("catalogFilesJson", v.catalogFilesJson)
+            vo.put("addressesJson", v.addressesJson)
             vo.put("isVerified", v.isVerified)
             vo.put("isFavorite", v.isFavorite)
             vo.put("rating", v.rating.toDouble())

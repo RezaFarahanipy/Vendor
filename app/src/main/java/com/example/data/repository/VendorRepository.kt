@@ -25,6 +25,7 @@ import com.example.data.model.VendorTagCrossRef
 import kotlinx.coroutines.withContext
 import com.example.data.model.catalogItems
 import com.example.util.t
+import com.example.data.model.addressItems
 
 class VendorRepository(private val database: AppDatabase) {
 
@@ -92,7 +93,7 @@ class VendorRepository(private val database: AppDatabase) {
             val searchIdx = PersianUtils.generateSearchIndex(
                 name = vendor.name,
                 ceoName = vendor.ceoName,
-                city = vendor.city,
+                city = vendor.city + " " + vendor.addressItems().drop(1).joinToString(" ") { it.province + " " + it.city + " " + it.address },
                 categories = vendor.categories,
                 tags = vendor.tags,
                 phone = vendor.phone,
@@ -294,7 +295,7 @@ class VendorRepository(private val database: AppDatabase) {
     private fun rebuildSearchIndex(v: Vendor): String = PersianUtils.generateSearchIndex(
         name = v.name,
         ceoName = v.ceoName,
-        city = v.city,
+        city = v.city + " " + v.addressItems().drop(1).joinToString(" ") { it.province + " " + it.city + " " + it.address },
         categories = v.categories,
         tags = v.tags,
         phone = v.phone,

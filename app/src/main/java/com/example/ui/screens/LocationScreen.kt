@@ -60,6 +60,7 @@ import com.example.ui.viewmodel.VendorViewModel
 import com.example.util.PersianUtils
 import com.example.util.tf
 import com.example.util.t
+import com.example.data.model.addressItems
 
 @Composable
 fun LocationScreen(
@@ -96,12 +97,21 @@ fun LocationScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            val addrList = vendor.addressItems()
+            if (addrList.isEmpty()) {
+                Text(
+                    text = t("آدرس دقیق در سیستم ثبت نشده است."),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            addrList.forEachIndexed { idx, addr ->
             // Interactive Map Canvas
             LocationPickerCard(
-                latitude = vendor.latitude,
-                longitude = vendor.longitude,
+                latitude = addr.latitude,
+                longitude = addr.longitude,
                 onLocationChange = { _, _ -> },
-                vendorTitle = vendor.name,
+                vendorTitle = vendor.name + if (idx > 0) " (${idx + 1})" else "",
                 readOnly = true
             )
 
@@ -126,7 +136,7 @@ fun LocationScreen(
                     )
 
                     Text(
-                        text = vendor.address.ifBlank { t("آدرس دقیق در سیستم ثبت نشده است.") },
+                        text = addr.address.ifBlank { t("آدرس دقیق در سیستم ثبت نشده است.") },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -136,12 +146,12 @@ fun LocationScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = tf("استان: {0}", vendor.province),
+                            text = tf("استان: {0}", addr.province),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = tf("شهر: {0}", vendor.city),
+                            text = tf("شهر: {0}", addr.city),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -151,7 +161,7 @@ fun LocationScreen(
 
                     // Direct Open Map Intent Button
                     Button(
-                        onClick = { openMap(context, vendor.latitude, vendor.longitude, vendor.name) },
+                        onClick = { openMap(context, addr.latitude, addr.longitude, vendor.name) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = BrandPrimary,
@@ -171,6 +181,7 @@ fun LocationScreen(
                         )
                     }
                 }
+            }
             }
 
             // Quick Contact Bar for Location Visit

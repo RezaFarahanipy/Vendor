@@ -130,6 +130,7 @@ import com.example.data.model.CatalogItem
 import com.example.data.model.catalogItems
 import com.example.util.t
 import com.example.util.tf
+import com.example.data.model.addressItems
 
 @OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -465,8 +466,8 @@ fun VendorDetailScreen(
                         }
                     }
 
-                    // Address & Map
-                    if (vendor.address.isNotBlank() || (vendor.latitude != 0.0 && vendor.longitude != 0.0)) {
+                    // Addresses & Map (one row per address)
+                    vendor.addressItems().forEach { addr ->
                         Spacer(modifier = Modifier.height(2.dp))
                         Row(
                             modifier = Modifier
@@ -480,14 +481,21 @@ fun VendorDetailScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = tf("{0}، {1}", vendor.province, vendor.city),
+                                    text = tf("{0} • {1}، {2}", t(addr.type), addr.province, addr.city),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                if (vendor.address.isNotBlank()) {
+                                if (addr.address.isNotBlank()) {
                                     Text(
-                                        text = vendor.address,
+                                        text = addr.address,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (addr.postalCode.isNotBlank()) {
+                                    Text(
+                                        text = tf("کد پستی: {0}", PersianUtils.toPersianDigits(addr.postalCode)),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
