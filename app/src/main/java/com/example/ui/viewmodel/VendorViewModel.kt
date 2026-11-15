@@ -42,6 +42,14 @@ enum class MainTab {
     SETTINGS
 }
 
+/** A person matched by the search, together with the company he/she works for. */
+data class PersonHit(val contact: ContactPerson, val vendor: Vendor)
+
+/** A product matched by the search, together with the company that supplies it. */
+data class ProductHit(val product: Product, val vendor: Vendor)
+
+data class SearchHits(val people: List<PersonHit> = emptyList(), val products: List<ProductHit> = emptyList())
+
 enum class SortOption(val title: String) {
     RELEVANCE("مرتبط‌ترین"),
     RATING("بالاترین امتیاز"),
@@ -289,7 +297,7 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
             matchesQuery && matchesCategory && matchesActivityType && matchesCity && matchesVerified && matchesCatalog
         }.let { list ->
             when (sort) {
-                SortOption.RELEVANCE -> list
+                SortOption.RELEVANCE -> if (query.isBlank()) list else list.sortedByDescending { relevanceScore(it, query, contactsByVendor[it.id]) }
                 SortOption.RATING -> list.sortedByDescending { it.rating }
                 SortOption.NEWEST -> list.sortedByDescending { it.createdAt }
                 SortOption.NAME -> list.sortedBy { it.name }
@@ -316,6 +324,68 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
             matchCat && matchQuery
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // People and products that match the query (shown as their own result sections with the company name)
+    val searchHits: StateFlow<SearchHits> = combine(
+        allVendors,
+        allContacts,
+        allProducts,
+        debouncedVendorQuery
+    ) { vendors, contacts, products, query ->
+        if (query.isBlank()) {
+            SearchHits()
+        } else {
+            val byId = vendors.associateBy { it.id }
+            val nq = PersianUtils.normalize(query)
+            val people = contacts.mapNotNull { c ->
+                val v = byId[c.vendorId] ?: return@mapNotNull null
+                val nameHit = PersianUtils.matchesSearch(c.name, query)
+                val hit = nameHit ||
+                        PersianUtils.matchesSearch(c.role, query) ||
+                        PersianUtils.matchesSearch(c.email, query) ||
+                        PersianUtils.matchesPhone(c.mobile, query) ||
+                        PersianUtils.matchesPhone(c.phone, query)
+                if (!hit) null else Triple(c, v, if (PersianUtils.normalize(c.name).startsWith(nq)) 2 else if (nameHit) 1 else 0)
+            }.sortedByDescending { it.third }.take(30).map { PersonHit(it.first, it.second) }
+            val prods = products.mapNotNull { p ->
+                val v = byId[p.vendorId] ?: return@mapNotNull null
+                val nameHit = PersianUtils.matchesSearch(p.name, query)
+                val hit = nameHit ||
+                        PersianUtils.matchesSearch(p.brand, query) ||
+                        PersianUtils.matchesSearch(p.model, query) ||
+                        PersianUtils.matchesSearch(p.technicalCode, query) ||
+                        PersianUtils.matchesSearch(p.specifications, query)
+                if (!hit) null else Triple(p, v, if (PersianUtils.normalize(p.name).startsWith(nq)) 2 else if (nameHit) 1 else 0)
+            }.sortedByDescending { it.third }.take(30).map { ProductHit(it.first, it.second) }
+            SearchHits(people, prods)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchHits())
+
+    // Recent searches (persisted)
+    val recentSearches: StateFlow<List<String>> = settingsDataStore.recentSearchesFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun commitSearch(query: String) {
+        viewModelScope.launch { settingsDataStore.addRecentSearch(query) }
+    }
+
+    fun clearRecentSearches() {
+        viewModelScope.launch { settingsDataStore.clearRecentSearches() }
+    }
+
+    private fun relevanceScore(v: Vendor, q: String, people: List<ContactPerson>?): Int {
+        val nq = PersianUtils.normalize(q)
+        if (nq.isBlank()) return 0
+        val name = PersianUtils.normalize(v.name)
+        var score = 0
+        if (name == nq) score += 120 else if (name.startsWith(nq)) score += 90 else if (name.contains(nq)) score += 60
+        if (PersianUtils.matchesSearch(v.tags, q) || PersianUtils.matchesSearch(v.categories, q)) score += 25
+        if (PersianUtils.matchesSearch(v.ceoName, q)) score += 20
+        if (people?.any { PersianUtils.matchesSearch(it.name, q) } == true) score += 15
+        if (PersianUtils.matchesSearch(v.city, q)) score += 8
+        if (v.isVerified) score += 5
+        return score + (v.rating * 2).toInt()
+    }
 
     // Statistics
     val stats: StateFlow<VendorStats> = combine(

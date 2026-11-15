@@ -495,5 +495,13 @@ object EnglishTranslations {
         "حذف آدرس" to "Remove address",
         "کد پستی: {0}" to "Postal code: {0}",
         "نام بانک" to "Bank name",
+        "محصولات ({0})" to "Products ({0})",
+        "وندورها ({0})" to "Vendors ({0})",
+        "جستجوهای اخیر" to "Recent searches",
+        "شماره همراه باید ۱۱ رقم و با 09 شروع شود" to "Mobile number must be 11 digits starting with 09",
+        "مثال: 09123456789" to "Example: 09123456789",
+        "تلفن باید با کد شهر و ۸ رقم باشد (مثال: 021-77654321)" to "Landline must be area code + 8 digits (e.g. 021-77654321)",
+        "شماره تلفن یا همراه معتبر نیست" to "Phone or mobile number is not valid",
+        "پرسنل ({0})" to "Personnel ({0})",
     )
 }

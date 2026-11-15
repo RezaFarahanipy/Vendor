@@ -131,6 +131,8 @@ import com.example.data.model.catalogItems
 import com.example.util.t
 import com.example.util.tf
 import com.example.data.model.addressItems
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -872,27 +874,45 @@ fun VendorDetailScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    val contactMobileError = contactMobile.isNotBlank() && !PersianUtils.isValidIranianMobile(contactMobile)
                     OutlinedTextField(
                         value = contactMobile,
-                        onValueChange = { contactMobile = it },
+                        onValueChange = { contactMobile = PersianUtils.toEnglishDigits(it).filter { ch -> ch.isDigit() }.take(11) },
                         label = { Text(t("شماره همراه")) },
+                        placeholder = { Text("09123456789") },
                         singleLine = true,
+                        isError = contactMobileError,
+                        supportingText = {
+                            Text(
+                                text = if (contactMobileError) t("شماره همراه باید ۱۱ رقم و با 09 شروع شود") else t("مثال: 09123456789"),
+                                fontSize = 10.sp,
+                                color = if (contactMobileError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        val contactPhoneError = contactPhone.isNotBlank() && contactPhone.filter { it.isDigit() }.length != 11
                         OutlinedTextField(
                             value = contactPhone,
-                            onValueChange = { contactPhone = it },
+                            onValueChange = { contactPhone = PersianUtils.formatLandlinePhone(it) },
                             label = { Text(t("تلفن ثابت")) },
+                            placeholder = { Text("021-77654321") },
                             singleLine = true,
+                            isError = contactPhoneError,
+                            supportingText = if (contactPhoneError) {
+                                { Text(t("تلفن باید با کد شهر و ۸ رقم باشد (مثال: 021-77654321)"), fontSize = 10.sp, color = MaterialTheme.colorScheme.error) }
+                            } else null,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                             modifier = Modifier.weight(1.5f)
                         )
                         OutlinedTextField(
                             value = contactExt,
-                            onValueChange = { contactExt = it },
+                            onValueChange = { contactExt = PersianUtils.toEnglishDigits(it).filter { ch -> ch.isDigit() }.take(6) },
                             label = { Text(t("داخلی")) },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
@@ -912,6 +932,12 @@ fun VendorDetailScreen(
                     onClick = {
                         if (contactName.isBlank()) {
                             Toast.makeText(context, t("نام شخص الزامی است"), Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        if ((contactMobile.isNotBlank() && !PersianUtils.isValidIranianMobile(contactMobile)) ||
+                            (contactPhone.isNotBlank() && contactPhone.filter { it.isDigit() }.length != 11)
+                        ) {
+                            Toast.makeText(context, t("شماره تلفن یا همراه معتبر نیست"), Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         val toSave = ContactPerson(

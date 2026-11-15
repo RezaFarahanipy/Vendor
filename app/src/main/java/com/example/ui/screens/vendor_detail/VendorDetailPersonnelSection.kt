@@ -57,6 +57,8 @@ import com.example.ui.theme.BrandViolet
 import com.example.util.tf
 import com.example.util.t
 import androidx.compose.foundation.clickable
+import com.example.ui.components.Messenger
+import com.example.ui.components.MessengerIconButton
 
 /**
  * Modular Personnel Section for Vendor Detail Screen
@@ -227,14 +229,15 @@ private fun PersonnelItem(
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    MessengerChip(t("واتس‌اپ"), Color(0xFF25D366), Modifier.weight(1f)) {
+                    MessengerIconButton(Messenger.WHATSAPP) {
                         MessengerUtils.openWhatsApp(context, target, "سلام، از طریق اپلیکیشن وندوریاب با شما در ارتباط هستم.")
                     }
-                    MessengerChip(t("تلگرام"), Color(0xFF0088CC), Modifier.weight(1f)) { MessengerUtils.openTelegram(context, target) }
-                    MessengerChip(t("بله"), Color(0xFF00A389), Modifier.weight(1f)) { MessengerUtils.openBale(context, target) }
-                    MessengerChip(t("روبیکا"), Color(0xFF792CEE), Modifier.weight(1f)) { MessengerUtils.openRubika(context, target) }
+                    MessengerIconButton(Messenger.TELEGRAM) { MessengerUtils.openTelegram(context, target) }
+                    MessengerIconButton(Messenger.BALE) { MessengerUtils.openBale(context, target) }
+                    MessengerIconButton(Messenger.RUBIKA) { MessengerUtils.openRubika(context, target) }
                 }
             }
 
@@ -283,27 +286,5 @@ private fun email(context: Context, address: String) {
         context.startActivity(intent)
     } catch (e: Exception) {
         Toast.makeText(context, t("امکان ارسال ایمیل وجود ندارد"), Toast.LENGTH_SHORT).show()
-    }
-}
-
-
-@Composable
-private fun MessengerChip(label: String, color: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Box(
-        modifier = modifier
-            .height(38.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(color)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            color = Color.White,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            softWrap = false
-        )
     }
 }

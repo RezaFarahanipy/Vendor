@@ -97,6 +97,20 @@ import com.example.ui.theme.staggerIn
 import com.example.ui.theme.StatusBarStyle
 import com.example.util.tf
 import com.example.util.t
+import com.example.ui.viewmodel.PersonHit
+import com.example.ui.viewmodel.ProductHit
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.material3.AssistChip
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
+import com.example.ui.theme.BrandContainer
+import com.example.ui.theme.BrandViolet
+import com.example.ui.theme.VioletContainer
+import com.example.ui.theme.GreenVerified
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -439,8 +453,18 @@ fun SearchScreen(
             }
         }
 
-        // Vendors List
-        if (filteredVendors.isEmpty()) {
+        // Unified results: people & products (with their company) followed by the vendors
+        val hits by viewModel.searchHits.collectAsState()
+        val recent by viewModel.recentSearches.collectAsState()
+        val hasQuery = query.isNotBlank()
+        val nothingFound = filteredVendors.isEmpty() && hits.people.isEmpty() && hits.products.isEmpty()
+        LaunchedEffect(query, nothingFound) {
+            if (hasQuery && !nothingFound) {
+                kotlinx.coroutines.delay(1500)
+                viewModel.commitSearch(query)
+            }
+        }
+        if (nothingFound) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -475,11 +499,49 @@ fun SearchScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                if (!hasQuery && recent.isNotEmpty()) {
+                    item(key = "recent_searches") {
+                        RecentSearchesPanel(
+                            recent = recent,
+                            onPick = { viewModel.searchQuery.value = it },
+                            onClear = { viewModel.clearRecentSearches() }
+                        )
+                    }
+                }
+                if (hits.people.isNotEmpty()) {
+                    item(key = "people_header") {
+                        SearchSectionHeader(tf("پرسنل ({0})", PersianUtils.toPersianDigits(hits.people.size)))
+                    }
+                    items(hits.people, key = { "p_" + it.contact.id }) { hit ->
+                        PersonResultCard(
+                            hit = hit,
+                            modifier = Modifier.animateItem(),
+                            onClick = { viewModel.commitSearch(query); onVendorClick(hit.vendor.id) }
+                        )
+                    }
+                }
+                if (hits.products.isNotEmpty()) {
+                    item(key = "products_header") {
+                        SearchSectionHeader(tf("محصولات ({0})", PersianUtils.toPersianDigits(hits.products.size)))
+                    }
+                    items(hits.products, key = { "pr_" + it.product.id }) { hit ->
+                        ProductResultCard(
+                            hit = hit,
+                            modifier = Modifier.animateItem(),
+                            onClick = { viewModel.commitSearch(query); onVendorClick(hit.vendor.id) }
+                        )
+                    }
+                }
+                if (filteredVendors.isNotEmpty() && (hits.people.isNotEmpty() || hits.products.isNotEmpty())) {
+                    item(key = "vendors_header") {
+                        SearchSectionHeader(tf("وندورها ({0})", PersianUtils.toPersianDigits(filteredVendors.size)))
+                    }
+                }
                 itemsIndexed(filteredVendors, key = { _, v -> v.id }) { index, vendor ->
                     VendorCard(
                         modifier = Modifier.animateItem().staggerIn(index),
                         vendor = vendor,
-                        onClick = { onVendorClick(vendor.id) },
+                        onClick = { viewModel.commitSearch(query); onVendorClick(vendor.id) },
                         onFavoriteClick = { viewModel.toggleVendorFavorite(vendor) }
                     )
                 }
@@ -697,3 +759,186 @@ fun ActiveFilterChip(
     }
 }
 
+
+
+@Composable
+private fun SearchSectionHeader(title: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .height(18.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(BrandPrimary)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RecentSearchesPanel(recent: List<String>, onPick: (String) -> Unit, onClear: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = t("جستجوهای اخیر"),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            TextButton(onClick = onClear) {
+                Text(t("پاک کردن"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error)
+            }
+        }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            recent.forEach { phrase ->
+                AssistChip(
+                    onClick = { onPick(phrase) },
+                    label = { Text(phrase, maxLines = 1) },
+                    leadingIcon = { Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun PersonResultCard(hit: PersonHit, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val c = hit.contact
+    val number = c.mobile.ifBlank { c.phone }
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(BrandContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = c.name.trim().take(1),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = BrandDark
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(c.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1)
+                if (c.role.isNotBlank()) {
+                    Text(c.role, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Business, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = hit.vendor.name,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandPrimary,
+                        maxLines = 1
+                    )
+                }
+                if (number.isNotBlank()) {
+                    Text(
+                        text = PersianUtils.toPersianDigits(number),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            if (number.isNotBlank()) {
+                IconButton(
+                    onClick = {
+                        try {
+                            context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + PersianUtils.normalizePhone(number))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        } catch (_: Exception) {
+                        }
+                    }
+                ) {
+                    Icon(Icons.Default.Call, contentDescription = t("تماس"), tint = GreenVerified)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun ProductResultCard(hit: ProductHit, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val p = hit.product
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(VioletContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Inventory2, contentDescription = null, tint = BrandViolet, modifier = Modifier.size(24.dp))
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(p.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1)
+                val sub = listOf(p.brand, p.model).filter { it.isNotBlank() }.joinToString(" • ")
+                if (sub.isNotBlank()) {
+                    Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Business, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = hit.vendor.name,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandPrimary,
+                        maxLines = 1
+                    )
+                }
+            }
+        }
+    }
+}

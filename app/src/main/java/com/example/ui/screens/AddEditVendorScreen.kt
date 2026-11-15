@@ -794,17 +794,27 @@ fun AddEditVendorScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    val personMobileInputError = personMobileInput.isNotBlank() && !PersianUtils.isValidIranianMobile(personMobileInput)
                     OutlinedTextField(
                         value = personMobileInput,
-                        onValueChange = { personMobileInput = it },
+                        onValueChange = { personMobileInput = PersianUtils.toEnglishDigits(it).filter { ch -> ch.isDigit() }.take(11) },
                         label = { Text(t("شماره همراه")) },
                         placeholder = { Text("09123456789") },
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        isError = personMobileInputError,
+                        supportingText = {
+                            Text(
+                                text = if (personMobileInputError) t("شماره همراه باید ۱۱ رقم و با 09 شروع شود") else t("مثال: 09123456789"),
+                                fontSize = 10.sp,
+                                color = if (personMobileInputError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     val personCity = PersianUtils.detectLandlineCity(personPhoneInput)
+                    val personPhoneError = personPhoneInput.isNotBlank() && personPhoneInput.filter { it.isDigit() }.length != 11
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -817,6 +827,7 @@ fun AddEditVendorScreen(
                             label = { Text(t("تلفن مستقیم")) },
                             placeholder = { Text("021-77654321") },
                             singleLine = true,
+                            isError = personPhoneError,
                             trailingIcon = {
                                 if (personCity != null) {
                                     Surface(
@@ -834,7 +845,9 @@ fun AddEditVendorScreen(
                                     }
                                 }
                             },
-                            supportingText = if (personCity != null) {
+                            supportingText = if (personPhoneError) {
+                                { Text(t("تلفن باید با کد شهر و ۸ رقم باشد (مثال: 021-77654321)"), fontSize = 10.sp, color = MaterialTheme.colorScheme.error) }
+                            } else if (personCity != null) {
                                 { Text(tf("شهر شناسایی‌شده: {0}", personCity), fontSize = 10.sp, color = BrandDark) }
                             } else null,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
@@ -842,7 +855,7 @@ fun AddEditVendorScreen(
                         )
                         OutlinedTextField(
                             value = personExtInput,
-                            onValueChange = { personExtInput = it },
+                            onValueChange = { personExtInput = PersianUtils.toEnglishDigits(it).filter { ch -> ch.isDigit() }.take(6) },
                             label = { Text(t("داخلی")) },
                             placeholder = { Text("101") },
                             singleLine = true,
@@ -866,6 +879,12 @@ fun AddEditVendorScreen(
                     onClick = {
                         if (personNameInput.isBlank()) {
                             Toast.makeText(context, t("نام شخص الزامی است"), Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        if ((personMobileInput.isNotBlank() && !PersianUtils.isValidIranianMobile(personMobileInput)) ||
+                            (personPhoneInput.isNotBlank() && personPhoneInput.filter { it.isDigit() }.length != 11)
+                        ) {
+                            Toast.makeText(context, t("شماره تلفن یا همراه معتبر نیست"), Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         val newContact = ContactPerson(

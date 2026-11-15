@@ -28,6 +28,7 @@ class AppSettingsDataStore(private val context: Context) {
         val IS_APP_LOCK_ENABLED = booleanPreferencesKey("is_app_lock_enabled")
         val IS_SCREENSHOT_BLOCK_ENABLED = booleanPreferencesKey("is_screenshot_block_enabled")
         val IS_DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("is_dynamic_color_enabled")
+        val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
     }
 
     val themeModeFlow: Flow<ThemeMode> = context.dataStore.data.map { preferences ->
@@ -62,6 +63,25 @@ class AppSettingsDataStore(private val context: Context) {
 
     val isDynamicColorEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[PreferencesKeys.IS_DYNAMIC_COLOR_ENABLED] ?: false
+    }
+
+    /** Last committed search phrases, newest first (max 8). */
+    val recentSearchesFlow: Flow<List<String>> = context.dataStore.data.map { preferences ->
+        (preferences[PreferencesKeys.RECENT_SEARCHES] ?: "").split("\n").filter { it.isNotBlank() }
+    }
+
+    suspend fun addRecentSearch(query: String) {
+        val clean = query.trim().replace("\n", " ")
+        if (clean.length < 2) return
+        context.dataStore.edit { preferences ->
+            val current = (preferences[PreferencesKeys.RECENT_SEARCHES] ?: "").split("\n").filter { it.isNotBlank() }
+            val updated = (listOf(clean) + current.filter { !it.equals(clean, ignoreCase = true) }).take(8)
+            preferences[PreferencesKeys.RECENT_SEARCHES] = updated.joinToString("\n")
+        }
+    }
+
+    suspend fun clearRecentSearches() {
+        context.dataStore.edit { preferences -> preferences.remove(PreferencesKeys.RECENT_SEARCHES) }
     }
 
     suspend fun setThemeMode(mode: ThemeMode) {
