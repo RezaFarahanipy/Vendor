@@ -135,6 +135,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.ui.components.GenderSelector
 import com.example.ui.components.MaskedLandlineField
+import com.example.ui.components.RoleQuickChips
 
 @OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -863,6 +864,7 @@ fun VendorDetailScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    GenderSelector(gender = contactGender, onChange = { contactGender = it })
                     OutlinedTextField(
                         value = contactName,
                         onValueChange = { contactName = it },
@@ -870,30 +872,24 @@ fun VendorDetailScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    GenderSelector(gender = contactGender, onChange = { contactGender = it })
                     OutlinedTextField(
                         value = contactRole,
                         onValueChange = { contactRole = it },
                         label = { Text(t("سمت سازمانی")) },
-                        placeholder = { Text(t("مدیرعامل، کارشناس فنی...")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    RoleQuickChips(onPick = { contactRole = it })
                     val contactMobileError = contactMobile.isNotBlank() && !PersianUtils.isValidIranianMobile(contactMobile)
                     OutlinedTextField(
                         value = contactMobile,
                         onValueChange = { contactMobile = PersianUtils.toEnglishDigits(it).filter { ch -> ch.isDigit() }.take(11) },
                         label = { Text(t("شماره همراه")) },
-                        placeholder = { Text("09123456789") },
                         singleLine = true,
                         isError = contactMobileError,
-                        supportingText = {
-                            Text(
-                                text = if (contactMobileError) t("شماره همراه باید ۱۱ رقم و با 09 شروع شود") else t("مثال: 09123456789"),
-                                fontSize = 10.sp,
-                                color = if (contactMobileError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
+                        supportingText = if (contactMobileError) {
+                            { Text(t("شماره همراه باید ۱۱ رقم و با 09 شروع شود"), fontSize = 10.sp, color = MaterialTheme.colorScheme.error) }
+                        } else null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -906,7 +902,6 @@ fun VendorDetailScreen(
                             value = contactPhone,
                             onValueChange = { contactPhone = it },
                             label = { Text(t("تلفن ثابت")) },
-                            placeholder = { Text("021-77654321") },
                             singleLine = true,
                             isError = contactPhoneError,
                             supportingText = if (contactPhoneError) {

@@ -518,5 +518,7 @@ object EnglishTranslations {
         "نمایش بیشتر" to "Show more",
         "نمایش کمتر" to "Show less",
         "برای شروع، نام وندور، پرسنل، محصول یا شماره را بنویسید" to "To start, type a vendor, person, product or number",
+        "شماره کپی شد. در روبیکا آن را جستجو کنید" to "Number copied. Search for it in Rubika",
+        "برنامه روبیکا نصب نیست" to "Rubika is not installed",
     )
 }

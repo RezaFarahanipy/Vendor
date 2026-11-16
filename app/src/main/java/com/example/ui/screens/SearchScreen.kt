@@ -956,12 +956,12 @@ private fun PersonResultCard(hit: PersonHit, modifier: Modifier = Modifier, onCl
                     ) {
                         Icon(Icons.Default.Call, contentDescription = t("تماس"), tint = Color.White, modifier = Modifier.size(20.dp))
                     }
-                    MessengerIconButton(Messenger.WHATSAPP, size = 36.dp) {
+                    MessengerIconButton(Messenger.WHATSAPP) {
                         MessengerUtils.openWhatsApp(context, number, "سلام، از طریق اپلیکیشن وندوریاب با شما در ارتباط هستم.")
                     }
-                    MessengerIconButton(Messenger.TELEGRAM, size = 36.dp) { MessengerUtils.openTelegram(context, number) }
-                    MessengerIconButton(Messenger.BALE, size = 36.dp) { MessengerUtils.openBale(context, number) }
-                    MessengerIconButton(Messenger.RUBIKA, size = 36.dp) { MessengerUtils.openRubika(context, number) }
+                    MessengerIconButton(Messenger.TELEGRAM) { MessengerUtils.openTelegram(context, number) }
+                    MessengerIconButton(Messenger.BALE) { MessengerUtils.openBale(context, number) }
+                    MessengerIconButton(Messenger.RUBIKA) { MessengerUtils.openRubika(context, number) }
                 }
             }
         }

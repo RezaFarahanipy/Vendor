@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import com.example.util.t
 
 object MessengerUtils {
 
@@ -57,12 +58,24 @@ object MessengerUtils {
     }
 
     fun openRubika(context: Context, rawPhone: String) {
+        val phone = PersianUtils.normalizePhone(rawPhone)
         try {
-            val phone = cleanPhoneForMessenger(rawPhone)
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://rubika.ir/joing/$phone"))
-            context.startActivity(intent)
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("phone", phone))
         } catch (_: Exception) {
-            Toast.makeText(context, t("پیام‌رسان روبیکا باز نشد"), Toast.LENGTH_SHORT).show()
+        }
+        val launch = listOf("app.rbmain.a", "ir.resaneh1.iptv").firstNotNullOfOrNull {
+            context.packageManager.getLaunchIntentForPackage(it)
+        }
+        if (launch != null) {
+            Toast.makeText(context, t("شماره کپی شد. در روبیکا آن را جستجو کنید"), Toast.LENGTH_LONG).show()
+            context.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } else {
+            Toast.makeText(context, t("برنامه روبیکا نصب نیست"), Toast.LENGTH_SHORT).show()
+            try {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://rubika.ir")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            } catch (_: Exception) {
+            }
         }
     }
 }

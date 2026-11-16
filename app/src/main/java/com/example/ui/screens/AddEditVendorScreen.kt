@@ -150,6 +150,7 @@ import com.example.data.model.AddressCodec
 import com.example.data.model.addressItems
 import com.example.ui.components.GenderSelector
 import com.example.ui.components.MaskedLandlineField
+import com.example.ui.components.RoleQuickChips
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -783,41 +784,35 @@ fun AddEditVendorScreen(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    GenderSelector(gender = personGender, onChange = { personGender = it })
                     OutlinedTextField(
                         value = personNameInput,
                         onValueChange = { personNameInput = it },
                         label = { Text(t("نام و نام خانوادگی *")) },
-                        placeholder = { Text(t("مثال: مهندس مجید محمودی")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    GenderSelector(gender = personGender, onChange = { personGender = it })
 
                     OutlinedTextField(
                         value = personRoleInput,
                         onValueChange = { personRoleInput = it },
                         label = { Text(t("سمت / عنوان سازمانی")) },
-                        placeholder = { Text(t("مدیرعامل، مدیر فروش، کارشناس فنی...")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    RoleQuickChips(onPick = { personRoleInput = it })
 
                     val personMobileInputError = personMobileInput.isNotBlank() && !PersianUtils.isValidIranianMobile(personMobileInput)
                     OutlinedTextField(
                         value = personMobileInput,
                         onValueChange = { personMobileInput = PersianUtils.toEnglishDigits(it).filter { ch -> ch.isDigit() }.take(11) },
                         label = { Text(t("شماره همراه")) },
-                        placeholder = { Text("09123456789") },
                         singleLine = true,
                         isError = personMobileInputError,
-                        supportingText = {
-                            Text(
-                                text = if (personMobileInputError) t("شماره همراه باید ۱۱ رقم و با 09 شروع شود") else t("مثال: 09123456789"),
-                                fontSize = 10.sp,
-                                color = if (personMobileInputError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
+                        supportingText = if (personMobileInputError) {
+                            { Text(t("شماره همراه باید ۱۱ رقم و با 09 شروع شود"), fontSize = 10.sp, color = MaterialTheme.colorScheme.error) }
+                        } else null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -832,7 +827,6 @@ fun AddEditVendorScreen(
                             value = personPhoneInput,
                             onValueChange = { personPhoneInput = it },
                             label = { Text(t("تلفن مستقیم")) },
-                            placeholder = { Text("021-77654321") },
                             singleLine = true,
                             isError = personPhoneError,
                             trailingIcon = {
@@ -864,7 +858,6 @@ fun AddEditVendorScreen(
                             value = personExtInput,
                             onValueChange = { personExtInput = PersianUtils.toEnglishDigits(it).filter { ch -> ch.isDigit() }.take(6) },
                             label = { Text(t("داخلی")) },
-                            placeholder = { Text("101") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f)
@@ -875,7 +868,6 @@ fun AddEditVendorScreen(
                         value = personEmailInput,
                         onValueChange = { personEmailInput = it },
                         label = { Text(t("ایمیل پرسنل")) },
-                        placeholder = { Text("person@company.com") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )

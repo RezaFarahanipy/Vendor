@@ -19,6 +19,11 @@ import java.util.zip.ZipOutputStream
 import com.example.data.model.CatalogItem
 import com.example.data.model.CatalogCodec
 import com.example.data.model.catalogItems
+import com.example.data.model.addressItems
+import com.example.data.model.VendorAddress
+import com.example.data.model.AddressCodec
+import com.example.data.model.BankAccount
+import com.example.data.model.BankAccountUtils
 
 data class FullBackupData(
     val version: Int = 1,
@@ -28,75 +33,82 @@ data class FullBackupData(
     val products: List<Product>
 )
 
+/** A vendor read from a CSV row together with its personnel and products. */
+data class ImportedVendor(
+    val vendor: Vendor,
+    val contacts: List<ContactPerson> = emptyList(),
+    val products: List<Product> = emptyList()
+)
+
 data class ImportSummary(
     val newCount: Int,
     val duplicateSkippedCount: Int,
-    val vendorsToInsert: List<Vendor>
+    val vendorsToInsert: List<Vendor>,
+    val imports: List<ImportedVendor> = emptyList()
 )
 
 object CsvUtils {
 
     const val UTF8_BOM = "\uFEFF"
 
+    private const val ENTRY_SEP = " ## "
+
+    private fun cell(text: String) = text.replace("|", "/").replace("##", "#").replace("\n", " ").trim()
+
+    private val EXPORT_HEADERS = listOf(
+        "نام شرکت", "مدیرعامل", "نوع فعالیت", "دسته‌بندی‌ها", "برچسب‌ها", "توضیحات",
+        "تلفن ثابت", "سایر تلفن‌های ثابت", "تلفن همراه", "سایر شماره‌های همراه", "ایمیل", "وبسایت",
+        "نوع آدرس", "استان", "شهر", "کد پستی", "آدرس", "آدرس‌های دیگر", "عرض جغرافیایی", "طول جغرافیایی",
+        "کد اقتصادی", "شناسه ملی", "شماره ثبت",
+        "نام بانک", "شماره شبا", "شماره حساب", "شعبه", "سایر حساب‌های بانکی",
+        "پرسنل", "محصولات", "یادداشت‌ها", "امتیاز", "تأیید شده"
+    )
+
     /**
-     * Converts a list of vendors to standard CSV string with UTF-8 BOM for Microsoft Excel compatibility
+     * Converts vendors (with personnel and products) to a CSV string with UTF-8 BOM for Microsoft Excel.
+     * Multi-value cells use " ## " between entries and "|" between the parts of one entry:
+     *  - other addresses: type|province|city|postal code|address|lat|lng
+     *  - other bank accounts: bank|account|IBAN|branch
+     *  - personnel: name|role|mobile|phone|extension|email|gender
+     *  - products: name|brand|model|technical code|category|specifications
      */
-    fun exportVendorsToCsv(vendors: List<Vendor>): String {
+    fun exportVendorsToCsv(
+        vendors: List<Vendor>,
+        contacts: List<ContactPerson> = emptyList(),
+        products: List<Product> = emptyList()
+    ): String {
+        val contactsByVendor = contacts.groupBy { it.vendorId }
+        val productsByVendor = products.groupBy { it.vendorId }
         val sb = StringBuilder()
         sb.append(UTF8_BOM)
-        // Full comprehensive Header
-        val headers = listOf(
-            "نام شرکت",
-            "مدیرعامل",
-            "نوع فعالیت",
-            "دسته‌بندی‌ها",
-            "برچسب‌ها",
-            "تلفن ثابت",
-            "سایر تلفن‌های ثابت",
-            "تلفن همراه",
-            "سایر شماره‌های همراه",
-            "ایمیل",
-            "وبسایت",
-            "استان",
-            "شهر",
-            "آدرس",
-            "کد اقتصادی",
-            "شناسه ملی",
-            "شماره ثبت",
-            "حساب‌های بانکی",
-            "یادداشت‌ها",
-            "عرض جغرافیایی",
-            "طول جغرافیایی",
-            "امتیاز",
-            "تأیید شده"
-        )
-        sb.append(headers.joinToString(",") { "\"${escapeCsv(it)}\"" }).append("\n")
+        sb.append(EXPORT_HEADERS.joinToString(",") { "\"${escapeCsv(it)}\"" }).append("\n")
 
         for (v in vendors) {
+            val addresses = v.addressItems()
+            val a1 = addresses.firstOrNull() ?: VendorAddress(province = v.province, city = v.city)
+            val otherAddresses = addresses.drop(1).joinToString(ENTRY_SEP) {
+                listOf(it.type, it.province, it.city, it.postalCode, it.address, it.latitude.toString(), it.longitude.toString())
+                    .joinToString("|") { f -> cell(f) }
+            }
+            val banks = v.getBankAccountsList()
+            val b1 = banks.firstOrNull()
+            val otherBanks = banks.drop(1).joinToString(ENTRY_SEP) {
+                listOf(it.bankName, it.accountNumber, it.iban, it.branch).joinToString("|") { f -> cell(f) }
+            }
+            val people = (contactsByVendor[v.id] ?: emptyList()).joinToString(ENTRY_SEP) {
+                listOf(it.name, it.role, it.mobile, it.phone, it.extension, it.email, it.gender).joinToString("|") { f -> cell(f) }
+            }
+            val prods = (productsByVendor[v.id] ?: emptyList()).joinToString(ENTRY_SEP) {
+                listOf(it.name, it.brand, it.model, it.technicalCode, it.category, it.specifications).joinToString("|") { f -> cell(f) }
+            }
             val row = listOf(
-                v.name,
-                v.ceoName,
-                v.activityType,
-                v.categories,
-                v.tags,
-                v.phone,
-                v.secondaryPhones,
-                v.mobile,
-                v.additionalMobiles,
-                v.email,
-                v.website,
-                v.province,
-                v.city,
-                v.address,
-                v.economicCode,
-                v.nationalId,
-                v.registrationNumber,
-                v.bankAccounts,
-                v.notes,
-                v.latitude.toString(),
-                v.longitude.toString(),
-                v.rating.toString(),
-                if (v.isVerified) "بله" else "خیر"
+                v.name, v.ceoName, v.activityType, v.categories, v.tags, v.description,
+                v.phone, v.secondaryPhones, v.mobile, v.additionalMobiles, v.email, v.website,
+                a1.type, a1.province, a1.city, a1.postalCode, a1.address, otherAddresses,
+                if (a1.hasLocation) a1.latitude.toString() else "", if (a1.hasLocation) a1.longitude.toString() else "",
+                v.economicCode, v.nationalId, v.registrationNumber,
+                b1?.bankName.orEmpty(), b1?.iban.orEmpty(), b1?.accountNumber.orEmpty(), b1?.branch.orEmpty(), otherBanks,
+                people, prods, v.notes, v.rating.toString(), if (v.isVerified) "بله" else "خیر"
             )
             sb.append(row.joinToString(",") { "\"${escapeCsv(it)}\"" }).append("\n")
         }
@@ -168,89 +180,171 @@ object CsvUtils {
     /**
      * Parses CSV rows into Vendor objects, skipping header.
      */
-    fun parseCsvToVendors(csvContent: String): List<Vendor> {
+    private fun normHeader(h: String): String =
+        PersianUtils.normalize(h).replace("\u200c", "").replace("\u200f", "").replace(" ", "").lowercase()
+
+    private fun fixMobile(raw: String): String {
+        val d = PersianUtils.toEnglishDigits(raw).filter { it.isDigit() }
+        return if (d.length == 10 && d.startsWith("9")) "0$d" else d // Excel drops the leading zero
+    }
+
+    private fun fixLandline(raw: String): String {
+        val d = PersianUtils.toEnglishDigits(raw).filter { it.isDigit() }
+        if (d.isEmpty()) return ""
+        val full = if (d.length == 10 && !d.startsWith("0")) "0$d" else d
+        return PersianUtils.formatLandlinePhone(full)
+    }
+
+    private fun fixPhoneList(raw: String, f: (String) -> String): String =
+        raw.split(',', '،', ';', '\n').map { f(it.trim()) }.filter { it.isNotBlank() }.joinToString(", ")
+
+    private fun parseDouble(raw: String): Double =
+        PersianUtils.toEnglishDigits(raw.replace('٫', '.').replace('،', '.')).trim().toDoubleOrNull() ?: 0.0
+
+    /** Reads vendors from CSV by column NAME (so older/shorter files still work), including personnel and products. */
+    fun parseCsvToImports(csvContent: String): List<ImportedVendor> {
         val rows = parseCsvToRows(csvContent)
         if (rows.size <= 1) return emptyList()
-
-        val vendors = mutableListOf<Vendor>()
-        // Skip header at index 0
-        for (i in 1 until rows.size) {
-            val cols = rows[i]
-            if (cols.isEmpty() || cols[0].isBlank()) continue
-
-            val name = cols.getOrElse(0) { "" }.trim()
-            val ceoName = cols.getOrElse(1) { "" }.trim()
-            val activityType = cols.getOrElse(2) { "تولیدکننده" }.trim()
-            val categories = cols.getOrElse(3) { "" }.trim()
-            val tags = cols.getOrElse(4) { "" }.trim()
-            val phone = cols.getOrElse(5) { "" }.trim()
-            val secondaryPhones = cols.getOrElse(6) { "" }.trim()
-            val mobile = cols.getOrElse(7) { "" }.trim()
-            val additionalMobiles = cols.getOrElse(8) { "" }.trim()
-            val email = cols.getOrElse(9) { "" }.trim()
-            val website = cols.getOrElse(10) { "" }.trim()
-            val province = cols.getOrElse(11) { "تهران" }.trim()
-            val city = cols.getOrElse(12) { "تهران" }.trim()
-            val address = cols.getOrElse(13) { "" }.trim()
-            val economicCode = cols.getOrElse(14) { "" }.trim()
-            val nationalId = cols.getOrElse(15) { "" }.trim()
-            val registrationNumber = cols.getOrElse(16) { "" }.trim()
-            val bankAccounts = cols.getOrElse(17) { "" }.trim()
-            val notes = cols.getOrElse(18) { "" }.trim()
-            val lat = cols.getOrElse(19) { "35.73576" }.toDoubleOrNull() ?: 35.73576
-            val lng = cols.getOrElse(20) { "51.44678" }.toDoubleOrNull() ?: 51.44678
-            val rating = cols.getOrElse(21) { "0" }.toFloatOrNull() ?: 0f
-            val isVerifiedText = cols.getOrElse(22) { "خیر" }.trim()
-            val isVerified = isVerifiedText == "بله" || isVerifiedText.equals("true", ignoreCase = true)
-
-            vendors.add(
-                Vendor(
-                    id = 0L,
-                    name = name,
-                    ceoName = ceoName,
-                    activityType = activityType,
-                    categories = categories,
-                    tags = tags,
-                    phone = phone,
-                    secondaryPhones = secondaryPhones,
-                    mobile = mobile,
-                    additionalMobiles = additionalMobiles,
-                    email = email,
-                    website = website,
-                    province = province,
-                    city = city,
-                    address = address,
-                    economicCode = economicCode,
-                    nationalId = nationalId,
-                    registrationNumber = registrationNumber,
-                    bankAccounts = bankAccounts,
-                    notes = notes,
-                    latitude = lat,
-                    longitude = lng,
-                    rating = rating,
-                    isVerified = isVerified,
-                    description = "وارد شده از فایل اکسل / CSV",
-                    createdAt = System.currentTimeMillis()
-                )
-            )
+        val header = rows[0].map { normHeader(it) }
+        fun idx(vararg names: String): Int {
+            for (n in names) {
+                val i = header.indexOf(normHeader(n))
+                if (i >= 0) return i
+            }
+            return -1
         }
-        return vendors
+        val cName = idx("نام شرکت", "نام وندور").let { if (it < 0) 0 else it }
+        val cCeo = idx("مدیرعامل"); val cActivity = idx("نوع فعالیت"); val cCats = idx("دسته‌بندی‌ها", "دسته بندی ها")
+        val cTags = idx("برچسب‌ها"); val cDesc = idx("توضیحات")
+        val cPhone = idx("تلفن ثابت"); val cPhone2 = idx("سایر تلفن‌های ثابت")
+        val cMobile = idx("تلفن همراه"); val cMobile2 = idx("سایر شماره‌های همراه")
+        val cEmail = idx("ایمیل"); val cWeb = idx("وبسایت")
+        val cAddrType = idx("نوع آدرس"); val cProv = idx("استان"); val cCity = idx("شهر")
+        val cPostal = idx("کد پستی"); val cAddr = idx("آدرس"); val cAddr2 = idx("آدرس‌های دیگر")
+        val cLat = idx("عرض جغرافیایی"); val cLng = idx("طول جغرافیایی")
+        val cEco = idx("کد اقتصادی"); val cNat = idx("شناسه ملی"); val cReg = idx("شماره ثبت")
+        val cBankName = idx("نام بانک"); val cIban = idx("شماره شبا", "شبا"); val cAcc = idx("شماره حساب"); val cBranch = idx("شعبه")
+        val cBank2 = idx("سایر حساب‌های بانکی"); val cBankLegacy = idx("حساب‌های بانکی")
+        val cPeople = idx("پرسنل"); val cProducts = idx("محصولات"); val cNotes = idx("یادداشت‌ها")
+        val cRating = idx("امتیاز"); val cVerified = idx("تأیید شده", "تایید شده")
+
+        val result = mutableListOf<ImportedVendor>()
+        for (i in 1 until rows.size) {
+            val r = rows[i]
+            if (r.isEmpty() || r.all { it.isBlank() }) continue
+            fun col(c: Int, def: String = ""): String = if (c >= 0) r.getOrElse(c) { def }.trim() else def
+            val name = col(cName)
+            if (name.isBlank()) continue
+
+            val province = col(cProv, "تهران").ifBlank { "تهران" }
+            val city = col(cCity, "تهران").ifBlank { "تهران" }
+            val lat = parseDouble(col(cLat)); val lng = parseDouble(col(cLng))
+            val postal = PersianUtils.toEnglishDigits(col(cPostal)).filter { it.isDigit() }.take(10)
+            val rawAddress = col(cAddr)
+            val addrType = col(cAddrType)
+            val first = VendorAddress(
+                type = addrType.ifBlank { "کارخانه / کارگاه" }, province = province, city = city,
+                postalCode = postal, address = rawAddress, latitude = lat, longitude = lng
+            )
+            // Legacy files keep the whole text in the address column; new files are assembled from the parts.
+            val composite = if (cAddrType >= 0 || cPostal >= 0) first.composite() else rawAddress
+
+            val extraAddresses = col(cAddr2).split(ENTRY_SEP.trim()).mapNotNull { entry ->
+                val f = entry.trim().split("|").map { it.trim() }
+                if (f.all { it.isBlank() }) null else VendorAddress(
+                    type = f.getOrElse(0) { "" }.ifBlank { "کارخانه / کارگاه" }, province = f.getOrElse(1) { "" },
+                    city = f.getOrElse(2) { "" }, postalCode = PersianUtils.toEnglishDigits(f.getOrElse(3) { "" }).filter { it.isDigit() }.take(10),
+                    address = f.getOrElse(4) { "" }, latitude = parseDouble(f.getOrElse(5) { "" }), longitude = parseDouble(f.getOrElse(6) { "" })
+                )
+            }
+
+            val banks = mutableListOf<BankAccount>()
+            if (col(cBankName).isNotBlank() || col(cIban).isNotBlank() || col(cAcc).isNotBlank()) {
+                banks.add(BankAccount(
+                    bankName = col(cBankName), accountNumber = PersianUtils.toEnglishDigits(col(cAcc)),
+                    iban = PersianUtils.toEnglishDigits(col(cIban)).uppercase().replace(" ", ""), branch = col(cBranch)
+                ))
+            }
+            col(cBank2).split(ENTRY_SEP.trim()).forEach { entry ->
+                val f = entry.trim().split("|").map { it.trim() }
+                if (f.any { it.isNotBlank() }) banks.add(BankAccount(
+                    bankName = f.getOrElse(0) { "" }, accountNumber = PersianUtils.toEnglishDigits(f.getOrElse(1) { "" }),
+                    iban = PersianUtils.toEnglishDigits(f.getOrElse(2) { "" }).uppercase().replace(" ", ""), branch = f.getOrElse(3) { "" }
+                ))
+            }
+            val bankSerialized = if (banks.isNotEmpty()) BankAccountUtils.serialize(banks) else col(cBankLegacy)
+
+            val verifiedText = col(cVerified)
+            var vendor = Vendor(
+                id = 0L,
+                name = name,
+                ceoName = col(cCeo),
+                activityType = col(cActivity, "تولیدکننده").ifBlank { "تولیدکننده" },
+                categories = col(cCats),
+                tags = col(cTags),
+                phone = fixLandline(col(cPhone)),
+                secondaryPhones = fixPhoneList(col(cPhone2)) { fixLandline(it) },
+                mobile = fixMobile(col(cMobile)),
+                additionalMobiles = fixPhoneList(col(cMobile2)) { fixMobile(it) },
+                email = col(cEmail),
+                website = col(cWeb),
+                province = province,
+                city = city,
+                address = composite,
+                latitude = lat,
+                longitude = lng,
+                economicCode = PersianUtils.toEnglishDigits(col(cEco)).filter { it.isDigit() },
+                nationalId = PersianUtils.toEnglishDigits(col(cNat)).filter { it.isDigit() },
+                registrationNumber = PersianUtils.toEnglishDigits(col(cReg)),
+                bankAccounts = bankSerialized,
+                notes = col(cNotes),
+                rating = PersianUtils.toEnglishDigits(col(cRating, "0")).toFloatOrNull() ?: 0f,
+                isVerified = verifiedText == "بله" || verifiedText.equals("true", ignoreCase = true),
+                description = col(cDesc).ifBlank { "وارد شده از فایل اکسل / CSV" },
+                createdAt = System.currentTimeMillis()
+            )
+            if (extraAddresses.isNotEmpty()) {
+                val firstItem = vendor.addressItems().firstOrNull() ?: first
+                vendor = vendor.copy(addressesJson = AddressCodec.encode(listOf(firstItem) + extraAddresses))
+            }
+
+            val contacts = col(cPeople).split(ENTRY_SEP.trim()).mapNotNull { entry ->
+                val f = entry.trim().split("|").map { it.trim() }
+                val nm = f.getOrElse(0) { "" }
+                if (nm.isBlank()) null else ContactPerson(
+                    vendorId = 0L, name = nm, role = f.getOrElse(1) { "" },
+                    mobile = fixMobile(f.getOrElse(2) { "" }), phone = fixLandline(f.getOrElse(3) { "" }),
+                    extension = PersianUtils.toEnglishDigits(f.getOrElse(4) { "" }).filter { it.isDigit() },
+                    email = f.getOrElse(5) { "" }, gender = f.getOrElse(6) { "" }.takeIf { it == "آقا" || it == "خانم" } ?: ""
+                )
+            }
+            val prods = col(cProducts).split(ENTRY_SEP.trim()).mapNotNull { entry ->
+                val f = entry.trim().split("|").map { it.trim() }
+                val nm = f.getOrElse(0) { "" }
+                if (nm.isBlank()) null else Product(
+                    vendorId = 0L, name = nm, brand = f.getOrElse(1) { "" }, model = f.getOrElse(2) { "" },
+                    technicalCode = f.getOrElse(3) { "" }, category = f.getOrElse(4) { "" }, specifications = f.getOrElse(5) { "" }
+                )
+            }
+            result.add(ImportedVendor(vendor, contacts, prods))
+        }
+        return result
     }
 
     /**
      * Deduplicates imported vendors against existing database vendors
      */
-    fun deduplicateVendors(incoming: List<Vendor>, existing: List<Vendor>): ImportSummary {
+    fun deduplicateImports(incoming: List<ImportedVendor>, existing: List<Vendor>): ImportSummary {
         val existingNormalizedNames = existing.map { PersianUtils.normalize(it.name).trim() }.filter { it.isNotBlank() }.toSet()
         val existingNationalIds = existing.map { it.nationalId.filter { c -> c.isDigit() } }.filter { it.isNotBlank() }.toSet()
         val existingMobiles = existing.map { PersianUtils.normalizePhone(it.mobile) }.filter { it.isNotBlank() }.toSet()
 
-        val toInsert = mutableListOf<Vendor>()
+        val toInsert = mutableListOf<ImportedVendor>()
         var duplicatesCount = 0
-
         val seenInBatchNames = mutableSetOf<String>()
 
-        for (vendor in incoming) {
+        for (item in incoming) {
+            val vendor = item.vendor
             val normName = PersianUtils.normalize(vendor.name).trim()
             val normNational = vendor.nationalId.filter { it.isDigit() }
             val normMobile = PersianUtils.normalizePhone(vendor.mobile)
@@ -262,7 +356,7 @@ object CsvUtils {
             if (isDuplicate) {
                 duplicatesCount++
             } else {
-                toInsert.add(vendor)
+                toInsert.add(item)
                 if (normName.isNotBlank()) seenInBatchNames.add(normName)
             }
         }
@@ -270,7 +364,8 @@ object CsvUtils {
         return ImportSummary(
             newCount = toInsert.size,
             duplicateSkippedCount = duplicatesCount,
-            vendorsToInsert = toInsert
+            vendorsToInsert = toInsert.map { it.vendor },
+            imports = toInsert
         )
     }
 

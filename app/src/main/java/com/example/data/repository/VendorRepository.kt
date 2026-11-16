@@ -385,18 +385,16 @@ class VendorRepository(private val database: AppDatabase) {
 
     suspend fun exportCsv(): String = withContext(Dispatchers.IO) {
         val vendors = allVendors.first()
-        CsvUtils.exportVendorsToCsv(vendors)
+        val contacts = allContacts.first()
+        val products = allProducts.first()
+        CsvUtils.exportVendorsToCsv(vendors, contacts, products)
     }
 
     suspend fun importCsv(csvContent: String): com.example.util.ImportSummary = withContext(Dispatchers.IO) {
-        val parsed = CsvUtils.parseCsvToVendors(csvContent)
+        val parsed = CsvUtils.parseCsvToImports(csvContent)
         val currentVendors = allVendors.first()
-        val summary = CsvUtils.deduplicateVendors(parsed, currentVendors)
-        if (summary.vendorsToInsert.isNotEmpty()) {
-            database.withTransaction {
-                vendorDao.insertVendors(summary.vendorsToInsert)
-            }
-        }
+        val summary = CsvUtils.deduplicateImports(parsed, currentVendors)
+        summary.imports.forEach { saveVendorWithRelations(it.vendor, it.contacts, it.products) }
         summary
     }
 

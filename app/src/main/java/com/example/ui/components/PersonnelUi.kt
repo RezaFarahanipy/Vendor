@@ -1,6 +1,10 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.FilterChip
@@ -98,4 +102,28 @@ fun MaskedLandlineField(
         singleLine = singleLine,
         keyboardOptions = keyboardOptions
     )
+}
+
+/** Common job titles offered as one-tap helpers under the "job title" field. */
+val COMMON_ROLES = listOf(
+    "مدیرعامل", "مدیر فروش", "کارشناس فروش", "کارشناس مالی", "حسابدار", "ترانسپورت",
+    "کارشناس خرید", "مدیر بازرگانی", "مدیر تولید", "مسئول انبار", "مسئول فنی", "بازاریاب", "منشی", "مدیر پروژه"
+)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun RoleQuickChips(onPick: (String) -> Unit, modifier: Modifier = Modifier) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        COMMON_ROLES.forEach { role ->
+            AssistChip(
+                onClick = { onPick(role) },
+                label = { Text(role, style = MaterialTheme.typography.labelSmall) },
+                shape = RoundedCornerShape(10.dp)
+            )
+        }
+    }
 }

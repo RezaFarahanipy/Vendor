@@ -52,7 +52,7 @@ fun rememberAppIcon(packages: List<String>): ImageBitmap? {
 fun MessengerIconButton(
     messenger: Messenger,
     modifier: Modifier = Modifier,
-    size: Dp = 40.dp,
+    size: Dp = 30.dp,
     onClick: () -> Unit
 ) {
     val icon = rememberAppIcon(messenger.packages)

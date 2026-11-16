@@ -25,7 +25,12 @@ object PersianUtils {
                 sb.append(char)
             }
         }
-        return sb.toString()
+        val converted = sb.toString()
+        // Phone-like text ("021-46138195", "+98 912 ...") is wrapped in an LTR isolate: after Persian letters the
+        // hyphen would otherwise split the number and show its groups in reverse order.
+        val looksLikePhone = text.count { it.isDigit() } >= 5 && text.any { it == '-' || it == '+' || it == ' ' || it == '(' } &&
+                text.all { it.isDigit() || it == '-' || it == '+' || it == ' ' || it == '(' || it == ')' }
+        return if (looksLikePhone) "\u2066" + converted + "\u2069" else converted
     }
 
     fun toPersianDigits(number: Number): String {
