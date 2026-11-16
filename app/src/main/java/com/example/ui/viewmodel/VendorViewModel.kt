@@ -365,6 +365,43 @@ class VendorViewModel(application: Application) : AndroidViewModel(application) 
     val recentSearches: StateFlow<List<String>> = settingsDataStore.recentSearchesFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Specialty suggestions (quick phrases for the vendor description), editable in settings
+    val specialtySuggestions: StateFlow<List<String>> = settingsDataStore.specialtySuggestionsFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, com.example.data.preferences.DEFAULT_SPECIALTY_SUGGESTIONS)
+
+    private fun sameSuggestion(a: String, b: String) = PersianUtils.normalize(a.trim()) == PersianUtils.normalize(b.trim())
+
+    /** Adds a phrase; returns false (and shows a notice) when it is blank or already in the list. */
+    fun addSuggestion(text: String): Boolean {
+        val clean = text.trim().replace("\n", " ")
+        if (clean.isBlank()) return false
+        if (specialtySuggestions.value.any { sameSuggestion(it, clean) }) {
+            userNotice.value = t("این مورد قبلاً در لیست وجود دارد")
+            return false
+        }
+        viewModelScope.launch { settingsDataStore.setSpecialtySuggestions(specialtySuggestions.value + clean) }
+        return true
+    }
+
+    fun updateSuggestion(old: String, new: String): Boolean {
+        val clean = new.trim().replace("\n", " ")
+        if (clean.isBlank()) return false
+        if (specialtySuggestions.value.any { !it.equals(old) && sameSuggestion(it, clean) }) {
+            userNotice.value = t("این مورد قبلاً در لیست وجود دارد")
+            return false
+        }
+        viewModelScope.launch { settingsDataStore.setSpecialtySuggestions(specialtySuggestions.value.map { if (it == old) clean else it }) }
+        return true
+    }
+
+    fun deleteSuggestion(text: String) {
+        viewModelScope.launch { settingsDataStore.setSpecialtySuggestions(specialtySuggestions.value.filter { it != text }) }
+    }
+
+    fun resetSuggestions() {
+        viewModelScope.launch { settingsDataStore.setSpecialtySuggestions(com.example.data.preferences.DEFAULT_SPECIALTY_SUGGESTIONS) }
+    }
+
     fun commitSearch(query: String) {
         viewModelScope.launch { settingsDataStore.addRecentSearch(query) }
     }

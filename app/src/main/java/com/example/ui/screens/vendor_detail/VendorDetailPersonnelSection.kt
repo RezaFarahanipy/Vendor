@@ -59,6 +59,11 @@ import com.example.util.t
 import androidx.compose.foundation.clickable
 import com.example.ui.components.Messenger
 import com.example.ui.components.MessengerIconButton
+import com.example.ui.components.GENDER_MALE
+import com.example.ui.components.GENDER_FEMALE
+import com.example.ui.components.personDisplayName
+import androidx.compose.material.icons.filled.Man
+import androidx.compose.material.icons.filled.Woman
 
 /**
  * Modular Personnel Section for Vendor Detail Screen
@@ -155,13 +160,22 @@ private fun PersonnelItem(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                    Icon(
+                        imageVector = when (contact.gender) {
+                            GENDER_MALE -> Icons.Default.Man
+                            GENDER_FEMALE -> Icons.Default.Woman
+                            else -> Icons.Default.Person
+                        },
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(10.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = contact.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(text = personDisplayName(contact.name, contact.gender), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(
                         text = "${contact.role} ${if (contact.extension.isNotBlank()) "• داخلی ${PersianUtils.toPersianDigits(contact.extension)}" else ""}",
                         style = MaterialTheme.typography.bodySmall,

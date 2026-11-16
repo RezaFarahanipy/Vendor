@@ -27,5 +27,6 @@ data class ContactPerson(
     val mobile: String = "",
     val phone: String = "",
     val extension: String = "",
-    val email: String = ""
+    val email: String = "",
+    val gender: String = "" // "آقا" / "خانم" / empty when unknown
 )

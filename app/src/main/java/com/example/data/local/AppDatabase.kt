@@ -33,7 +33,7 @@ import com.example.util.PersianUtils
         VendorPhone::class,
         BankAccount::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -308,6 +308,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v8: personnel gender (آقا / خانم). */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE contact_persons ADD COLUMN gender TEXT NOT NULL DEFAULT ''")
+                Log.i(TAG, "MIGRATION_7_8 finished")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 try {
@@ -316,7 +324,7 @@ abstract class AppDatabase : RoomDatabase() {
                         AppDatabase::class.java,
                         "vendorlist_database"
                     )
-                        .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                        .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                         .addCallback(object : RoomDatabase.Callback() {
                             override fun onOpen(db: SupportSQLiteDatabase) {
                                 super.onOpen(db)

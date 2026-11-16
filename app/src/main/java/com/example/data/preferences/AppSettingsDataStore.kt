@@ -19,6 +19,54 @@ enum class ThemeMode {
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "vendor_app_settings")
 
+/** Default phrases offered as quick suggestions while registering a vendor's specialty. */
+val DEFAULT_SPECIALTY_SUGGESTIONS = listOf(
+    "میلگرد",
+    "نبشی",
+    "ناودانی",
+    "تیرآهن",
+    "ورق سیاه",
+    "ورق گالوانیزه",
+    "ورق روغنی",
+    "ورق استیل",
+    "لوله مانیسمان",
+    "لوله درزدار",
+    "لوله پلی‌اتیلن",
+    "پروفیل و قوطی",
+    "سیم و کابل",
+    "کابل برق",
+    "کابل شبکه",
+    "تابلو برق",
+    "ترانسفورماتور",
+    "کنتاکتور و رله",
+    "لامپ و روشنایی",
+    "الکتروموتور",
+    "پمپ آب",
+    "پمپ صنعتی",
+    "شیرآلات صنعتی",
+    "اتصالات و فلنج",
+    "بلبرینگ و رولبرینگ",
+    "کمپرسور",
+    "جک هیدرولیک",
+    "پیچ و مهره",
+    "یراق‌آلات",
+    "ابزارآلات",
+    "رنگ صنعتی",
+    "چسب و درزگیر",
+    "سیمان",
+    "گچ و خاک",
+    "آجر و بلوک",
+    "کاشی و سرامیک",
+    "شیشه و آینه",
+    "چوب و MDF",
+    "عایق رطوبتی",
+    "داربست و قالب‌بندی",
+    "لوازم ایمنی و حفاظت فردی",
+    "مواد شیمیایی",
+    "روغن و گریس",
+    "قطعات یدکی"
+)
+
 class AppSettingsDataStore(private val context: Context) {
 
     private object PreferencesKeys {
@@ -29,6 +77,7 @@ class AppSettingsDataStore(private val context: Context) {
         val IS_SCREENSHOT_BLOCK_ENABLED = booleanPreferencesKey("is_screenshot_block_enabled")
         val IS_DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("is_dynamic_color_enabled")
         val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
+        val SPECIALTY_SUGGESTIONS = stringPreferencesKey("specialty_suggestions")
     }
 
     val themeModeFlow: Flow<ThemeMode> = context.dataStore.data.map { preferences ->
@@ -82,6 +131,18 @@ class AppSettingsDataStore(private val context: Context) {
 
     suspend fun clearRecentSearches() {
         context.dataStore.edit { preferences -> preferences.remove(PreferencesKeys.RECENT_SEARCHES) }
+    }
+
+    /** User-editable specialty suggestions (stored newline-separated; defaults until first edit). */
+    val specialtySuggestionsFlow: Flow<List<String>> = context.dataStore.data.map { preferences ->
+        val raw = preferences[PreferencesKeys.SPECIALTY_SUGGESTIONS]
+        if (raw == null) DEFAULT_SPECIALTY_SUGGESTIONS else raw.split("\n").filter { it.isNotBlank() }
+    }
+
+    suspend fun setSpecialtySuggestions(list: List<String>) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SPECIALTY_SUGGESTIONS] = list.joinToString("\n")
+        }
     }
 
     suspend fun setThemeMode(mode: ThemeMode) {

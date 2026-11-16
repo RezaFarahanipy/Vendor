@@ -344,6 +344,7 @@ object CsvUtils {
             co.put("mobile", c.mobile)
             co.put("phone", c.phone)
             co.put("extension", c.extension)
+                    co.put("gender", c.gender)
             co.put("email", c.email)
             contactsArray.put(co)
         }
@@ -434,6 +435,7 @@ object CsvUtils {
                         mobile = co.optString("mobile", ""),
                         phone = co.optString("phone", ""),
                         extension = co.optString("extension", ""),
+                        gender = co.optString("gender", ""),
                         email = co.optString("email", "")
                     )
                 )
@@ -582,6 +584,7 @@ object CsvUtils {
             co.put("mobile", c.mobile)
             co.put("phone", c.phone)
             co.put("extension", c.extension)
+                    co.put("gender", c.gender)
             co.put("email", c.email)
             contactsArray.put(co)
         }

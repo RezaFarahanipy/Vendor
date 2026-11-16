@@ -51,6 +51,12 @@ import com.example.ui.theme.BrandPrimary
 import java.io.File
 import com.example.ui.theme.BrandViolet
 import com.example.util.t
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import com.example.util.PersianUtils
 
 /**
  * Step 1: Basic Information, Activity Type & Logo
@@ -71,7 +77,8 @@ fun Step1BaseInfo(
     onSelectedCategoriesChange: (Set<String>) -> Unit,
     allCategories: List<Category>,
     description: String,
-    onDescriptionChange: (String) -> Unit
+    onDescriptionChange: (String) -> Unit,
+    suggestions: List<String> = emptyList()
 ) {
     Text(
         text = t("اطلاعات پایه، نشان تجاری و لوگو"),
@@ -263,4 +270,45 @@ fun Step1BaseInfo(
         modifier = Modifier.fillMaxWidth(),
         minLines = 2
     )
+
+    if (suggestions.isNotEmpty()) {
+        var expanded by remember { mutableStateOf(false) }
+        val tokens = description.split('،', ',', '\n').map { it.trim() }.filter { it.isNotEmpty() }
+        val shown = if (expanded) suggestions else suggestions.take(12)
+        Text(
+            text = t("پیشنهادهای سریع (برای افزودن یا حذف لمس کنید)"),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            shown.forEach { suggestion ->
+                val selected = tokens.any { PersianUtils.normalize(it) == PersianUtils.normalize(suggestion) }
+                FilterChip(
+                    selected = selected,
+                    onClick = {
+                        if (selected) {
+                            onDescriptionChange(tokens.filterNot { PersianUtils.normalize(it) == PersianUtils.normalize(suggestion) }.joinToString("، "))
+                        } else {
+                            val base = description.trimEnd().trimEnd('،', ',')
+                            onDescriptionChange(if (base.isBlank()) suggestion else "$base، $suggestion")
+                        }
+                    },
+                    label = { Text(suggestion, style = MaterialTheme.typography.labelMedium) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = BrandPrimary,
+                        selectedLabelColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                )
+            }
+        }
+        if (suggestions.size > 12) {
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(if (expanded) t("نمایش کمتر") else t("نمایش بیشتر"))
+            }
+        }
+    }
 }

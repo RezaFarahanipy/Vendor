@@ -104,6 +104,7 @@ import com.example.util.PersianUtils
 import com.example.ui.theme.BrandViolet
 import com.example.util.tf
 import com.example.util.t
+import androidx.compose.material.icons.filled.Lightbulb
 
 @Composable
 fun SettingsScreen(
@@ -193,6 +194,8 @@ fun SettingsScreen(
     var showFeaturesDialog by remember { mutableStateOf(false) }
     var showActivityTypeManageDialog by remember { mutableStateOf(false) }
     var showCategoryManageDialog by remember { mutableStateOf(false) }
+    var showSuggestionsDialog by remember { mutableStateOf(false) }
+    val specialtySuggestions by viewModel.specialtySuggestions.collectAsState()
     var showResetDialog by remember { mutableStateOf(false) }
     var showDatabaseInfoDialog by remember { mutableStateOf(false) }
 
@@ -616,6 +619,16 @@ fun SettingsScreen(
                 )
             }
 
+            // Specialty suggestions manager
+            item {
+                SettingsClickableCard(
+                    icon = Icons.Default.Lightbulb,
+                    title = t("پیشنهادهای زمینه تخصصی"),
+                    subtitle = tf("{0} مورد (افزودن، ویرایش و حذف)", PersianUtils.toPersianDigits(specialtySuggestions.size)),
+                    onClick = { showSuggestionsDialog = true }
+                )
+            }
+
             // Database & Storage Architecture Card
             item {
                 SettingsClickableCard(
@@ -713,6 +726,17 @@ fun SettingsScreen(
             onUpdate = { viewModel.updateActivityType(it) },
             onRequestDelete = { activityTypeToDelete = it },
             onDismiss = { showActivityTypeManageDialog = false }
+        )
+    }
+
+    if (showSuggestionsDialog) {
+        ManageSuggestionsDialog(
+            suggestions = specialtySuggestions,
+            onAdd = { viewModel.addSuggestion(it) },
+            onUpdate = { old, new -> viewModel.updateSuggestion(old, new) },
+            onDelete = { viewModel.deleteSuggestion(it) },
+            onReset = { viewModel.resetSuggestions() },
+            onDismiss = { showSuggestionsDialog = false }
         )
     }
 

@@ -111,6 +111,16 @@ import com.example.ui.theme.BrandContainer
 import com.example.ui.theme.BrandViolet
 import com.example.ui.theme.VioletContainer
 import com.example.ui.theme.GreenVerified
+import com.example.ui.components.Messenger
+import com.example.ui.components.MessengerIconButton
+import com.example.ui.components.GENDER_MALE
+import com.example.ui.components.GENDER_FEMALE
+import com.example.ui.components.personDisplayName
+import com.example.util.MessengerUtils
+import androidx.compose.material.icons.filled.Man
+import androidx.compose.material.icons.filled.Woman
+import com.example.ui.theme.RoseContainer
+import com.example.ui.theme.AnimatedHeart
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -420,8 +430,12 @@ fun SearchScreen(
             }
         }
 
-        // Result count header
-        Row(
+        val filtersActive = selectedCategory != "همه" || selectedCity != "همه" || onlyVerified || onlyCatalog
+        val showResults = query.isNotBlank() || filtersActive
+
+        // Result count header (only while a search or filter is active)
+        if (showResults) {
+            Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 4.dp),
@@ -452,6 +466,7 @@ fun SearchScreen(
                 }
             }
         }
+        }
 
         // Unified results: people & products (with their company) followed by the vendors
         val hits by viewModel.searchHits.collectAsState()
@@ -464,7 +479,42 @@ fun SearchScreen(
                 viewModel.commitSearch(query)
             }
         }
-        if (nothingFound) {
+        if (!showResults) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                if (recent.isNotEmpty()) {
+                    RecentSearchesPanel(
+                        recent = recent,
+                        onPick = { viewModel.searchQuery.value = it },
+                        onClear = { viewModel.clearRecentSearches() }
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = BrandPrimary.copy(alpha = 0.35f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = t("برای شروع، نام وندور، پرسنل، محصول یا شماره را بنویسید"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        } else if (nothingFound) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -499,15 +549,6 @@ fun SearchScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                if (!hasQuery && recent.isNotEmpty()) {
-                    item(key = "recent_searches") {
-                        RecentSearchesPanel(
-                            recent = recent,
-                            onPick = { viewModel.searchQuery.value = it },
-                            onClear = { viewModel.clearRecentSearches() }
-                        )
-                    }
-                }
                 if (hits.people.isNotEmpty()) {
                     item(key = "people_header") {
                         SearchSectionHeader(tf("پرسنل ({0})", PersianUtils.toPersianDigits(hits.people.size)))
@@ -538,12 +579,21 @@ fun SearchScreen(
                     }
                 }
                 itemsIndexed(filteredVendors, key = { _, v -> v.id }) { index, vendor ->
-                    VendorCard(
-                        modifier = Modifier.animateItem().staggerIn(index),
-                        vendor = vendor,
-                        onClick = { viewModel.commitSearch(query); onVendorClick(vendor.id) },
-                        onFavoriteClick = { viewModel.toggleVendorFavorite(vendor) }
-                    )
+                    if (isCardView) {
+                        VendorCard(
+                            modifier = Modifier.animateItem().staggerIn(index),
+                            vendor = vendor,
+                            onClick = { viewModel.commitSearch(query); onVendorClick(vendor.id) },
+                            onFavoriteClick = { viewModel.toggleVendorFavorite(vendor) }
+                        )
+                    } else {
+                        VendorListRow(
+                            modifier = Modifier.animateItem(),
+                            vendor = vendor,
+                            onClick = { viewModel.commitSearch(query); onVendorClick(vendor.id) },
+                            onFavoriteClick = { viewModel.toggleVendorFavorite(vendor) }
+                        )
+                    }
                 }
             }
         }
@@ -826,6 +876,11 @@ private fun PersonResultCard(hit: PersonHit, modifier: Modifier = Modifier, onCl
     val context = LocalContext.current
     val c = hit.contact
     val number = c.mobile.ifBlank { c.phone }
+    val avatarColor = when (c.gender) {
+        GENDER_MALE -> BrandContainer
+        GENDER_FEMALE -> RoseContainer
+        else -> BrandContainer
+    }
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
@@ -833,61 +888,80 @@ private fun PersonResultCard(hit: PersonHit, modifier: Modifier = Modifier, onCl
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(CircleShape)
-                    .background(BrandContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = c.name.trim().take(1),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = BrandDark
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(c.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1)
-                if (c.role.isNotBlank()) {
-                    Text(c.role, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(avatarColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when (c.gender) {
+                        GENDER_MALE -> Icon(Icons.Default.Man, contentDescription = null, tint = BrandDark, modifier = Modifier.size(28.dp))
+                        GENDER_FEMALE -> Icon(Icons.Default.Woman, contentDescription = null, tint = RedFavorite, modifier = Modifier.size(28.dp))
+                        else -> Text(
+                            text = c.name.trim().take(1),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = BrandDark
+                        )
+                    }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Business, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = hit.vendor.name,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandPrimary,
-                        maxLines = 1
-                    )
-                }
-                if (number.isNotBlank()) {
-                    Text(
-                        text = PersianUtils.toPersianDigits(number),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(personDisplayName(c.name, c.gender), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1)
+                    if (c.role.isNotBlank()) {
+                        Text(c.role, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Business, contentDescription = null, tint = BrandPrimary, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = hit.vendor.name,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandPrimary,
+                            maxLines = 1
+                        )
+                    }
+                    if (number.isNotBlank()) {
+                        Text(
+                            text = PersianUtils.toPersianDigits(number),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
             if (number.isNotBlank()) {
-                IconButton(
-                    onClick = {
-                        try {
-                            context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + PersianUtils.normalizePhone(number))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                        } catch (_: Exception) {
-                        }
-                    }
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Call, contentDescription = t("تماس"), tint = GreenVerified)
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(GreenVerified)
+                            .clickable {
+                                try {
+                                    context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + PersianUtils.normalizePhone(number))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                                } catch (_: Exception) {
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Call, contentDescription = t("تماس"), tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
+                    MessengerIconButton(Messenger.WHATSAPP, size = 36.dp) {
+                        MessengerUtils.openWhatsApp(context, number, "سلام، از طریق اپلیکیشن وندوریاب با شما در ارتباط هستم.")
+                    }
+                    MessengerIconButton(Messenger.TELEGRAM, size = 36.dp) { MessengerUtils.openTelegram(context, number) }
+                    MessengerIconButton(Messenger.BALE, size = 36.dp) { MessengerUtils.openBale(context, number) }
+                    MessengerIconButton(Messenger.RUBIKA, size = 36.dp) { MessengerUtils.openRubika(context, number) }
                 }
             }
         }
@@ -938,6 +1012,54 @@ private fun ProductResultCard(hit: ProductHit, modifier: Modifier = Modifier, on
                         maxLines = 1
                     )
                 }
+            }
+        }
+    }
+}
+
+
+/** Compact one-line vendor row used by the "list" view mode. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun VendorListRow(vendor: com.example.data.model.Vendor, modifier: Modifier = Modifier, onClick: () -> Unit, onFavoriteClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(BrandContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(vendor.name.trim().take(1), fontWeight = FontWeight.ExtraBold, color = BrandDark)
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(vendor.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.weight(1f, fill = false))
+                    if (vendor.isVerified) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(Icons.Default.Business, contentDescription = null, tint = GreenVerified, modifier = Modifier.size(14.dp))
+                    }
+                }
+                val sub = listOf(vendor.activityType, vendor.city).filter { it.isNotBlank() }.joinToString(" • ")
+                if (sub.isNotBlank()) {
+                    Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                }
+            }
+            IconButton(onClick = onFavoriteClick) {
+                AnimatedHeart(isFavorite = vendor.isFavorite)
             }
         }
     }

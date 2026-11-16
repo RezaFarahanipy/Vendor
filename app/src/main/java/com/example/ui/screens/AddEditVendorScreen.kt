@@ -148,6 +148,8 @@ import com.example.data.model.catalogItems
 import com.example.data.model.VendorAddress
 import com.example.data.model.AddressCodec
 import com.example.data.model.addressItems
+import com.example.ui.components.GenderSelector
+import com.example.ui.components.MaskedLandlineField
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -252,6 +254,7 @@ fun AddEditVendorScreen(
 
     // Step 4: Location & Map
     val currentVendor = editingVendor
+    val specialtySuggestions by viewModel.specialtySuggestions.collectAsState()
     val addressList = remember(currentVendor) {
         mutableStateListOf<VendorAddress>().apply {
             addAll(currentVendor?.addressItems() ?: emptyList())
@@ -296,6 +299,7 @@ fun AddEditVendorScreen(
     var personPhoneInput by remember { mutableStateOf("") }
     var personExtInput by remember { mutableStateOf("") }
     var personEmailInput by remember { mutableStateOf("") }
+    var personGender by remember { mutableStateOf("") }
 
     // Dialog state for adding/editing product
     var showProductDialog by remember { mutableStateOf(false) }
@@ -592,7 +596,8 @@ fun AddEditVendorScreen(
                             onSelectedCategoriesChange = { selectedCategories = it },
                             allCategories = allCategories,
                             description = description,
-                            onDescriptionChange = { description = it }
+                            onDescriptionChange = { description = it },
+                            suggestions = specialtySuggestions
                         )
                         2 -> Step2LegalFinancial(
                             economicCode = economicCode,
@@ -640,6 +645,7 @@ fun AddEditVendorScreen(
                                 personPhoneInput = primaryPhone
                                 personExtInput = "101"
                                 personEmailInput = ""
+                                personGender = ""
                                 showPersonDialog = true
                             },
                             onEditPersonnelClick = { index, person ->
@@ -650,6 +656,7 @@ fun AddEditVendorScreen(
                                 personPhoneInput = person.phone
                                 personExtInput = person.extension
                                 personEmailInput = person.email
+                                personGender = person.gender
                                 showPersonDialog = true
                             }
                         )
@@ -785,6 +792,8 @@ fun AddEditVendorScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    GenderSelector(gender = personGender, onChange = { personGender = it })
+
                     OutlinedTextField(
                         value = personRoleInput,
                         onValueChange = { personRoleInput = it },
@@ -819,11 +828,9 @@ fun AddEditVendorScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedTextField(
+                        MaskedLandlineField(
                             value = personPhoneInput,
-                            onValueChange = { input ->
-                                personPhoneInput = PersianUtils.formatLandlinePhone(input)
-                            },
+                            onValueChange = { personPhoneInput = it },
                             label = { Text(t("تلفن مستقیم")) },
                             placeholder = { Text("021-77654321") },
                             singleLine = true,
@@ -895,7 +902,8 @@ fun AddEditVendorScreen(
                             mobile = personMobileInput.trim(),
                             phone = personPhoneInput.trim(),
                             extension = personExtInput.trim(),
-                            email = personEmailInput.trim()
+                            email = personEmailInput.trim(),
+                            gender = personGender
                         )
                         if (editingPersonIndex >= 0) {
                             personnelList[editingPersonIndex] = newContact

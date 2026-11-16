@@ -133,6 +133,8 @@ import com.example.util.tf
 import com.example.data.model.addressItems
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import com.example.ui.components.GenderSelector
+import com.example.ui.components.MaskedLandlineField
 
 @OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -171,6 +173,7 @@ fun VendorDetailScreen(
     var contactName by remember { mutableStateOf("") }
     var contactRole by remember { mutableStateOf("مدیرعامل") }
     var contactMobile by remember { mutableStateOf("") }
+    var contactGender by remember { mutableStateOf("") }
     var contactPhone by remember { mutableStateOf("") }
     var contactExt by remember { mutableStateOf("") }
     var contactEmail by remember { mutableStateOf("") }
@@ -529,6 +532,7 @@ fun VendorDetailScreen(
                     contactName = contact.name
                     contactRole = contact.role
                     contactMobile = contact.mobile
+                    contactGender = contact.gender
                     contactPhone = contact.phone
                     contactExt = contact.extension
                     contactEmail = contact.email
@@ -866,6 +870,7 @@ fun VendorDetailScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    GenderSelector(gender = contactGender, onChange = { contactGender = it })
                     OutlinedTextField(
                         value = contactRole,
                         onValueChange = { contactRole = it },
@@ -897,9 +902,9 @@ fun VendorDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         val contactPhoneError = contactPhone.isNotBlank() && contactPhone.filter { it.isDigit() }.length != 11
-                        OutlinedTextField(
+                        MaskedLandlineField(
                             value = contactPhone,
-                            onValueChange = { contactPhone = PersianUtils.formatLandlinePhone(it) },
+                            onValueChange = { contactPhone = it },
                             label = { Text(t("تلفن ثابت")) },
                             placeholder = { Text("021-77654321") },
                             singleLine = true,
@@ -948,7 +953,8 @@ fun VendorDetailScreen(
                             mobile = contactMobile.trim(),
                             phone = contactPhone.trim(),
                             extension = contactExt.trim(),
-                            email = contactEmail.trim()
+                            email = contactEmail.trim(),
+                            gender = contactGender
                         )
                         viewModel.saveContact(toSave)
                         showContactDialog = false

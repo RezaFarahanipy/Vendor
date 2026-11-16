@@ -38,6 +38,7 @@ import com.example.ui.theme.BrandPrimary
 import com.example.util.PersianUtils
 import com.example.util.tf
 import com.example.util.t
+import com.example.ui.components.MaskedLandlineField
 
 /**
  * Step 3: Contacts (Landline with 021-xxxxxxxx mask & city detection, Mobiles, Stacked Email & Website)
@@ -79,12 +80,9 @@ fun Step3Contacts(
         }
 
         val primaryCity = PersianUtils.detectLandlineCity(primaryPhone)
-        OutlinedTextField(
+        MaskedLandlineField(
             value = primaryPhone,
-            onValueChange = { input ->
-                val formatted = PersianUtils.formatLandlinePhone(input)
-                onPrimaryPhoneChange(formatted)
-            },
+            onValueChange = onPrimaryPhoneChange,
             label = { Text(t("تلفن ثابت اصلی (ماسک 021-xxxxxxxx)")) },
             placeholder = { Text("021-77654321") },
             singleLine = true,
@@ -122,11 +120,9 @@ fun Step3Contacts(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
+                MaskedLandlineField(
                     value = p,
-                    onValueChange = { input ->
-                        additionalPhones[idx] = PersianUtils.formatLandlinePhone(input)
-                    },
+                    onValueChange = { additionalPhones[idx] = it },
                     label = { Text(tf("تلفن ثابت فرعی {0}", PersianUtils.toPersianDigits(idx + 1))) },
                     placeholder = { Text("021-77654322") },
                     singleLine = true,

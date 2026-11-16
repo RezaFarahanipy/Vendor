@@ -576,3 +576,113 @@ private fun FeatureItem(number: String, title: String, desc: String) {
         }
     }
 }
+
+
+@Composable
+fun ManageSuggestionsDialog(
+    suggestions: List<String>,
+    onAdd: (String) -> Boolean,
+    onUpdate: (String, String) -> Boolean,
+    onDelete: (String) -> Unit,
+    onReset: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var newText by remember { mutableStateOf("") }
+    var editing by remember { mutableStateOf<String?>(null) }
+    var editText by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Lightbulb, contentDescription = null, tint = BrandPrimary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(t("مدیریت پیشنهادهای زمینه تخصصی"), fontWeight = FontWeight.Bold)
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = t("عبارت‌هایی که هنگام ثبت وندور برای انتخاب سریع پیشنهاد می‌شوند:"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = newText,
+                        onValueChange = { newText = it },
+                        placeholder = { Text(t("عبارت جدید (مثال: میلگرد)")) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Button(
+                        onClick = { if (onAdd(newText)) newText = "" },
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
+                    ) {
+                        Text(t("افزودن"), fontWeight = FontWeight.Bold)
+                    }
+                }
+                suggestions.forEach { item ->
+                    if (editing == item) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            OutlinedTextField(
+                                value = editText,
+                                onValueChange = { editText = it },
+                                label = { Text(t("ویرایش عبارت")) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(onClick = { editing = null }) { Text(t("انصراف")) }
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Button(
+                                    onClick = { if (onUpdate(item, editText)) editing = null },
+                                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary, contentColor = Color.White)
+                                ) {
+                                    Text(t("ذخیره"), fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = item, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                            IconButton(onClick = { editing = item; editText = item }, modifier = Modifier.size(32.dp)) {
+                                Icon(Icons.Default.Edit, contentDescription = t("ویرایش"), tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                            }
+                            IconButton(onClick = { onDelete(item) }, modifier = Modifier.size(32.dp)) {
+                                Icon(Icons.Default.Delete, contentDescription = t("حذف"), tint = RedFavorite, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onReset) { Text(t("بازگشت به پیش‌فرض")) }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(t("بستن")) }
+        }
+    )
+}
